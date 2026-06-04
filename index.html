@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="OST Quest — Adivina el videojuego por su banda sonora. Juego diario de música.">
+  <title>OST Quest — Adivina la banda sonora</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230c0e14'/><text x='16' y='22' text-anchor='middle' font-size='18' fill='%23b8e030'>♪</text></svg>">
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <header class="site-header">
+    <div class="site-header__left">
+      <span class="site-title">OST Quest</span>
+      <span class="site-subtitle">Adivina la banda sonora</span>
+    </div>
+    <div class="site-header__right">
+      <div class="header-countdown">
+        Próximo: <span id="header-countdown">--:--:--</span>
+      </div>
+      <button class="today-btn" id="btn-today" title="Volver al juego de hoy">Hoy</button>
+      <button class="icon-btn" id="btn-archive" title="Quest Log" aria-label="Quest Log">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/>
+          <line x1="12" y1="12" x2="12" y2="17"/>
+          <line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btn-stats" title="Estadísticas" aria-label="Estadísticas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="archive-banner" id="archive-banner"></div>
+
+  <div class="score-bar">
+    <div>Hits: <span class="score-bar__hits" id="score-hits">0</span></div>
+    <div>Miss: <span class="score-bar__miss" id="score-miss">0</span></div>
+    <div class="vol-control" id="vol-control">
+      <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16" style="flex-shrink:0;opacity:0.5">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path id="vol-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      </svg>
+      <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="80">
+    </div>
+  </div>
+
+  <div id="loading-screen">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Cargando bandas sonoras…</p>
+  </div>
+
+  <div id="game-area" style="display:none">
+    <div class="columns-wrapper" id="columns-wrapper"></div>
+  </div>
+
+</div>
+
+<div id="modal" role="dialog" aria-modal="true">
+  <div id="modal-inner"></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- YouTube hidden audio player (iframe embed, off-screen) -->
+<!-- YouTube IFrame API player (oculto) -->
+<div style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+  <div id="yt-player"></div>
+</div>
+
+<script src="js/database.js"></script>
+<script src="js/daily.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/youtube.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>
