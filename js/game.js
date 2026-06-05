@@ -214,7 +214,7 @@ function openGuessModal(gi, cv, ci) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        ¡Mi opción!
+        Es esta
       </button>
     </div>`;
 
@@ -273,8 +273,7 @@ function openResultModal(gi, pickedCv, isCorrect) {
       <div class="modal__result-info">
         <p class="modal__result-text">${msg}</p>
         ${ansAsset.youtubeId ? `
-          <a class="deezer-link" href="https://www.youtube.com/watch?v=${ansAsset.youtubeId}"
-             target="_blank" rel="noopener">Ver en YouTube</a>` : ''}
+          <a class="deezer-link" href="https://www.youtube.com/watch?v=${ansAsset.youtubeId}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>Ver en YouTube</a>` : ''}
       </div>
     </div>`;
 
@@ -403,8 +402,6 @@ function openArchive() {
       closeModal();
       stopAudio();
       const [ay,am,ad] = ds.split('-');
-      document.getElementById('archive-banner').textContent = `Quest ${ad}-${am}-${ay}`;
-      document.getElementById('archive-banner').style.display = 'block';
       initGame(ds, true);
     });
   });
@@ -422,7 +419,24 @@ function resolveGuess(gi, pickedCv) {
 
   saveDayProgress(currentDateStr, colStates);
   updateScoreDisplay();
+  showScorePopup(correct);
   setTimeout(() => openResultModal(gi, pickedCv, correct), 60);
+}
+
+// Store last click position for popup
+let _lastClickX = window.innerWidth / 2;
+let _lastClickY = window.innerHeight / 2;
+document.addEventListener('click', e => { _lastClickX = e.clientX; _lastClickY = e.clientY; }, true);
+
+function showScorePopup(correct) {
+  const popup = document.createElement('div');
+  popup.className = `score-popup score-popup--${correct ? 'hit' : 'miss'}`;
+  popup.textContent = correct ? 'HIT' : 'MISS';
+  popup.style.left      = `${_lastClickX}px`;
+  popup.style.top       = `${_lastClickY - 10}px`;
+  popup.style.transform = 'translateX(-50%)';
+  document.body.appendChild(popup);
+  popup.addEventListener('animationend', () => popup.remove());
 }
 
 function checkFinished() {
@@ -482,21 +496,52 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-archive').addEventListener('click', openArchive);
   document.getElementById('btn-today').addEventListener('click', () => {
     stopAudio();
-    document.getElementById('archive-banner').style.display = 'none';
     initGame(today, false);
   });
 
   initGame(today, false);
 
-  // Volume control — inline slider, always visible
-  const volSlider = document.getElementById('vol-slider');
-  const savedVol  = parseInt(localStorage.getItem('ostquest_vol'));
-  if (!isNaN(savedVol)) volSlider.value = savedVol;
+  // Volume control
+  const volSlider  = document.getElementById('vol-slider');
+  const volBtn     = document.getElementById('btn-vol');
+  const volControl = document.getElementById('vol-control');
+  let prevVol = 80;
+
+  const savedVol = parseInt(localStorage.getItem('ostquest_vol'));
+  if (!isNaN(savedVol)) { volSlider.value = savedVol; prevVol = savedVol || 80; }
+
+  function updateVolIcon(v) {
+    const waves = document.getElementById('vol-waves');
+    const muted = v === 0;
+    if (volBtn) volBtn.classList.toggle('muted', muted);
+    if (waves)  waves.style.display = muted ? 'none' : '';
+  }
+  updateVolIcon(parseInt(volSlider.value));
 
   volSlider.addEventListener('input', () => {
     const v = parseInt(volSlider.value);
+    if (v > 0) prevVol = v;
     setYouTubeVolume(v);
-    const waves = document.getElementById('vol-waves');
-    if (waves) waves.style.opacity = v === 0 ? '0' : '0.5';
+    updateVolIcon(v);
   });
+
+  // Click button: toggle mute/unmute
+  if (volBtn) {
+    volBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const current = parseInt(volSlider.value);
+      if (current === 0) {
+        // Unmute
+        volSlider.value = prevVol;
+        setYouTubeVolume(prevVol);
+        updateVolIcon(prevVol);
+      } else {
+        // Mute
+        prevVol = current;
+        volSlider.value = 0;
+        setYouTubeVolume(0);
+        updateVolIcon(0);
+      }
+    });
+  }
 });

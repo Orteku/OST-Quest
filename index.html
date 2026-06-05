@@ -19,6 +19,7 @@
       <span class="site-title">OST Quest</span>
       <span class="site-subtitle">Adivina la banda sonora</span>
     </div>
+    <div class="archive-banner" id="archive-banner"></div>
     <div class="site-header__right">
       <div class="header-countdown">
         Próximo: <span id="header-countdown">--:--:--</span>
@@ -42,16 +43,22 @@
     </div>
   </header>
 
-  <div class="archive-banner" id="archive-banner"></div>
 
+  <!-- Score bar hidden, values kept for JS -->
   <div class="score-bar">
     <div>Hits: <span class="score-bar__hits" id="score-hits">0</span></div>
     <div>Miss: <span class="score-bar__miss" id="score-miss">0</span></div>
-    <div class="vol-control" id="vol-control">
-      <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16" style="flex-shrink:0;opacity:0.5">
+  </div>
+
+  <!-- Floating volume control bottom-left -->
+  <div class="vol-control" id="vol-control">
+    <button class="vol-btn" id="btn-vol" aria-label="Volumen">
+      <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
         <path id="vol-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
       </svg>
+    </button>
+    <div class="vol-slider-wrap">
       <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="80">
     </div>
   </div>
