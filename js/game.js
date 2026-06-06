@@ -16,7 +16,7 @@ async function initGame(dateStr, archiveMode) {
   stopAudio();
 
   showLoadingScreen(true);
-  currentGroups = generateDailyGame(dateStr);
+  currentGroups = await generateDailyGame(dateStr);
 
   // Restaurar progreso guardado (solo día actual, no archivo)
   const saved = loadDayProgress(dateStr);
@@ -47,7 +47,6 @@ async function initGame(dateStr, archiveMode) {
 
 // ─── Progreso guardado ────────────────────────────────────────────────────────
 
-// saveDayProgress and loadDayProgress now live in daily.js
 
 
 
@@ -273,7 +272,7 @@ function openResultModal(gi, pickedCv, isCorrect) {
       <div class="modal__result-info">
         <p class="modal__result-text">${msg}</p>
         ${ansAsset.youtubeId ? `
-          <a class="deezer-link" href="https://www.youtube.com/watch?v=${ansAsset.youtubeId}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>Ver en YouTube</a>` : ''}
+          <a class="yt-link" href="https://www.youtube.com/watch?v=${ansAsset.youtubeId}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>Ver en YouTube</a>` : ''}
       </div>
     </div>`;
 
@@ -402,6 +401,8 @@ function openArchive() {
       closeModal();
       stopAudio();
       const [ay,am,ad] = ds.split('-');
+      const banner = document.getElementById('archive-banner');
+      if (banner) { banner.textContent = `Quest ${ad}-${am}-${ay}`; banner.style.display = 'block'; }
       initGame(ds, true);
     });
   });
@@ -496,6 +497,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-archive').addEventListener('click', openArchive);
   document.getElementById('btn-today').addEventListener('click', () => {
     stopAudio();
+    const banner = document.getElementById('archive-banner');
+    if (banner) banner.style.display = 'none';
     initGame(today, false);
   });
 

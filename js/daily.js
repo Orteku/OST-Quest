@@ -1,23 +1,37 @@
 // OST Quest - Daily Game Logic
 
-// Devuelve "YYYY-MM-DD" del día de juego actual (cambia a las 03:00 UTC)
+// ── Fechas ────────────────────────────────────────────────────────────────────
+
 function getGameDay(date) {
   const d = date ? new Date(date) : new Date();
-  // Si es antes de las 03:00 UTC, pertenece al día anterior
-  if (d.getUTCHours() < 3) {
-    d.setUTCDate(d.getUTCDate() - 1);
-  }
+  if (d.getUTCHours() < 3) d.setUTCDate(d.getUTCDate() - 1);
   return d.toISOString().slice(0, 10);
 }
 
-// Genera "YYYY-MM-DD" de hace N días (sin aplicar corrección de 3am, ya la aplica getGameDay)
 function getPastGameDay(daysAgo) {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() - daysAgo);
   return getGameDay(d);
 }
 
-// ── RNG determinista (mulberry32) ────────────────────────────────────────────
+// ── Carga de games.json ───────────────────────────────────────────────────────
+
+let _gamesCache = null;
+
+async function loadGamesJson() {
+  if (_gamesCache) return _gamesCache;
+  try {
+    const res  = await fetch('games.json?v=' + Date.now());
+    if (!res.ok) throw new Error('games.json no encontrado');
+    _gamesCache = await res.json();
+    return _gamesCache;
+  } catch (e) {
+    console.warn('⚠️ No se pudo cargar games.json, usando generación por semilla:', e.message);
+    return null;
+  }
+}
+
+// ── RNG determinista (fallback si no hay games.json) ─────────────────────────
 
 function seededRng(seed) {
   let s = seed;
@@ -47,9 +61,8 @@ function seededShuffle(arr, rng) {
   return a;
 }
 
-// ── Generación del juego diario ───────────────────────────────────────────────
-
-function generateDailyGame(dateStr) {
+// Genera el juego con semilla (fallback)
+function generateFromSeed(dateStr) {
   const seed = dateToSeed(dateStr);
   const rng  = seededRng(seed);
   const used = new Set();
@@ -81,6 +94,31 @@ function generateDailyGame(dateStr) {
   }
 
   return groups;
+}
+
+// Reconstruye el juego desde IDs guardados en games.json
+function reconstructFromIds(stored) {
+  const byId = Object.fromEntries(GAME_DB.map(g => [g.id, g]));
+  return stored.map(group => {
+    const answer = byId[group.answerId];
+    const covers = group.coverIds.map(id => byId[id]).filter(Boolean);
+    if (!answer || covers.length < 4) return null;
+    return { answer, covers };
+  }).filter(Boolean);
+}
+
+// Punto de entrada principal — usa games.json si existe, semilla como fallback
+async function generateDailyGame(dateStr) {
+  const games = await loadGamesJson();
+
+  if (games && games[dateStr]) {
+    const groups = reconstructFromIds(games[dateStr]);
+    if (groups.length === 3) return groups;
+    console.warn('⚠️ Juego en games.json incompleto para', dateStr, '— usando semilla');
+  }
+
+  // Fallback: generación por semilla (útil durante desarrollo sin games.json)
+  return generateFromSeed(dateStr);
 }
 
 // ── Countdown ─────────────────────────────────────────────────────────────────
@@ -129,7 +167,6 @@ function savePlayedDay(dateStr, result) {
   localStorage.setItem(PLAYED_KEY, JSON.stringify(days));
 }
 
-// FIX 4: guardar progreso funciona tanto para hoy como para días del archivo
 function saveDayProgress(dateStr, colStates) {
   localStorage.setItem(`ostquest_prog_${dateStr}`, JSON.stringify(colStates));
 }
@@ -141,13 +178,10 @@ function loadDayProgress(dateStr) {
   } catch { return null; }
 }
 
-// Registra resultado de una partida completada
-// Solo actualiza estadísticas/racha si es el juego del día actual
 function recordDailyResult(dateStr, score, total) {
   const played = loadPlayedDays();
   const today  = getGameDay();
 
-  // Actualizar stats/racha solo para el juego de hoy y solo la primera vez
   if (dateStr === today && !played[dateStr]) {
     const stats = loadStats();
     stats.played++;
@@ -163,6 +197,5 @@ function recordDailyResult(dateStr, score, total) {
     saveStats(stats);
   }
 
-  // Guardar resultado siempre (hoy o archivo), sobreescribiendo si ya existe
   savePlayedDay(dateStr, { score, total, ts: Date.now() });
 }

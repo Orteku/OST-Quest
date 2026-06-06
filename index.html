@@ -80,10 +80,9 @@
 <div id="toast" role="status" aria-live="polite"></div>
 
 <!-- YouTube hidden audio player (iframe embed, off-screen) -->
-<!-- YouTube IFrame API player (oculto) -->
-<div style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
-  <div id="yt-player"></div>
-</div>
+
+<!-- YouTube IFrame API anchor (required, must exist in DOM) -->
+<div style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px" aria-hidden="true"><div id="yt-player"></div></div>
 
 <script src="js/database.js"></script>
 <script src="js/daily.js"></script>

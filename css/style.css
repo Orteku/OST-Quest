@@ -88,6 +88,21 @@ ul, li { list-style: none; }
 .today-btn:hover { background: #1c2614; border-color: #3a4828; }
 
 /* ─── Archive Banner ───────────────────────────────────────────────────────── */
+.archive-banner {
+  display: none;
+  background: #1a1400;
+  border: 1px solid #3a2e00;
+  color: #d4a820;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 /* ─── Score bar ─────────────────────────────────────────────────────────────── */
 .score-bar { display: none; margin-bottom: 0; }
@@ -160,6 +175,7 @@ ul, li { list-style: none; }
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   transition: transform 0.12s, background 0.12s;
+  will-change: transform;
 }
 .play-btn:hover    { transform: scale(1.1); background: #c8f040; }
 .play-btn:disabled { background: #2a2e38; color: #444; }
@@ -308,12 +324,6 @@ ul, li { list-style: none; }
   border-radius: 8px;
   padding: 10px 12px;
 }
-.modal__result-thumb {
-  width: 52px; height: 52px;
-  border-radius: 5px;
-  object-fit: cover;
-  flex-shrink: 0;
-}
 .modal__result-text {
   font-size: 12px;
   color: #888;
@@ -321,7 +331,7 @@ ul, li { list-style: none; }
 }
 .modal__result-text strong { color: #ddd9cf; }
 
-.deezer-link {
+.yt-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -333,8 +343,8 @@ ul, li { list-style: none; }
   line-height: 1;
   vertical-align: middle;
 }
-.deezer-link svg { flex-shrink: 0; display: block; }
-.deezer-link:hover { color: #aac0ff; }
+.yt-link svg { flex-shrink: 0; display: block; }
+.yt-link:hover { color: #aac0ff; }
 
 /* Modal close X button */
 .modal__close-x {
@@ -499,20 +509,6 @@ ul, li { list-style: none; }
   .covers-grid { gap: 4px; padding: 5px; }
 }
 
-/* ─── YouTube hidden audio player ─────────────────────────────────────────── */
-#yt-player-container {
-  position: fixed;
-  left: -9999px;
-  top: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  pointer-events: none;
-}
-#yt-player-container iframe {
-  width: 1px;
-  height: 1px;
-}
 
 /* ─── Floating volume (bottom-left, bar expands right) ───────────────────────── */
 .vol-control {
@@ -550,8 +546,7 @@ ul, li { list-style: none; }
   border-left: none;
   border-radius: 0 20px 20px 0;
   margin-left: -22px;
-  padding-left: 26px;
-  padding: 0 14px 0 10px;
+  padding: 0 14px 0 26px;
   height: 40px;
   overflow: hidden;
   max-width: 0;
