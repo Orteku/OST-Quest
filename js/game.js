@@ -106,9 +106,19 @@ function renderColumn(gi, wrapper) {
     if (st.solved) {
       const isAnswer = cv.id === g.answer.id;
       const isPicked = cv.id === st.pickedId;
-      if (isPicked && isAnswer)  item.classList.add('cover-item--correct-pick');
-      else if (isPicked)         item.classList.add('cover-item--wrong-pick');
-      else if (isAnswer)         item.classList.add('cover-item--answer');
+      if (isPicked && isAnswer) {
+        // Correct pick: highlight green, rest dimmed
+        item.classList.add('cover-item--correct-pick');
+      } else if (isPicked) {
+        // Wrong pick: slightly dimmed + red outline
+        item.classList.add('cover-item--wrong-pick');
+      } else if (isAnswer) {
+        // Correct answer (when user picked wrong): highlight green
+        item.classList.add('cover-item--answer');
+      } else {
+        // Neither picked nor answer: fully dimmed
+        item.classList.add('cover-item--dimmed');
+      }
     }
 
     const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(cv.game)}`;
@@ -367,12 +377,10 @@ function openArchive() {
     // Check both played registry and saved progress for this day
     let result = played[ds];
     if (!result) {
-      // Check if there's saved progress that's complete
       const prog = loadDayProgress(ds);
       if (prog && prog.every(s => s.solved)) {
         const score = prog.filter(s => s.correct).length;
         result = { score, total: 3 };
-        // Also persist it so it shows next time
         savePlayedDay(ds, { score, total: 3, ts: Date.now() });
       }
     }
@@ -382,7 +390,8 @@ function openArchive() {
          </span>`
       : `<span class="archive__badge archive__badge--new">Jugar</span>`;
     const [y,m,d] = ds.split('-');
-    return `<li class="archive__item" data-date="${ds}">
+    const isActive = ds === currentDateStr && isArchiveMode;
+    return `<li class="archive__item ${isActive ? 'archive__item--active' : ''}" data-date="${ds}">
       <span class="archive__date">${d}-${m}-${y}</span>${badge}
     </li>`;
   }).join('');
