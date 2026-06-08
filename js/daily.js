@@ -90,7 +90,8 @@ function generateFromSeed(dateStr) {
     }
 
     distractors.forEach(d => used.add(d.id));
-    groups.push({ answer, covers: seededShuffle([answer, ...distractors], rng) });
+    const trackIndex = Math.floor(rng() * answer.tracks.length);
+    groups.push({ answer, covers: seededShuffle([answer, ...distractors], rng), trackIndex });
   }
 
   return groups;
@@ -103,7 +104,7 @@ function reconstructFromIds(stored) {
     const answer = byId[group.answerId];
     const covers = group.coverIds.map(id => byId[id]).filter(Boolean);
     if (!answer || covers.length < 4) return null;
-    return { answer, covers };
+    return { answer, covers, trackIndex: group.trackIndex || 0 };
   }).filter(Boolean);
 }
 
@@ -146,9 +147,9 @@ const PLAYED_KEY = 'ostquest_played';
 function loadStats() {
   try {
     return JSON.parse(localStorage.getItem(STATS_KEY)) || {
-      played: 0, wins: 0, streak: 0, maxStreak: 0, lastPlayedDay: null
+      played: 0, wins: 0, totalHits: 0, streak: 0, maxStreak: 0, lastPlayedDay: null
     };
-  } catch { return { played: 0, wins: 0, streak: 0, maxStreak: 0, lastPlayedDay: null }; }
+  } catch { return { played: 0, wins: 0, totalHits: 0, streak: 0, maxStreak: 0, lastPlayedDay: null }; }
 }
 
 function saveStats(stats) {
@@ -186,6 +187,7 @@ function recordDailyResult(dateStr, score, total) {
     const stats = loadStats();
     stats.played++;
     if (score === total) stats.wins++;
+    stats.totalHits = (stats.totalHits || 0) + score;
     const yesterday = getPastGameDay(1);
     if (stats.lastPlayedDay === yesterday) {
       stats.streak++;

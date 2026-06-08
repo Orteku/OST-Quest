@@ -92,10 +92,12 @@ function generateGameForDate(dateStr) {
 
     distractors.forEach(d => used.add(d.id));
 
+    const trackIndex = Math.floor(rng() * answer.tracks.length);
     // Guardar solo los IDs (el cliente reconstruye los detalles desde database.js)
     groups.push({
       answerId: answer.id,
       coverIds: seededShuffle([answer, ...distractors], rng).map(g => g.id),
+      trackIndex,
     });
   }
 

@@ -31,7 +31,9 @@ async function initGame(dateStr, archiveMode) {
   }
 
   await Promise.all(currentGroups.map(async (g) => {
-    g.assets = await Promise.all(g.covers.map(cv => getGameAssets(cv)));
+    g.assets = await Promise.all(g.covers.map(cv =>
+      getGameAssets(cv, cv.id === g.answer.id ? (g.trackIndex || 0) : 0)
+    ));
   }));
 
   showLoadingScreen(false);
@@ -267,8 +269,10 @@ function openResultModal(gi, pickedCv, isCorrect) {
   const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(g.answer.game)}`;
 
   const btnClass = isCorrect ? 'btn--result-ok' : 'btn--result-fail';
-  const btnText  = isCorrect ? '¡Correcto!' : '¡Errado!';
-  const msg      = isCorrect ? '¡Lo hiciste bien!' : `Era <strong>${g.answer.game}</strong>`;
+  const btnText  = isCorrect ? '¡Acertaste!' : '¡Fallaste!';
+  const msg      = isCorrect
+    ? SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)]
+    : FAIL_MESSAGES[Math.floor(Math.random() * FAIL_MESSAGES.length)];
 
   document.getElementById('modal-inner').innerHTML = `
     <button class="modal__close-x" id="result-close">&times;</button>
@@ -297,30 +301,30 @@ function openResultModal(gi, pickedCv, isCorrect) {
 function openEndModal(score) {
   closeModal();
   const stats = loadStats();
-  const pct   = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+  const pct   = stats.played > 0 ? Math.round(((stats.totalHits || 0) / (stats.played * 3)) * 100) : 0;
   // FIX 2: modal final es bloqueante, solo cierra con el botón
 
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__end">
       <div class="modal__end-score">
-        <span class="modal__end-num">${score}</span>
+        <span class="modal__end-num modal__end-num--${score}">${score}</span>
         <span class="modal__end-denom">/ 3</span>
       </div>
       <p class="modal__end-label">${
-        score === 3 ? '¡Perfecto!'        :
-        score === 2 ? '¡Casi!'            :
-        score === 1 ? 'Sigue intentándolo':
-                      'Mañana será mejor'
+        score === 3 ? '¡Eres la CABRA!'         :
+        score === 2 ? 'No está mal'              :
+        score === 1 ? 'Se hizo lo que se pudo'   :
+                      'Tienes un poco de skill issue'
       }</p>
-      ${isArchiveMode ? `<p class="modal__archive-note">Modo Quest Log — sin estadísticas</p>` : ''}
+      ${isArchiveMode ? `<p class="modal__archive-note">Quests pasadas no suben las estadísticas</p>` : ''}
       ${!isArchiveMode ? `
         <div class="modal__stats">
-          <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">Jugadas</span></div>
-          <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">Hits %</span></div>
+          <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">Quests completadas</span></div>
+          <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">Puntería</span></div>
           <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">Racha</span></div>
           <div class="stat-box"><span class="stat-box__val">${stats.maxStreak}</span><span class="stat-box__lbl">Mejor racha</span></div>
         </div>
-        <div class="modal__countdown">Próximo juego en <strong id="end-countdown">--:--:--</strong></div>
+        <div class="modal__countdown">Siguiente Quest en &nbsp; <strong id="end-countdown">--:--:--</strong></div>
       ` : ''}
       <button class="btn btn--new" id="close-end-btn">Cerrar</button>
     </div>`;
@@ -341,18 +345,18 @@ function tickEndCountdown() {
 
 function openStatsModal() {
   const stats = loadStats();
-  const pct   = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+  const pct   = stats.played > 0 ? Math.round(((stats.totalHits || 0) / (stats.played * 3)) * 100) : 0;
 
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__end">
       <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1.2rem">Estadísticas</h2>
       <div class="modal__stats">
-        <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">Jugadas</span></div>
-        <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">Hits %</span></div>
+        <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">Quests completadas</span></div>
+        <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">Puntería</span></div>
         <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">Racha actual</span></div>
         <div class="stat-box"><span class="stat-box__val">${stats.maxStreak}</span><span class="stat-box__lbl">Mejor racha</span></div>
       </div>
-      <div class="modal__countdown">Próximo juego en <strong id="stats-countdown">--:--:--</strong></div>
+      <div class="modal__countdown">Siguiente Quest en &nbsp; <strong id="stats-countdown">--:--:--</strong></div>
       <button class="btn btn--new" id="close-stats-btn">Cerrar</button>
     </div>`;
 
@@ -376,19 +380,24 @@ function openArchive() {
   const rows = days.map(ds => {
     // Check both played registry and saved progress for this day
     let result = played[ds];
+    let inProgress = false;
     if (!result) {
       const prog = loadDayProgress(ds);
       if (prog && prog.every(s => s.solved)) {
         const score = prog.filter(s => s.correct).length;
         result = { score, total: 3 };
         savePlayedDay(ds, { score, total: 3, ts: Date.now() });
+      } else if (prog && prog.some(s => s.solved)) {
+        inProgress = true;
       }
     }
     const badge = result
       ? `<span class="archive__badge archive__badge--${result.score === 3 ? 'ok' : result.score > 0 ? 'partial' : 'fail'}">
            ${result.score === 3 ? '✓' : result.score + '/3'}
          </span>`
-      : `<span class="archive__badge archive__badge--new">Jugar</span>`;
+      : inProgress
+        ? `<span class="archive__badge archive__badge--ongoing">En curso...</span>`
+        : `<span class="archive__badge archive__badge--new">Jugar</span>`;
     const [y,m,d] = ds.split('-');
     const isActive = ds === currentDateStr && isArchiveMode;
     return `<li class="archive__item ${isActive ? 'archive__item--active' : ''}" data-date="${ds}">
