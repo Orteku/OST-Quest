@@ -1,0 +1,1320 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Database Editor - OST Quest</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111316;
+      --panel: #1a1d22;
+      --panel2: #232731;
+      --text: #eef0f4;
+      --muted: #a9b0bd;
+      --line: #333846;
+      --accent: #28d7e8;
+      --danger: #ff6666;
+      --warn: #ffd166;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(17, 19, 22, 0.96);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px;
+      backdrop-filter: blur(8px);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      letter-spacing: .2px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    button, input, select, textarea {
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+      font-weight: 650;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #031013;
+      border-color: transparent;
+    }
+    button.danger {
+      background: #3b1f24;
+      color: #ffd9df;
+      border-color: #76333f;
+    }
+    button.success {
+      background: #27a048;
+      color: #fff;
+      border-color: transparent;
+    }
+    .video-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .video-col .watch-link {
+      display: block;
+      align-self: flex-start;
+    }
+    .video-facade {
+      position: relative;
+      cursor: pointer;
+    }
+    .yt-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .yt-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.72);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0 0 3px;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .video-facade:hover .yt-play {
+      background: #c00;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+    img.cover-preview { cursor: zoom-in; }
+    .btn-group {
+      display: flex;
+      gap: 4px;
+      background: rgba(40, 215, 232, 0.08);
+      border: 1px solid rgba(40, 215, 232, 0.2);
+      border-radius: 10px;
+      padding: 4px;
+    }
+    #custom-confirm {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+    #custom-confirm-box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 24px 28px;
+      max-width: 420px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    #custom-confirm-msg {
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    #custom-confirm-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    #lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      cursor: zoom-out;
+    }
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 10px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.8);
+    }
+    .scroll-btns {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 100;
+    }
+    .scroll-btns button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      font-size: 18px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+    input[type="file"] { max-width: 290px; }
+    #search {
+      min-width: 240px;
+      flex: 1;
+    }
+    main {
+      padding: 16px;
+      max-width: 1700px;
+      margin: 0 auto;
+    }
+    code { color: #d8e3ff; }
+    .info {
+      color: var(--muted);
+      margin: 10px 0 14px;
+      line-height: 1.45;
+    }
+    .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 10px 0 14px;
+    }
+    .pill {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+    }
+    .pill strong { color: var(--text); }
+    .pill.warn { border-color: #ffd166; color: #ffe7a0; }
+    .search-stats {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+      align-self: center;
+      padding: 0 2px;
+    }
+    .search-stats strong { color: var(--text); }
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 106px minmax(340px, 1.2fr) minmax(360px, 520px);
+      gap: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      align-items: start;
+    }
+    .row.hidden { display: none; }
+    .cover-box {
+      display: grid;
+      gap: 6px;
+    }
+    .cover-preview {
+      width: 96px;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      background: #080a0d;
+      border: 1px solid #2b303b;
+      border-radius: 8px;
+    }
+    .cover-preview.missing {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 8px;
+      object-fit: unset;
+    }
+    .meta {
+      display: grid;
+      gap: 8px;
+    }
+    .titleline {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .game-title {
+      font-weight: 800;
+      font-size: 16px;
+      line-height: 1.25;
+      flex: 1;
+    }
+    .row-id {
+      color: var(--muted);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+    }
+    .grid-fields {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 65px 52px 68px;
+      gap: 8px;
+      align-items: end;
+    }
+    .cover-field {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+    .game-row {
+      display: grid;
+      grid-template-columns: 1fr 68px 52px;
+      gap: 8px;
+      align-items: end;
+    }
+    .yt-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 65px auto;
+      gap: 8px;
+      align-items: end;
+    }
+    .yt-row > label { min-width: 0; }
+    .yt-row input { width: 100%; min-width: 0; }
+    input[data-field="startSeconds"], #newStart { width: 65px; min-width: 0; }
+    .yt-row--extra { position: relative; }
+    .yt-row--extra > button.danger { position: absolute; left: -34px; bottom: 0; }
+    label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      min-width: 0;
+    }
+    label span { padding-left: 2px; }
+    .field-youtube, .field-cover {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .game-input { width: 100%; }
+    .game-row input { width: 100%; min-width: 0; }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .small {
+      font-size: 12px;
+      padding: 6px 8px;
+    }
+    .watch-link, .cover-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+      align-self: center;
+    }
+    .watch-link:hover, .cover-link:hover { text-decoration: underline; }
+    .video-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: 220px;
+      background: #050607;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #2b303b;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+    .compact .row {
+      grid-template-columns: 72px minmax(360px, 1.4fr) 300px;
+      padding: 8px;
+      gap: 8px;
+    }
+    .compact .cover-preview { width: 64px; border-radius: 7px; }
+    .compact .video-wrap { max-height: 170px; }
+    .compact .grid-fields {
+      grid-template-columns: minmax(0, 1fr) 65px 52px 68px;
+      gap: 6px;
+    }
+    .compact input { padding: 6px 8px; }
+    .add-panel {
+      margin: 16px 0;
+      background: #15191f;
+      border: 1px dashed #485061;
+      border-radius: 12px;
+      padding: 12px;
+      display: none;
+    }
+    .add-panel.open { display: block; }
+    .add-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .add-row1 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 68px 52px;
+      gap: 8px;
+      align-items: end;
+    }
+    .add-row2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 65px;
+      gap: 8px;
+      align-items: end;
+    }
+    .add-row1 input { width: 100%; min-width: 0; }
+    .add-row2 label { min-width: 0; }
+    .add-row2 input { width: 100%; min-width: 0; }
+    .footer-space { height: 60px; }
+    .notice {
+      border-left: 4px solid var(--warn);
+      background: #211d12;
+      padding: 10px 12px;
+      color: #ffe7a0;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    .sheets-panel {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 0 2px;
+      border-top: 1px solid var(--line);
+      margin-top: 8px;
+    }
+    .sheets-panel.open { display: flex; }
+    .sheets-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .sheets-label { font-size: 12px; color: var(--muted); white-space: nowrap; min-width: 80px; }
+    .sheets-url-input { flex: 1; min-width: 300px; font-size: 13px; }
+    .sheets-status { font-size: 12px; color: var(--muted); }
+    .sheets-status.ok    { color: #6bc832; }
+    .sheets-status.error { color: var(--danger); }
+    @media (max-width: 1100px) {
+      .row, .compact .row {
+        grid-template-columns: 76px 1fr;
+      }
+      .video-wrap {
+        grid-column: 1 / -1;
+      }
+      .cover-preview { width: 68px; }
+    }
+    @media (max-width: 720px) {
+      .row, .compact .row {
+        grid-template-columns: 1fr;
+      }
+      .cover-box {
+        grid-template-columns: 72px 1fr;
+        align-items: center;
+      }
+      .grid-fields, .compact .grid-fields {
+        grid-template-columns: minmax(0, 1fr) 65px 52px 68px;
+      }
+      .cover-field { grid-template-columns: 1fr; }
+      .add-row1 { grid-template-columns: 1fr 68px 52px; }
+      .add-row2 { grid-template-columns: 1fr 65px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h1 style="margin:0">Database Editor</h1>
+    <div style="display:flex;gap:6px">
+      <a href="https://www.youtube.com" target="_blank" rel="noopener" style="background:#ff0000;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">YouTube</a>
+      <a href="https://www.igdb.com" target="_blank" rel="noopener" style="background:#8c44b0;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">IGDB</a>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button id="toggleAdd" class="success">Añadir entrada</button>
+    <input id="search" type="search" placeholder="Buscar juego, ID, cover..." />
+    <span id="searchStats" class="search-stats"></span>
+    <span id="incompletePill" class="pill warn" style="display:none">Incompletas: <strong id="countIncomplete">0</strong></span>
+    <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+    <div style="flex:1"></div>
+    <input id="fileInput" type="file" accept=".js,.txt,.json" />
+    <button id="sheetsBtn">↓ Google Sheets</button>
+    <button id="supabaseBtn">↓ Supabase</button>
+    <div class="btn-group">
+      <button id="downloadJs" class="primary">Descargar JS</button>
+      <button id="downloadJson">JSON</button>
+      <button id="downloadCsv">CSV</button>
+    </div>
+  </div>
+  <div id="protocolWarn" class="notice" style="display:none;margin:8px 0 0;text-align:center">
+    Para evitar el error 153 de YouTube, abre el editor desde HTTP local:
+    <code>python -m http.server 8000</code> → <code>http://localhost:8000/database_editor.html</code>
+  </div>
+  <div id="sheetsPanel" class="sheets-panel">
+    <div class="sheets-row">
+      <span class="sheets-label">Importar de:</span>
+      <input id="sheetsUrlInput" class="sheets-url-input"
+             placeholder="URL del Google Sheet..."
+             value="https://docs.google.com/spreadsheets/d/1PzT5tdB6yQn9c9_R-YObqTqyaN4jRJxqTT4HEm1nh-s/edit" />
+      <input id="sheetsTabInput" style="width:90px;font-size:13px" placeholder="Hoja" value="DATABASE" title="Nombre exacto de la pestaña" />
+      <button id="doImportSheets" class="primary">Importar</button>
+      <span id="sheetsStatus" class="sheets-status"></span>
+    </div>
+    <div class="sheets-row">
+      <span class="sheets-label">Guardar en:</span>
+      <input id="scriptUrlInput" class="sheets-url-input"
+             placeholder="URL del Apps Script (Extensions → Apps Script → Implementar)..." />
+      <button id="doSaveSheets">Guardar en Sheet</button>
+      <span id="saveStatus" class="sheets-status"></span>
+    </div>
+  </div>
+  <div id="supabasePanel" class="sheets-panel">
+    <div class="sheets-row">
+      <span class="sheets-label">URL proyecto:</span>
+      <input id="supabaseUrl" class="sheets-url-input" placeholder="https://xxxx.supabase.co" />
+      <span class="sheets-label" style="margin-left:4px">Tabla:</span>
+      <input id="supabaseTableInput" style="width:90px;font-size:13px" placeholder="games" value="games" />
+    </div>
+    <div class="sheets-row">
+      <span class="sheets-label">Clave anon:</span>
+      <input id="supabaseKey" class="sheets-url-input" type="password" placeholder="eyJhbGci..." />
+    </div>
+    <div class="sheets-row">
+      <button id="doImportSupabase" class="primary">Cargar desde Supabase</button>
+      <button id="doSaveSupabase">Guardar en Supabase</button>
+      <span id="supabaseStatus" class="sheets-status"></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="addPanel" class="add-panel">
+    <h2 style="margin:0 0 10px;font-size:17px;">Añadir nueva entrada</h2>
+    <div class="add-grid">
+      <div class="add-row1">
+        <label><span>Juego</span><input id="newGame" placeholder="Nombre del juego" /></label>
+        <label><span>Cover URL</span><input id="newCover" class="field-cover" placeholder="https://..." /></label>
+        <label><span>Año</span><input id="newYear" type="number" min="1970" max="2100" step="1" value="2026" /></label>
+        <label><span>Pop (1–6)</span><input id="newPop" type="number" min="1" max="6" step="1" value="5" /></label>
+      </div>
+      <div class="add-row2">
+        <label><span>YouTube ID o URL</span><input id="newYoutubeId" class="field-youtube" placeholder="dQw4w9WgXcQ o URL completa" /></label>
+        <label><span>Inicio (m:ss)</span><input id="newStart" class="field-youtube" placeholder="0:00" value="0:00" /></label>
+      </div>
+    </div>
+    <div class="actions" style="margin-top:10px;">
+      <button id="addEntry" class="primary">Añadir al final</button>
+      <button id="clearNew">Limpiar</button>
+    </div>
+  </section>
+
+  <div id="list" class="list"></div>
+  <div class="footer-space"></div>
+</main>
+
+<div id="lightbox" style="display:none" role="dialog" aria-modal="true">
+  <img id="lightboxImg" alt="Cover ampliada" />
+</div>
+
+<div id="custom-confirm" style="display:none" role="dialog" aria-modal="true">
+  <div id="custom-confirm-box">
+    <div id="custom-confirm-msg"></div>
+    <div id="custom-confirm-btns"></div>
+  </div>
+</div>
+
+<div class="scroll-btns">
+  <button id="scrollTop" title="Ir arriba">↑</button>
+  <button id="scrollBottom" title="Ir abajo">↓</button>
+</div>
+
+<script>
+(() => {
+  let db = [];
+  let dirty = false;
+  let compact = false;
+  let originalFilename = "database.js";
+
+  const $ = (id) => document.getElementById(id);
+  const list = $("list");
+
+  function customConfirm(msg, { ok = "Aceptar", cancel = "Cancelar", okDanger = false } = {}) {
+    return new Promise(resolve => {
+      $("custom-confirm-msg").textContent = msg;
+      const btns = $("custom-confirm-btns");
+      btns.innerHTML = "";
+      const cancelBtn = document.createElement("button");
+      cancelBtn.textContent = cancel;
+      cancelBtn.onclick = () => { $("custom-confirm").style.display = "none"; resolve(false); };
+      const okBtn = document.createElement("button");
+      okBtn.textContent = ok;
+      okBtn.className = okDanger ? "danger" : "primary";
+      okBtn.onclick = () => { $("custom-confirm").style.display = "none"; resolve(true); };
+      btns.append(cancelBtn, okBtn);
+      $("custom-confirm").style.display = "flex";
+      okBtn.focus();
+    });
+  }
+
+  function setDirty(value = true) {
+    dirty = value;
+    $("dirtyPill").style.display = dirty ? "" : "none";
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  function jsString(value) {
+    return String(value ?? "")
+      .replaceAll("\\", "\\\\")
+      .replaceAll('"', '\\"');
+  }
+
+  function extractYoutubeId(value) {
+    const s = String(value || "").trim();
+    if (!s) return "";
+    const patterns = [
+      /youtu\.be\/([a-zA-Z0-9_-]{6,})/,
+      /youtube\.com\/watch\?[^#]*v=([a-zA-Z0-9_-]{6,})/,
+      /youtube\.com\/embed\/([a-zA-Z0-9_-]{6,})/,
+      /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]{6,})/,
+      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{6,})/
+    ];
+    for (const re of patterns) {
+      const m = s.match(re);
+      if (m) return m[1].slice(0, 20);
+    }
+    return s.replace(/[^\w-]/g, "").slice(0, 20);
+  }
+
+  function cleanUrl(value) {
+    return String(value || "").trim();
+  }
+
+  function embedSrc(item) {
+    const track = item.tracks?.[0] ?? item;
+    const id = encodeURIComponent(track.youtubeId || "");
+    const start = Math.max(0, Number(track.startSeconds) || 0);
+    const origin = location.protocol.startsWith("http") ? encodeURIComponent(location.origin) : "";
+    const originParam = origin ? `&origin=${origin}` : "";
+    return `https://www.youtube.com/embed/${id}?start=${start}&rel=0&modestbranding=1${originParam}`;
+  }
+
+  function watchUrl(item) {
+    const track = item.tracks?.[0] ?? item;
+    const id = encodeURIComponent(track.youtubeId || "");
+    const start = Math.max(0, Number(track.startSeconds) || 0);
+    return `https://www.youtube.com/watch?v=${id}&t=${start}s`;
+  }
+
+  function tracksSectionHtml(tracks) {
+    const rows = tracks.map((track, ti) => {
+      const ytVal = escapeHtml(track.youtubeId);
+      const stVal = escapeHtml(secondsToTime(track.startSeconds));
+      if (ti === 0) {
+        return `<div class="yt-row">
+          <label><span>YouTube ID o URL</span><input class="field-youtube" data-field="youtubeId" data-track="0" value="${ytVal}" /></label>
+          <label><span>Inicio (m:ss)</span><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="0" value="${stVal}" /></label>
+          <button class="small" data-action="loadTrack" data-track="0">Cargar</button>
+        </div>`;
+      }
+      return `<div class="yt-row yt-row--extra">
+        <button class="small danger" data-action="removeTrack" data-track="${ti}">✕</button>
+        <label><input class="field-youtube" data-field="youtubeId" data-track="${ti}" value="${ytVal}" /></label>
+        <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
+        <button class="small" data-action="loadTrack" data-track="${ti}">Cargar</button>
+      </div>`;
+    }).join("");
+    return rows + `<button class="small" data-action="addTrack" style="margin-top:4px">+</button>`;
+  }
+
+  function parseGameDb(text) {
+    let src = String(text || "").trim();
+
+    try {
+      const parsed = JSON.parse(src);
+      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed.GAME_DB)) return parsed.GAME_DB;
+    } catch {}
+
+    const assignIndex = src.search(/\bGAME_DB\b\s*=/);
+    let arrayText = "";
+    if (assignIndex >= 0) {
+      const after = src.slice(assignIndex);
+      const bracketStart = after.indexOf("[");
+      if (bracketStart < 0) throw new Error("No encuentro '[' después de GAME_DB =");
+      arrayText = extractBalanced(after.slice(bracketStart), "[", "]");
+    } else {
+      const bracketStart = src.indexOf("[");
+      if (bracketStart >= 0) arrayText = extractBalanced(src.slice(bracketStart), "[", "]");
+      else arrayText = "[" + src + "]";
+    }
+
+    const arr = Function(`"use strict"; return (${arrayText});`)();
+    if (!Array.isArray(arr)) throw new Error("GAME_DB no es un array");
+    return arr;
+  }
+
+  function extractBalanced(s, open, close) {
+    let depth = 0, quote = null, escape = false;
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (quote) {
+        if (escape) { escape = false; continue; }
+        if (ch === "\\") { escape = true; continue; }
+        if (ch === quote) quote = null;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === "`") { quote = ch; continue; }
+      if (ch === open) depth++;
+      if (ch === close) {
+        depth--;
+        if (depth === 0) return s.slice(0, i + 1);
+      }
+    }
+    throw new Error("No se pudo cerrar el array GAME_DB");
+  }
+
+  function normalizeTracks(x) {
+    if (Array.isArray(x.tracks) && x.tracks.length > 0) {
+      return x.tracks.map(t => ({
+        youtubeId: extractYoutubeId(String(t.youtubeId ?? "")),
+        startSeconds: Math.max(0, Number(t.startSeconds) || 0)
+      }));
+    }
+    return [{
+      youtubeId: extractYoutubeId(String(x.youtubeId ?? "")),
+      startSeconds: Math.max(0, Number(x.startSeconds) || 0)
+    }];
+  }
+
+  function normalizeDb(arr) {
+    return arr.map((x, idx) => ({
+      id: Number(x.id) || idx + 1,
+      game: String(x.game ?? "").trim(),
+      cover: cleanUrl(x.cover ?? ""),
+      tracks: normalizeTracks(x),
+      pop: Number(x.pop) || 1,
+      year: Number(x.year) || 0
+    }));
+  }
+
+  function secondsToTime(s) {
+    const total = Math.max(0, Number(s) || 0);
+    const m = Math.floor(total / 60);
+    const sec = total % 60;
+    return `${m}:${String(sec).padStart(2, "0")}`;
+  }
+
+  function timeToSeconds(val) {
+    const s = String(val || "").trim();
+    if (s.includes(":")) {
+      const [m, sec] = s.split(":");
+      return Math.max(0, (parseInt(m, 10) || 0) * 60 + (parseInt(sec, 10) || 0));
+    }
+    return Math.max(0, Number(s) || 0);
+  }
+
+  function updateStats() {
+    const total = db.length;
+    const visible = [...document.querySelectorAll(".row")].filter(r => !r.classList.contains("hidden")).length;
+    const q = $("search").value.trim();
+    $("searchStats").textContent = total === 0 ? "" : q ? `${visible} de ${total}` : `${total} entradas`;
+    const incomplete = db.filter(x => !x.game || !x.tracks?.[0]?.youtubeId).length;
+    $("countIncomplete").textContent = incomplete;
+    $("incompletePill").style.display = incomplete > 0 ? "" : "none";
+  }
+
+  function coverHtml(item) {
+    if (!item.cover) {
+      return `<div class="cover-preview missing">Sin cover</div>`;
+    }
+    return `<img class="cover-preview" src="${escapeHtml(item.cover)}" alt="Cover de ${escapeHtml(item.game)}" loading="lazy"
+      onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'cover-preview missing', textContent:'Cover no carga'}));" />`;
+  }
+
+  function render() {
+    document.body.classList.toggle("compact", compact);
+    list.innerHTML = "";
+    const frag = document.createDocumentFragment();
+
+    db.forEach((item, index) => {
+      const row = document.createElement("article");
+      row.className = "row";
+      row.dataset.index = String(index);
+      row.dataset.search = `${item.game} ${item.tracks.map(t => t.youtubeId).join(" ")} ${item.cover} ${item.year} ${item.pop}`.toLowerCase();
+
+      row.innerHTML = `
+        <div class="cover-box">
+          <div class="cover-holder">${coverHtml(item)}</div>
+          ${item.cover ? `<a class="cover-link" target="_blank" rel="noopener" href="${escapeHtml(item.cover)}">abrir cover</a>` : `<span class="cover-link" style="color:var(--muted)">sin enlace</span>`}
+        </div>
+
+        <div class="meta">
+          <div class="titleline">
+            <span class="row-id">#${escapeHtml(item.id)}</span>
+            <span class="game-title">${escapeHtml(item.game || "(sin título)")}</span>
+            <button class="small" data-action="duplicate">Duplicar</button>
+            <button class="small danger" data-action="delete">Eliminar</button>
+          </div>
+
+          <div class="game-row">
+            <label><span>Juego</span><input class="game-input" data-field="game" value="${escapeHtml(item.game)}" /></label>
+            <label><span>Año</span><input type="number" min="1970" max="2100" step="1" data-field="year" value="${escapeHtml(item.year)}" /></label>
+            <label><span>Pop (1–6)</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
+          </div>
+
+          <div class="cover-field">
+            <label><span>Cover URL</span><input class="field-cover" data-field="cover" value="${escapeHtml(item.cover)}" placeholder="https://..." /></label>
+            <button class="small" data-action="reloadCover">Recargar cover</button>
+          </div>
+
+          <div class="tracks-section">${tracksSectionHtml(item.tracks)}</div>
+
+        </div>
+
+        <div class="video-col">
+          <div class="video-wrap video-facade" data-src="${escapeHtml(embedSrc(item))}">
+            <img class="yt-thumb" src="https://img.youtube.com/vi/${escapeHtml(item.tracks[0].youtubeId)}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" />
+            <button class="yt-play" aria-label="Reproducir">▶</button>
+          </div>
+          <a class="watch-link" target="_blank" rel="noopener" href="${escapeHtml(watchUrl(item))}">abrir en YouTube</a>
+        </div>
+      `;
+
+      frag.appendChild(row);
+    });
+
+    list.appendChild(frag);
+    applySearch();
+    updateStats();
+  }
+
+  function updateItemFromInput(input) {
+    const row = input.closest(".row");
+    const index = Number(row.dataset.index);
+    const field = input.dataset.field;
+    const trackIdx = input.dataset.track !== undefined ? Number(input.dataset.track) : null;
+    let value = input.value;
+
+    if (trackIdx !== null) {
+      if (field === "youtubeId") value = extractYoutubeId(value);
+      if (field === "startSeconds") value = timeToSeconds(value);
+      db[index].tracks[trackIdx][field] = value;
+      if (field === "youtubeId") input.value = value;
+      if (field === "startSeconds") input.value = secondsToTime(value);
+      if (trackIdx === 0) {
+        reloadRowVideo(row);
+        const link = row.querySelector(".watch-link");
+        if (link) link.href = watchUrl(db[index]);
+      }
+    } else {
+      if (field === "cover") value = cleanUrl(value);
+      if (["pop", "year"].includes(field)) value = Number(value) || 0;
+      if (field === "pop") value = Math.max(1, Math.min(6, value));
+      db[index][field] = value;
+      if (field === "cover") input.value = value;
+      if (field === "game") {
+        const title = row.querySelector(".game-title");
+        if (title) title.textContent = value || "(sin título)";
+      }
+      if (field === "cover") reloadRowCover(row);
+    }
+
+    row.dataset.search = `${db[index].game} ${db[index].tracks.map(t => t.youtubeId).join(" ")} ${db[index].cover} ${db[index].year} ${db[index].pop}`.toLowerCase();
+    setDirty(true);
+    updateStats();
+  }
+
+  function reloadRowVideo(row) {
+    const index = Number(row.dataset.index);
+    const item = db[index];
+    const track = item.tracks[0];
+    const wrap = row.querySelector(".video-wrap");
+    if (!wrap) return;
+    wrap.classList.add("video-facade");
+    wrap.dataset.src = embedSrc(item);
+    wrap.innerHTML = `<img class="yt-thumb" src="https://img.youtube.com/vi/${encodeURIComponent(track.youtubeId)}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button>`;
+  }
+
+  function reloadRowCover(row) {
+    const index = Number(row.dataset.index);
+    const holder = row.querySelector(".cover-holder");
+    const link = row.querySelector(".cover-link");
+    if (holder) holder.innerHTML = coverHtml(db[index]);
+    if (link) {
+      if (db[index].cover) {
+        link.textContent = "abrir cover";
+        link.href = db[index].cover;
+        link.style.color = "";
+      } else {
+        link.textContent = "sin enlace";
+        link.removeAttribute("href");
+        link.style.color = "var(--muted)";
+      }
+    }
+  }
+
+  list.addEventListener("change", (e) => {
+    if (e.target.matches("input[data-field]")) updateItemFromInput(e.target);
+  });
+
+  list.addEventListener("keydown", (e) => {
+    if (e.target.matches("input[data-field]") && e.key === "Enter") e.target.blur();
+  });
+
+  list.addEventListener("click", (e) => {
+    const cover = e.target.closest("img.cover-preview");
+    if (cover) {
+      $("lightboxImg").src = cover.src;
+      $("lightbox").style.display = "flex";
+      return;
+    }
+
+    const facade = e.target.closest(".video-facade");
+    if (facade) {
+      const src = facade.dataset.src + "&autoplay=1";
+      facade.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+      facade.classList.remove("video-facade");
+      return;
+    }
+
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const row = btn.closest(".row");
+    const index = Number(row.dataset.index);
+    const action = btn.dataset.action;
+
+    if (action === "loadTrack") {
+      const ti = Number(btn.dataset.track || 0);
+      const track = db[index].tracks[ti];
+      const wrap = row.querySelector(".video-wrap");
+      if (!wrap) return;
+      const src = embedSrc({ tracks: [track] }) + "&autoplay=1";
+      wrap.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+      wrap.classList.remove("video-facade");
+    } else if (action === "reloadCover") {
+      reloadRowCover(row);
+    } else if (action === "addTrack") {
+      db[index].tracks.push({ youtubeId: "", startSeconds: 0 });
+      setDirty(true);
+      row.querySelector(".tracks-section").innerHTML = tracksSectionHtml(db[index].tracks);
+    } else if (action === "removeTrack") {
+      const ti = Number(btn.dataset.track);
+      if (db[index].tracks.length > 1) {
+        db[index].tracks.splice(ti, 1);
+        setDirty(true);
+        row.querySelector(".tracks-section").innerHTML = tracksSectionHtml(db[index].tracks);
+      }
+    } else if (action === "duplicate") {
+      const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
+      db.splice(index + 1, 0, { ...db[index], id: maxId + 1, game: db[index].game + " (copia)", tracks: db[index].tracks.map(t => ({ ...t })) });
+      setDirty(true);
+      render();
+    } else if (action === "delete") {
+      if (confirm(`¿Eliminar "${db[index].game}"?`)) {
+        db.splice(index, 1);
+        setDirty(true);
+        render();
+      }
+    }
+  });
+
+  function applySearch() {
+    const q = $("search").value.trim().toLowerCase();
+    document.querySelectorAll(".row").forEach(row => {
+      row.classList.toggle("hidden", q && !row.dataset.search.includes(q));
+    });
+    updateStats();
+  }
+
+  $("search").addEventListener("input", applySearch);
+
+  $("fileInput").addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    loadText(await file.text(), file.name);
+    e.target.value = "";
+  });
+
+  $("toggleAdd").addEventListener("click", () => {
+    $("addPanel").classList.toggle("open");
+    $("newGame").focus();
+  });
+
+  $("clearNew").addEventListener("click", () => {
+    $("newGame").value = "";
+    $("newCover").value = "";
+    $("newYoutubeId").value = "";
+    $("newStart").value = "0:00";
+    $("newPop").value = 6;
+    $("newYear").value = new Date().getFullYear();
+  });
+
+  $("addEntry").addEventListener("click", () => {
+    const game = $("newGame").value.trim();
+    const cover = cleanUrl($("newCover").value);
+    const youtubeId = extractYoutubeId($("newYoutubeId").value);
+    const startSeconds = timeToSeconds($("newStart").value);
+    const pop = Math.max(1, Math.min(10, Number($("newPop").value) || 6));
+    const year = Number($("newYear").value) || new Date().getFullYear();
+
+    if (!game) return alert("Falta el nombre del juego.");
+    if (!youtubeId) return alert("Falta el YouTube ID.");
+
+    const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
+    db.push({ id: maxId + 1, game, cover, pop, year, tracks: [{ youtubeId, startSeconds }] });
+    setDirty(true);
+    $("clearNew").click();
+    render();
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  });
+
+  function loadText(text, filename) {
+    try {
+      db = normalizeDb(parseGameDb(text));
+      originalFilename = filename || "database.js";
+      setDirty(false);
+      render();
+    } catch (err) {
+      alert("No he podido leer el archivo: " + err.message);
+      console.error(err);
+    }
+  }
+
+  function toJs() {
+    const lines = db.map(item => {
+      const coverPart = item.cover ? ` cover: "${jsString(item.cover)}",` : "";
+      const tracksPart = item.tracks.map(t => `{ youtubeId: "${jsString(t.youtubeId)}", startSeconds: ${Number(t.startSeconds) || 0} }`).join(", ");
+      return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0}, tracks: [${tracksPart}] },`;
+    });
+    return `const GAME_DB = [\n${lines.join("\n")}\n];\n`;
+  }
+
+  function download(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+    setDirty(false);
+  }
+
+  $("downloadJs").addEventListener("click", () => {
+    const base = originalFilename.replace(/\.(js|txt|json)$/i, "") || "database";
+    download(`${base}.js`, toJs(), "text/javascript;charset=utf-8");
+  });
+
+  $("downloadJson").addEventListener("click", () => {
+    const base = originalFilename.replace(/\.(js|txt|json)$/i, "") || "database";
+    download(`${base}.json`, JSON.stringify(db, null, 2), "application/json;charset=utf-8");
+  });
+
+  window.addEventListener("beforeunload", (e) => {
+    if (!dirty) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
+
+
+  $("lightbox").addEventListener("click", () => $("lightbox").style.display = "none");
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") $("lightbox").style.display = "none";
+  });
+
+  $("scrollTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+  $("scrollBottom").addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+
+  $("newYear").value = new Date().getFullYear();
+  if (location.protocol === "file:") $("protocolWarn").style.display = "";
+
+  // ── Google Sheets import ────────────────────────────────────────────────────
+
+  function extractSheetId(urlOrId) {
+    const m = urlOrId.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : urlOrId.trim();
+  }
+
+  function normalizeSheetKeys(obj) {
+    const map = {
+      youtubeid: "youtubeId", youtube_id: "youtubeId", "youtube id": "youtubeId",
+      startseconds: "startSeconds", start_seconds: "startSeconds", "start seconds": "startSeconds",
+      start: "startSeconds", inicio: "startSeconds",
+      popularidad: "pop", popularity: "pop",
+      juego: "game", "año": "year", ano: "year", portada: "cover",
+    };
+    const result = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[map[k] ?? k] = v;
+    }
+    return result;
+  }
+
+  const SCRIPT_URL_KEY = "ostquest_script_url";
+  const savedScriptUrl = localStorage.getItem(SCRIPT_URL_KEY);
+  if (savedScriptUrl) $("scriptUrlInput").value = savedScriptUrl;
+
+  $("sheetsBtn").addEventListener("click", () => {
+    $("sheetsPanel").classList.toggle("open");
+  });
+
+  $("doImportSheets").addEventListener("click", async () => {
+    const sheetId = extractSheetId($("sheetsUrlInput").value);
+    const status = $("sheetsStatus");
+    status.textContent = "Importando...";
+    status.className = "sheets-status";
+
+    try {
+      const tab = $("sheetsTabInput").value.trim();
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=1${tab ? `&sheet=${encodeURIComponent(tab)}` : ""}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+
+      const jsonStr = text.slice(text.indexOf("(") + 1, text.lastIndexOf(")"));
+      const data = JSON.parse(jsonStr);
+
+      if (data.status !== "ok") throw new Error(data.errors?.[0]?.message || "Error de Google Sheets");
+
+      const { cols, rows } = data.table;
+      const headers = cols.map(c => (c.label || c.id).toLowerCase().trim());
+
+      const raw = rows
+        .filter(row => row.c?.some(cell => cell?.v != null))
+        .map(row => {
+          const obj = {};
+          headers.forEach((h, i) => { obj[h] = row.c[i]?.v ?? ""; });
+          return normalizeSheetKeys(obj);
+        });
+
+      db = normalizeDb(raw);
+      originalFilename = "database";
+      setDirty(false);
+      render();
+
+      status.textContent = `✓ ${db.length} entradas importadas`;
+      status.className = "sheets-status ok";
+      $("sheetsPanel").classList.remove("open");
+    } catch (err) {
+      status.textContent = "Error: " + err.message;
+      status.className = "sheets-status error";
+      console.error(err);
+    }
+  });
+
+  $("doSaveSheets").addEventListener("click", async () => {
+    const scriptUrl = $("scriptUrlInput").value.trim();
+    const status = $("saveStatus");
+    if (!scriptUrl) {
+      status.textContent = "Introduce la URL del Apps Script.";
+      status.className = "sheets-status error";
+      return;
+    }
+    if (db.length === 0) {
+      status.textContent = "No hay datos cargados para guardar.";
+      status.className = "sheets-status error";
+      return;
+    }
+
+    status.textContent = "Guardando...";
+    status.className = "sheets-status";
+    localStorage.setItem(SCRIPT_URL_KEY, scriptUrl);
+
+    try {
+      const CHUNK = 3;
+      const session = Date.now().toString(36);
+      const chunks = [];
+      for (let i = 0; i < db.length; i += CHUNK) chunks.push(db.slice(i, i + CHUNK));
+
+      for (let i = 0; i < chunks.length; i++) {
+        status.textContent = `Enviando ${i + 1}/${chunks.length}...`;
+        const params = new URLSearchParams({
+          action: 'save_chunk',
+          session,
+          chunk: i,
+          total: chunks.length,
+          data: JSON.stringify(chunks[i])
+        });
+        const res = await fetch(`${scriptUrl}?${params}`);
+        const text = await res.text();
+        let json;
+        try { json = JSON.parse(text); } catch { throw new Error('Respuesta inesperada: ' + text.slice(0, 120)); }
+        if (json.ok === false) throw new Error(json.error || 'Error en el script');
+      }
+
+      status.textContent = `✓ ${db.length} entradas guardadas en el Sheet`;
+      status.className = "sheets-status ok";
+    } catch (err) {
+      status.textContent = "Error de red: " + err.message;
+      status.className = "sheets-status error";
+    }
+  });
+
+  // ── Supabase ──────────────────────────────────────────────────────────────
+
+  const SUPA_STORAGE_KEY = "ostquest_supabase";
+  const savedSupa = JSON.parse(localStorage.getItem(SUPA_STORAGE_KEY) || "{}");
+  if (savedSupa.url)   $("supabaseUrl").value         = savedSupa.url;
+  if (savedSupa.key)   $("supabaseKey").value         = savedSupa.key;
+  if (savedSupa.table) $("supabaseTableInput").value  = savedSupa.table;
+
+  $("supabaseBtn").addEventListener("click", () => {
+    $("supabasePanel").classList.toggle("open");
+  });
+
+  function getSupaClient() {
+    const url = $("supabaseUrl").value.trim();
+    const key = $("supabaseKey").value.trim();
+    if (!url || !key) throw new Error("Introduce la URL del proyecto y la clave anon");
+    localStorage.setItem(SUPA_STORAGE_KEY, JSON.stringify({
+      url, key, table: $("supabaseTableInput").value.trim() || "games"
+    }));
+    return supabase.createClient(url, key);
+  }
+
+  $("doImportSupabase").addEventListener("click", async () => {
+    const status = $("supabaseStatus");
+    status.textContent = "Cargando...";
+    status.className = "sheets-status";
+    try {
+      const client = getSupaClient();
+      const table = $("supabaseTableInput").value.trim() || "games";
+      const { data, error } = await client.from(table).select("*").order("id");
+      if (error) throw error;
+      const incoming = normalizeDb(data);
+      if (db.length > 0) {
+        const totalTracks = arr => arr.reduce((s, x) => s + x.tracks.length, 0);
+        const warnings = [];
+        if (incoming.length < db.length) warnings.push(`${db.length - incoming.length} entrada(s) menos (${incoming.length} vs ${db.length} en memoria)`);
+        if (totalTracks(incoming) < totalTracks(db)) warnings.push(`${totalTracks(db) - totalTracks(incoming)} canción(es) menos (${totalTracks(incoming)} vs ${totalTracks(db)} en memoria)`);
+        if (warnings.length > 0) {
+          if (!await customConfirm(`Supabase tiene menos datos que lo que tienes en memoria: ${warnings.join("; ")}. Si cargas, perderás lo que tienes.`, { ok: "Cargar de todos modos", cancel: "Cancelar", okDanger: true })) return;
+        }
+      }
+      db = incoming;
+      originalFilename = "database";
+      setDirty(false);
+      render();
+      status.textContent = `✓ ${db.length} entradas cargadas`;
+      status.className = "sheets-status ok";
+      $("supabasePanel").classList.remove("open");
+    } catch (err) {
+      status.textContent = "Error: " + err.message;
+      status.className = "sheets-status error";
+      console.error(err);
+    }
+  });
+
+  $("doSaveSupabase").addEventListener("click", async () => {
+    const status = $("supabaseStatus");
+    if (db.length === 0) {
+      status.textContent = "No hay datos cargados.";
+      status.className = "sheets-status error";
+      return;
+    }
+    if (!await customConfirm(`¿Sobrescribir la tabla en Supabase con ${db.length} entradas? Esta acción no se puede deshacer.`, { ok: "Sobrescribir", okDanger: true })) return;
+    status.textContent = "Comprobando...";
+    status.className = "sheets-status";
+    try {
+      const clientCheck = getSupaClient();
+      const table = $("supabaseTableInput").value.trim() || "games";
+      const { data: currentData, error: countError } = await clientCheck.from(table).select("id, tracks");
+      if (!countError && currentData) {
+        const totalTracks = arr => arr.reduce((s, x) => s + (Array.isArray(x.tracks) ? x.tracks.length : 1), 0);
+        const warnings = [];
+        if (db.length < currentData.length) warnings.push(`${currentData.length - db.length} entrada(s) menos (${db.length} vs ${currentData.length} en Supabase)`);
+        if (totalTracks(db) < totalTracks(currentData)) warnings.push(`${totalTracks(currentData) - totalTracks(db)} canción(es) menos (${totalTracks(db)} vs ${totalTracks(currentData)} en Supabase)`);
+        if (warnings.length > 0) {
+          if (!await customConfirm(`Lo que vas a subir tiene menos datos que lo que hay en Supabase: ${warnings.join("; ")}.`, { ok: "Subir de todos modos", cancel: "Cancelar", okDanger: true })) return;
+        }
+      }
+    } catch (_) {
+      if (!await customConfirm("No se ha podido comprobar cuántas entradas hay en Supabase. Si continúas, podrías sobrescribir datos sin saberlo.", { ok: "Subir de todos modos", cancel: "Cancelar", okDanger: true })) return;
+    }
+    const now = new Date();
+    const stamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}-${String(now.getHours()).padStart(2,"0")}${String(now.getMinutes()).padStart(2,"0")}`;
+    download(`database-${stamp}.js`, toJs(), "text/javascript;charset=utf-8");
+    status.textContent = "Guardando...";
+    status.className = "sheets-status";
+    try {
+      const client = getSupaClient();
+      const table = $("supabaseTableInput").value.trim() || "games";
+      const { error: delError } = await client.from(table).delete().gte("id", 0);
+      if (delError) throw delError;
+      const { error: insError } = await client.from(table).insert(db);
+      if (insError) throw insError;
+      status.textContent = `✓ ${db.length} entradas guardadas en Supabase`;
+      status.className = "sheets-status ok";
+      setDirty(false);
+    } catch (err) {
+      status.textContent = "Error: " + err.message;
+      status.className = "sheets-status error";
+      console.error(err);
+    }
+  });
+
+  $("downloadCsv").addEventListener("click", () => {
+    const headers = ["id", "game", "cover", "pop", "year", "tracks"];
+    const escape = val => {
+      const s = String(val ?? "");
+      return s.includes(",") || s.includes('"') || s.includes("\n")
+        ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [
+      headers.join(","),
+      ...db.map(item => headers.map(h => h === "tracks" ? escape(JSON.stringify(item.tracks)) : escape(item[h])).join(","))
+    ];
+    const base = originalFilename.replace(/\.(js|txt|json)$/i, "") || "database";
+    download(`${base}.csv`, lines.join("\n"), "text/csv;charset=utf-8");
+  });
+
+})();
+</script>
+</body>
+</html>
