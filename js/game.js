@@ -24,9 +24,9 @@ async function initGame(dateStr, archiveMode) {
     colStates = saved;
   } else {
     colStates = [
-      { locked: false, solved: false, pickedId: null, correct: false },
-      { locked: true,  solved: false, pickedId: null, correct: false },
-      { locked: true,  solved: false, pickedId: null, correct: false },
+      { locked: false, solved: false, pickedId: null, pickedPos: null, correct: false },
+      { locked: true,  solved: false, pickedId: null, pickedPos: null, correct: false },
+      { locked: true,  solved: false, pickedId: null, pickedPos: null, correct: false },
     ];
   }
 
@@ -231,7 +231,7 @@ function openGuessModal(gi, cv, ci) {
 
   document.getElementById('confirm-btn').addEventListener('click', () => {
     closeModal();
-    resolveGuess(gi, cv);
+    resolveGuess(gi, cv, ci);
   });
   openModal();
 }
@@ -429,11 +429,12 @@ function openArchive() {
 
 // ─── Game Logic ───────────────────────────────────────────────────────────────
 
-function resolveGuess(gi, pickedCv) {
+function resolveGuess(gi, pickedCv, pickedPos) {
   const correct = pickedCv.id === currentGroups[gi].answer.id;
-  colStates[gi].solved   = true;
-  colStates[gi].pickedId = pickedCv.id;
-  colStates[gi].correct  = correct;
+  colStates[gi].solved    = true;
+  colStates[gi].pickedId  = pickedCv.id;
+  colStates[gi].pickedPos = pickedPos ?? null;
+  colStates[gi].correct   = correct;
   if (gi + 1 < 3) colStates[gi + 1].locked = false;
 
   saveDayProgress(currentDateStr, colStates);
@@ -463,10 +464,49 @@ function checkFinished() {
   if (gameFinished) return;
   gameFinished = true;
   const score = colStates.filter(s => s.correct).length;
+
+  let isLine = false;
+  if (score === 3) {
+    const p = colStates[0].pickedPos;
+if (p !== null && colStates[1].pickedPos === p && colStates[2].pickedPos === p) {
+      isLine = true;
+      setTimeout(() => triggerLineEffect(p), 80);
+    }
+  }
+
   setTimeout(() => {
     recordDailyResult(currentDateStr, score, 3);
     openEndModal(score);
-  }, 400);
+  }, isLine ? 1800 : 400);
+}
+
+function triggerLineEffect(pos) {
+  const sfx = new Audio('fx/cash.mp3');
+  sfx.currentTime = 0.5;
+  sfx.play().catch(() => {});
+
+  const topItem = document.getElementById('col-0')?.querySelectorAll('.cover-item')?.[pos];
+  const botItem = document.getElementById('col-2')?.querySelectorAll('.cover-item')?.[pos];
+  if (topItem && botItem) {
+    const topRect = topItem.getBoundingClientRect();
+    const botRect = botItem.getBoundingClientRect();
+    const strip = document.createElement('div');
+    strip.className = 'line-strip';
+    strip.style.cssText = `left:${topRect.left}px;top:${topRect.top}px;width:${topRect.width}px;height:${botRect.bottom - topRect.top}px;`;
+    document.body.appendChild(strip);
+    strip.addEventListener('animationend', () => strip.remove());
+  }
+
+  if (topItem) {
+    const rect = topItem.getBoundingClientRect();
+    const gif = document.createElement('div');
+    gif.className = 'line-gif';
+    gif.innerHTML = `<img src="fx/coin.gif" alt="">`;
+    gif.style.left = `${rect.left + rect.width / 2}px`;
+    gif.style.top  = `${rect.top}px`;
+    document.body.appendChild(gif);
+    gif.addEventListener('animationend', () => gif.remove());
+  }
 }
 
 // ─── Score / Countdown ────────────────────────────────────────────────────────
@@ -509,6 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.id !== 'modal') return;
     closeModal();
     renderAll();
+    checkFinished();
   });
 
   document.getElementById('btn-stats').addEventListener('click', openStatsModal);
