@@ -25,9 +25,8 @@ function _applyDOM() {
     const v = _t[el.dataset.i18nAria];
     if (typeof v === 'string') el.setAttribute('aria-label', v);
   });
-  document.querySelectorAll('.lang-btn').forEach(btn =>
-    btn.classList.toggle('lang-btn--active', btn.dataset.lang === _lang)
-  );
+  const sel = document.getElementById('lang-select');
+  if (sel) sel.value = _lang;
   document.documentElement.lang = _lang;
 }
 

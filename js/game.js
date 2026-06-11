@@ -544,9 +544,7 @@ function showToast(msg) {
 document.addEventListener('DOMContentLoaded', async () => {
   await initI18n();
 
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.addEventListener('click', () => setLang(btn.dataset.lang));
-  });
+  document.getElementById('lang-select').addEventListener('change', e => setLang(e.target.value));
 
   const today = getGameDay();
 
@@ -569,23 +567,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   initGame(today, false);
 
-  // ─── Aviso de anuncios si no hay bloqueador ──────────────────────────────
-  if (!localStorage.getItem('ostquest_adwarn_ok')) {
-    fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
-      method: 'HEAD', mode: 'no-cors', cache: 'no-store'
-    }).then(() => {
-      const banner = document.createElement('div');
-      banner.className = 'ad-warning';
-      banner.innerHTML =
-        `<strong>${t('adwarn_label')}</strong> ${t('adwarn_text')}` +
-        `<button class="ad-warning__close" aria-label="${t('btn_close')}">✕</button>`;
-      document.body.appendChild(banner);
-      banner.querySelector('.ad-warning__close').addEventListener('click', () => {
-        localStorage.setItem('ostquest_adwarn_ok', '1');
-        banner.remove();
-      });
-    }).catch(() => {});
-  }
+
 
   // Volume control
   const volSlider  = document.getElementById('vol-slider');

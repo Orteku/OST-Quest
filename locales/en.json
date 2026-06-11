@@ -29,8 +29,6 @@
   "archive_in_progress": "In progress...",
   "archive_play":        "Play",
   "stats_title":         "Stats",
-  "adwarn_label":        "Heads up:",
-  "adwarn_text":         "Music is played via YouTube. Without an ad blocker, you may hear ads before the track starts.",
   "msg_success": [
     "Nailed it!",
     "Too easy",

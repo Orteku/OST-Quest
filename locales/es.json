@@ -29,8 +29,6 @@
   "archive_in_progress": "En curso...",
   "archive_play":        "Jugar",
   "stats_title":         "Estadísticas",
-  "adwarn_label":        "Aviso:",
-  "adwarn_text":         "La música se reproduce vía YouTube. Sin bloqueador de anuncios, es posible que escuches publicidad antes de que empiece la canción.",
   "msg_success": [
     "¡Genial!",
     "Estaba chupado",

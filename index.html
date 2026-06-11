@@ -39,10 +39,6 @@
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
       </button>
-      <div class="lang-selector">
-        <button class="lang-btn" data-lang="es">ES</button>
-        <button class="lang-btn" data-lang="en">EN</button>
-      </div>
     </div>
   </header>
 
@@ -53,17 +49,23 @@
     <div><span data-i18n="score_miss">Miss:</span> <span class="score-bar__miss" id="score-miss">0</span></div>
   </div>
 
-  <!-- Floating volume control bottom-left -->
-  <div class="vol-control" id="vol-control">
-    <button class="vol-btn" id="btn-vol" aria-label="Volumen">
-      <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-        <path id="vol-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
-      </svg>
-    </button>
-    <div class="vol-slider-wrap">
-      <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="80">
+  <!-- Settings panel bottom-left: volume + language -->
+  <div class="settings-panel">
+    <div class="vol-control" id="vol-control">
+      <button class="vol-btn" id="btn-vol" aria-label="Volumen">
+        <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path id="vol-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
+      <div class="vol-slider-wrap">
+        <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="80">
+      </div>
     </div>
+    <select class="lang-select" id="lang-select" aria-label="Idioma">
+      <option value="es">Español</option>
+      <option value="en">English</option>
+    </select>
   </div>
 
   <div id="loading-screen">
