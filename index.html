@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="OST Quest — Adivina el videojuego por su banda sonora. Juego diario de música.">
-  <title>OST Quest — Adivina la banda sonora</title>
+  <title>OST Quest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="css/style.css">
@@ -21,10 +21,10 @@
     <div class="archive-banner" id="archive-banner"></div>
     <div class="site-header__right">
       <div class="header-countdown">
-        Siguiente quest: <span id="header-countdown">--:--:--</span>
+        <span data-i18n="next_quest">Siguiente quest:</span> <span id="header-countdown">--:--:--</span>
       </div>
-      <button class="today-btn" id="btn-today" title="Volver al juego de hoy">Hoy</button>
-      <button class="icon-btn" id="btn-archive" title="Quest Log" aria-label="Quest Log">
+      <button class="today-btn" id="btn-today" data-i18n="btn_today">Hoy</button>
+      <button class="icon-btn" id="btn-archive" data-i18n-aria="btn_archive_label" aria-label="Quest Log">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"/>
           <path d="M14 2v6h6"/>
@@ -32,21 +32,25 @@
           <line x1="8" y1="17" x2="13" y2="17"/>
         </svg>
       </button>
-      <button class="icon-btn" id="btn-stats" title="Estadísticas" aria-label="Estadísticas">
+      <button class="icon-btn" id="btn-stats" data-i18n-aria="btn_stats_label" aria-label="Estadísticas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <line x1="18" y1="20" x2="18" y2="10"/>
           <line x1="12" y1="20" x2="12" y2="4"/>
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
       </button>
+      <div class="lang-selector">
+        <button class="lang-btn" data-lang="es">ES</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
     </div>
   </header>
 
 
   <!-- Score bar hidden, values kept for JS -->
   <div class="score-bar">
-    <div>Hits: <span class="score-bar__hits" id="score-hits">0</span></div>
-    <div>Miss: <span class="score-bar__miss" id="score-miss">0</span></div>
+    <div><span data-i18n="score_hits">Hits:</span> <span class="score-bar__hits" id="score-hits">0</span></div>
+    <div><span data-i18n="score_miss">Miss:</span> <span class="score-bar__miss" id="score-miss">0</span></div>
   </div>
 
   <!-- Floating volume control bottom-left -->
@@ -64,7 +68,7 @@
 
   <div id="loading-screen">
     <div class="loading-spinner"></div>
-    <p class="loading-text">Cargando bandas sonoras…</p>
+    <p class="loading-text" data-i18n="loading">Cargando bandas sonoras…</p>
   </div>
 
   <div id="game-area" style="display:none">
@@ -78,16 +82,14 @@
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 
-<!-- YouTube hidden audio player (iframe embed, off-screen) -->
-
 <!-- YouTube IFrame API anchor (required, must exist in DOM) -->
 <div style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px" aria-hidden="true"><div id="yt-player"></div></div>
 
 <script src="js/database.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/daily.js"></script>
 <script src="js/assets.js"></script>
 <script src="js/youtube.js"></script>
-<script src="js/messages.js"></script>
 <script src="js/game.js"></script>
 
 </body>

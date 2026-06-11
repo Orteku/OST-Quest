@@ -662,6 +662,28 @@ ul, li { list-style: none; }
   100% { opacity: 0; transform: translateX(-50%) translateY(calc(-50% - 80px)) scale(0.9); }
 }
 
+/* ─── Language selector ──────────────────────────────────────────────────── */
+.lang-selector {
+  display: flex;
+  gap: 2px;
+  margin-left: 4px;
+}
+.lang-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #555960;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.lang-btn:hover { color: #ddd9cf; }
+.lang-btn--active {
+  color: #b8e030;
+  background: rgba(184,224,48,0.1);
+}
+
 /* ─── Ad warning banner ───────────────────────────────────────────────────── */
 .ad-warning {
   position: fixed;

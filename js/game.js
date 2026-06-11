@@ -83,7 +83,7 @@ function renderColumn(gi, wrapper) {
     : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
   const hintText = st.solved
     ? `<strong>${g.answer.game}</strong>`
-    : st.locked ? 'Bloqueado' : 'Pulsa ▶ para escuchar';
+    : st.locked ? t('col_locked') : t('col_play_hint');
 
   hdr.innerHTML = `
     <button class="play-btn" aria-label="Reproducir / pausar" ${st.locked ? 'disabled' : ''}>
@@ -190,7 +190,7 @@ function togglePlay(gi) {
   const asset  = g.assets[ansIdx];
 
   if (!asset?.youtubeId) {
-    showToast('Audio no disponible para este grupo.');
+    showToast(t('audio_unavailable'));
     return;
   }
 
@@ -227,7 +227,7 @@ function openGuessModal(gi, cv, ci) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        Es esta
+        ${t('guess_confirm')}
       </button>
     </div>`;
 
@@ -256,7 +256,7 @@ function openInfoModal(cv, asset) {
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
             <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
           </svg>
-          Ver en YouTube
+          ${t('watch_youtube')}
         </a>` : ''}
     </div>`;
 
@@ -271,10 +271,8 @@ function openResultModal(gi, pickedCv, isCorrect) {
   const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(g.answer.game)}`;
 
   const btnClass = isCorrect ? 'btn--result-ok' : 'btn--result-fail';
-  const btnText  = isCorrect ? '¡Acertaste!' : '¡Fallaste!';
-  const msg      = isCorrect
-    ? SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)]
-    : FAIL_MESSAGES[Math.floor(Math.random() * FAIL_MESSAGES.length)];
+  const btnText  = isCorrect ? t('result_correct') : t('result_wrong');
+  const msg      = tRandom(isCorrect ? 'msg_success' : 'msg_fail');
 
   document.getElementById('modal-inner').innerHTML = `
     <button class="modal__close-x" id="result-close">&times;</button>
@@ -288,7 +286,7 @@ function openResultModal(gi, pickedCv, isCorrect) {
       <div class="modal__result-info">
         <p class="modal__result-text">${msg}</p>
         ${ansAsset.youtubeId ? `
-          <a class="yt-link" href="https://www.youtube.com/watch?v=${ansAsset.youtubeId}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>Ver en YouTube</a>` : ''}
+          <a class="yt-link" href="https://www.youtube.com/watch?v=${ansAsset.youtubeId}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>${t('watch_youtube')}</a>` : ''}
       </div>
     </div>`;
 
@@ -313,22 +311,22 @@ function openEndModal(score) {
         <span class="modal__end-denom">/ 3</span>
       </div>
       <p class="modal__end-label">${
-        score === 3 ? '¡Eres la CABRA!'         :
-        score === 2 ? 'No está mal'              :
-        score === 1 ? 'Se hizo lo que se pudo'   :
-                      'Tienes un poco de skill issue'
+        score === 3 ? t('end_3') :
+        score === 2 ? t('end_2') :
+        score === 1 ? t('end_1') :
+                      t('end_0')
       }</p>
-      ${isArchiveMode ? `<p class="modal__archive-note">Quests pasadas no suben las estadísticas</p>` : ''}
+      ${isArchiveMode ? `<p class="modal__archive-note">${t('archive_note')}</p>` : ''}
       ${!isArchiveMode ? `
         <div class="modal__stats">
-          <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">Quests completadas</span></div>
-          <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">Puntería</span></div>
-          <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">Racha</span></div>
-          <div class="stat-box"><span class="stat-box__val">${stats.maxStreak}</span><span class="stat-box__lbl">Mejor racha</span></div>
+          <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
+          <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
+          <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak')}</span></div>
+          <div class="stat-box"><span class="stat-box__val">${stats.maxStreak}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
         </div>
-        <div class="modal__countdown">Siguiente Quest en &nbsp; <strong id="end-countdown">--:--:--</strong></div>
+        <div class="modal__countdown">${t('next_quest_in')} &nbsp; <strong id="end-countdown">--:--:--</strong></div>
       ` : ''}
-      <button class="btn btn--new" id="close-end-btn">Cerrar</button>
+      <button class="btn btn--new" id="close-end-btn">${t('btn_close')}</button>
     </div>`;
 
   document.getElementById('close-end-btn').addEventListener('click', () => {
@@ -351,15 +349,15 @@ function openStatsModal() {
 
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__end">
-      <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1.2rem">Estadísticas</h2>
+      <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1.2rem">${t('stats_title')}</h2>
       <div class="modal__stats">
-        <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">Quests completadas</span></div>
-        <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">Puntería</span></div>
-        <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">Racha actual</span></div>
-        <div class="stat-box"><span class="stat-box__val">${stats.maxStreak}</span><span class="stat-box__lbl">Mejor racha</span></div>
+        <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
+        <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
+        <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
+        <div class="stat-box"><span class="stat-box__val">${stats.maxStreak}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
       </div>
-      <div class="modal__countdown">Siguiente Quest en &nbsp; <strong id="stats-countdown">--:--:--</strong></div>
-      <button class="btn btn--new" id="close-stats-btn">Cerrar</button>
+      <div class="modal__countdown">${t('next_quest_in')} &nbsp; <strong id="stats-countdown">--:--:--</strong></div>
+      <button class="btn btn--new" id="close-stats-btn">${t('btn_close')}</button>
     </div>`;
 
   document.getElementById('close-stats-btn').addEventListener('click', closeModal);
@@ -398,8 +396,8 @@ function openArchive() {
            ${result.score === 3 ? '✓' : result.score + '/3'}
          </span>`
       : inProgress
-        ? `<span class="archive__badge archive__badge--ongoing">En curso...</span>`
-        : `<span class="archive__badge archive__badge--new">Jugar</span>`;
+        ? `<span class="archive__badge archive__badge--ongoing">${t('archive_in_progress')}</span>`
+        : `<span class="archive__badge archive__badge--new">${t('archive_play')}</span>`;
     const [y,m,d] = ds.split('-');
     const isActive = ds === currentDateStr && isArchiveMode;
     return `<li class="archive__item ${isActive ? 'archive__item--active' : ''}" data-date="${ds}">
@@ -409,9 +407,9 @@ function openArchive() {
 
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__end">
-      <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1rem">Quest Log</h2>
+      <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1rem">${t('archive_title')}</h2>
       <ul class="archive__list">${rows}</ul>
-      <button class="btn btn--new" id="close-archive-btn">Cerrar</button>
+      <button class="btn btn--new" id="close-archive-btn">${t('btn_close')}</button>
     </div>`;
 
   document.getElementById('close-archive-btn').addEventListener('click', closeModal);
@@ -543,7 +541,13 @@ function showToast(msg) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await initI18n();
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
+  });
+
   const today = getGameDay();
 
   // Clic fuera del modal cierra siempre (incluyendo el modal final)
@@ -573,9 +577,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const banner = document.createElement('div');
       banner.className = 'ad-warning';
       banner.innerHTML =
-        '<strong>Aviso:</strong> La música se reproduce vía YouTube. ' +
-        'Sin bloqueador de anuncios, es posible que escuches publicidad antes de que empiece la canción.' +
-        '<button class="ad-warning__close" aria-label="Cerrar">✕</button>';
+        `<strong>${t('adwarn_label')}</strong> ${t('adwarn_text')}` +
+        `<button class="ad-warning__close" aria-label="${t('btn_close')}">✕</button>`;
       document.body.appendChild(banner);
       banner.querySelector('.ad-warning__close').addEventListener('click', () => {
         localStorage.setItem('ostquest_adwarn_ok', '1');
