@@ -125,7 +125,7 @@ function renderColumn(gi, wrapper) {
 
     const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(cv.game)}`;
     const nameLen  = cv.game.length;
-    const labelFs  = nameLen > 36 ? '7px' : nameLen > 24 ? '8px' : '9px';
+    const labelFs  = nameLen > 36 ? '9px' : nameLen > 24 ? '11px' : '13px';
     item.innerHTML = `
       <img src="${asset.cover || fallback}" alt="${cv.game}" loading="lazy"
            onerror="this.onerror=null;this.src='${fallback}'">
