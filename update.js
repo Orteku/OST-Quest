@@ -78,7 +78,7 @@ function generateGameForDate(dateStr) {
     used.add(answer.id);
 
     let distractors = seededShuffle(
-      GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 2),
+      GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1),
       rng
     ).slice(0, 3);
 

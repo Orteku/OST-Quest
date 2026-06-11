@@ -227,8 +227,12 @@ ul, li { list-style: none; }
   color: #fff;
   opacity: 0;
   transition: opacity 0.18s;
-  line-height: 1.2;
+  line-height: 1.3;
   text-align: center;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .cover-item:hover .cover-item__label { opacity: 1; }
 

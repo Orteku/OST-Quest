@@ -124,10 +124,12 @@ function renderColumn(gi, wrapper) {
     }
 
     const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(cv.game)}`;
+    const nameLen  = cv.game.length;
+    const labelFs  = nameLen > 36 ? '7px' : nameLen > 24 ? '8px' : '9px';
     item.innerHTML = `
       <img src="${asset.cover || fallback}" alt="${cv.game}" loading="lazy"
            onerror="this.onerror=null;this.src='${fallback}'">
-      <span class="cover-item__label">${cv.game}</span>`;
+      <span class="cover-item__label" style="font-size:${labelFs}">${cv.game}</span>`;
 
     if (!st.locked) {
       if (!st.solved) {
