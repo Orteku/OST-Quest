@@ -657,3 +657,43 @@ ul, li { list-style: none; }
   20%  { opacity: 1; transform: translateX(-50%) translateY(calc(-50% - 14px)) scale(1); }
   100% { opacity: 0; transform: translateX(-50%) translateY(calc(-50% - 80px)) scale(0.9); }
 }
+
+/* ─── Ad warning banner ───────────────────────────────────────────────────── */
+.ad-warning {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 520px;
+  width: calc(100% - 32px);
+  background: #1e2028;
+  border: 1px solid #333640;
+  border-left: 3px solid #f0a030;
+  border-radius: 6px;
+  padding: 10px 36px 10px 14px;
+  font-size: 12px;
+  color: #999590;
+  line-height: 1.5;
+  z-index: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  animation: adWarnIn 0.3s ease-out;
+}
+.ad-warning strong { color: #f0a030; }
+.ad-warning__close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 16px;
+  line-height: 1;
+  color: #555960;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+}
+.ad-warning__close:hover { color: #ddd9cf; }
+@keyframes adWarnIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

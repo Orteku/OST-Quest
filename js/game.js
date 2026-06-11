@@ -563,6 +563,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initGame(today, false);
 
+  // ─── Aviso de anuncios si no hay bloqueador ──────────────────────────────
+  if (!localStorage.getItem('ostquest_adwarn_ok')) {
+    fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
+      method: 'HEAD', mode: 'no-cors', cache: 'no-store'
+    }).then(() => {
+      const banner = document.createElement('div');
+      banner.className = 'ad-warning';
+      banner.innerHTML =
+        '<strong>Aviso:</strong> La música se reproduce vía YouTube. ' +
+        'Sin bloqueador de anuncios, es posible que escuches publicidad antes de que empiece la canción.' +
+        '<button class="ad-warning__close" aria-label="Cerrar">✕</button>';
+      document.body.appendChild(banner);
+      banner.querySelector('.ad-warning__close').addEventListener('click', () => {
+        localStorage.setItem('ostquest_adwarn_ok', '1');
+        banner.remove();
+      });
+    }).catch(() => {});
+  }
+
   // Volume control
   const volSlider  = document.getElementById('vol-slider');
   const volBtn     = document.getElementById('btn-vol');
