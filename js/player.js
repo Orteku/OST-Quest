@@ -81,20 +81,24 @@ function youtubeThumbnail(videoId) {
   return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 }
 
-// ─── HTML5 audio (para URLs directas tipo Khinsider) ─────────────────────────
+// ─── HTML5 audio (para URLs directas tipo archive.org / Khinsider) ───────────
 
-let _audioEl       = null;
-let _audioOnEnd    = null;
-let _audioEndTimer = null;
+let _audioEl            = null;
+let _audioOnEnd         = null;
+let _audioEndTimer      = null;
+const _audioPreloadCache = new Map(); // url → Audio (precacheado)
+
+function _makeAudioEl() {
+  const el = new Audio();
+  el.addEventListener('ended', () => {
+    _cleanupDirectAudio();
+    if (_audioOnEnd) _audioOnEnd();
+  });
+  return el;
+}
 
 function _getAudioEl() {
-  if (!_audioEl) {
-    _audioEl = new Audio();
-    _audioEl.addEventListener('ended', () => {
-      _cleanupDirectAudio();
-      if (_audioOnEnd) _audioOnEnd();
-    });
-  }
+  if (!_audioEl) _audioEl = _makeAudioEl();
   return _audioEl;
 }
 
@@ -104,18 +108,57 @@ function _cleanupDirectAudio() {
   _audioOnEnd    = null;
 }
 
-function _playDirectAudio(url, startSeconds, onEnd) {
-  const el = _getAudioEl();
-  _audioOnEnd  = onEnd;
-  el.volume    = ytVolume / 100;
-  el.src       = url;
+function prewarmDirectAudio(url) {
+  if (_audioPreloadCache.has(url)) return;
+  const el = _makeAudioEl();
+  el.preload = 'auto';
+  el.src = url;
+  _audioPreloadCache.set(url, el);
+}
+
+function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying) {
+  _cleanupDirectAudio();
+  if (_audioEl) _audioEl.pause();
+
+  // Usar elemento precacheado si existe, si no crear uno nuevo
+  const cached = _audioPreloadCache.get(url);
+  if (cached) {
+    if (_audioEl && _audioEl !== cached) _audioEl.src = '';
+    _audioEl = cached;
+    _audioPreloadCache.delete(url);
+  } else {
+    _audioEl = _getAudioEl();
+    _audioEl.src = url;
+  }
+
+  _audioOnEnd      = onEnd;
+  _audioEl.volume  = ytVolume / 100;
+
   if (startSeconds) {
-    el.addEventListener('loadedmetadata', function h() {
-      el.removeEventListener('loadedmetadata', h);
-      el.currentTime = startSeconds;
+    if (_audioEl.readyState >= 1) {
+      _audioEl.currentTime = startSeconds;
+    } else {
+      _audioEl.addEventListener('loadedmetadata', function h() {
+        _audioEl.removeEventListener('loadedmetadata', h);
+        _audioEl.currentTime = startSeconds;
+      });
+    }
+  }
+
+  if (onWaiting) {
+    _audioEl.addEventListener('waiting', function h() {
+      _audioEl.removeEventListener('waiting', h);
+      onWaiting();
     });
   }
-  el.play().catch(() => {});
+  if (onPlaying) {
+    _audioEl.addEventListener('playing', function h() {
+      _audioEl.removeEventListener('playing', h);
+      onPlaying();
+    });
+  }
+
+  _audioEl.play().catch(() => {});
   clearTimeout(_audioEndTimer);
   _audioEndTimer = setTimeout(() => { _cleanupDirectAudio(); if (onEnd) onEnd(); }, 32000);
 }
@@ -224,12 +267,12 @@ function prewarmSoundCloud(url) {
 
 // ─── API unificada ────────────────────────────────────────────────────────────
 
-function playTrack(asset, onEnd) {
+function playTrack(asset, onEnd, onWaiting, onPlaying) {
   if (asset.audioUrl) {
     if (asset.sourceType === 'soundcloud') {
       playSoundCloud(asset.audioUrl, asset.startSeconds || 0, onEnd);
     } else {
-      _playDirectAudio(asset.audioUrl, asset.startSeconds || 0, onEnd);
+      _playDirectAudio(asset.audioUrl, asset.startSeconds || 0, onEnd, onWaiting, onPlaying);
     }
   } else if (asset.youtubeId) {
     playYouTube(asset.youtubeId, asset.startSeconds || 0, onEnd);

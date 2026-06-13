@@ -5,6 +5,7 @@ let colStates      = [];
 let currentDateStr = '';
 let isArchiveMode  = false;
 let playingCol     = -1;
+let loadingCol     = -1;
 let gameFinished   = false;
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
@@ -46,6 +47,11 @@ async function initGame(dateStr, archiveMode) {
     if (scAsset?.audioUrl) { prewarmSoundCloud(scAsset.audioUrl); break; }
   }
 
+  // Precachear el audio directo de las 3 columnas
+  _prewarmAnswerAudio(0);
+  _prewarmAnswerAudio(1);
+  _prewarmAnswerAudio(2);
+
   // Si ya estaba terminado al recargar, mostrar end modal directamente
   if (saved && colStates.every(s => s.solved)) {
     gameFinished = true;
@@ -84,12 +90,17 @@ function renderColumn(gi, wrapper) {
   // Header
   const hdr = document.createElement('div');
   hdr.className = 'col__header' + (playingCol === gi ? ' col__header--playing' : '');
-  const playIcon = playingCol === gi
-    ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-    : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
-  const hintText = st.solved
-    ? `<strong>${g.answer.game}</strong>`
-    : st.locked ? t('col_locked') : t('col_play_hint');
+  const isLoading = loadingCol === gi;
+  const playIcon = isLoading
+    ? `<svg class="col__loading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10"/></svg>`
+    : playingCol === gi
+      ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
+  const hintText = isLoading
+    ? t('audio_loading')
+    : st.solved
+      ? `<strong>${g.answer.game}</strong>`
+      : st.locked ? t('col_locked') : t('col_play_hint');
 
   hdr.innerHTML = `
     <button class="play-btn" aria-label="Reproducir / pausar" ${st.locked ? 'disabled' : ''}>
@@ -177,6 +188,7 @@ function rerenderColumn(gi) {
 function stopAudio() {
   stopTrack();
   playingCol = -1;
+  loadingCol = -1;
 }
 
 function togglePlay(gi) {
@@ -206,11 +218,14 @@ function togglePlay(gi) {
   }
 
   playingCol = gi;
-  playTrack(asset, () => {
-    stopAudio();
-    rerenderColumn(gi);
-  });
   rerenderColumn(gi);
+
+  playTrack(
+    asset,
+    () => { stopAudio(); rerenderColumn(gi); },
+    () => { loadingCol = gi; rerenderColumn(gi); },
+    () => { loadingCol = -1; rerenderColumn(gi); }
+  );
 }
 
 // ─── Modals ───────────────────────────────────────────────────────────────────
@@ -469,13 +484,23 @@ function openArchive() {
 
 // ─── Game Logic ───────────────────────────────────────────────────────────────
 
+function _prewarmAnswerAudio(gi) {
+  const g = currentGroups[gi];
+  if (!g) return;
+  const ansIdx = g.covers.indexOf(g.answer);
+  const asset  = g.assets?.[ansIdx];
+  if (asset?.sourceType === 'direct' && asset?.audioUrl) {
+    prewarmDirectAudio(asset.audioUrl);
+  }
+}
+
 function resolveGuess(gi, pickedCv, pickedPos) {
   const correct = pickedCv.id === currentGroups[gi].answer.id;
   colStates[gi].solved    = true;
   colStates[gi].pickedId  = pickedCv.id;
   colStates[gi].pickedPos = pickedPos ?? null;
   colStates[gi].correct   = correct;
-  if (gi + 1 < 3) colStates[gi + 1].locked = false;
+  if (gi + 1 < 3) { colStates[gi + 1].locked = false; _prewarmAnswerAudio(gi + 1); }
 
   saveDayProgress(currentDateStr, colStates);
   updateScoreDisplay();

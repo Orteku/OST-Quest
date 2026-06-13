@@ -9,6 +9,7 @@
   "col_locked":          "Bloqueado",
   "col_play_hint":       "Pulsa ▶ para escuchar",
   "audio_unavailable":   "Audio no disponible para este grupo.",
+  "audio_loading":       "Cargando audio…",
   "guess_confirm":       "Es esta",
   "watch_on_yt":         "Ver en",
   "watch_on":            "Escuchar en",
