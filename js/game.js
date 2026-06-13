@@ -40,6 +40,12 @@ async function initGame(dateStr, archiveMode) {
   renderAll();
   startCountdownTicker();
 
+  // Pre-calentar SoundCloud si hay algún track del día que lo use
+  for (const g of currentGroups) {
+    const scAsset = g.assets?.find(a => a.sourceType === 'soundcloud');
+    if (scAsset?.audioUrl) { prewarmSoundCloud(scAsset.audioUrl); break; }
+  }
+
   // Si ya estaba terminado al recargar, mostrar end modal directamente
   if (saved && colStates.every(s => s.solved)) {
     gameFinished = true;

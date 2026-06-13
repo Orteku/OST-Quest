@@ -163,14 +163,13 @@ function playSoundCloud(url, startSeconds, onEnd) {
       _scIframe = document.createElement('iframe');
       _scIframe.allow = 'autoplay';
       _scIframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px';
-      _scIframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=false`;
+      _scIframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true`;
       document.body.appendChild(_scIframe);
       _scWidget = SC.Widget(_scIframe);
       _scWidget.bind(SC.Widget.Events.FINISH, () => {
         _cleanupSoundCloud();
         if (_scOnEnd) _scOnEnd();
       });
-      // Seek happens here (after play has started) instead of before play()
       _scWidget.bind(SC.Widget.Events.PLAY, () => {
         if (_scPendingSeek > 0) {
           _scWidget.seekTo(_scPendingSeek);
@@ -179,12 +178,13 @@ function playSoundCloud(url, startSeconds, onEnd) {
       });
     } else {
       _scWidget.unbind(SC.Widget.Events.READY);
-      _scWidget.load(url, { auto_play: false });
+      _scWidget.load(url, { auto_play: true });
     }
     _scWidget.bind(SC.Widget.Events.READY, function onScReady() {
       _scWidget.unbind(SC.Widget.Events.READY);
       _scWidget.setVolume(ytVolume);
-      _scWidget.play();
+      // No llamamos play() aquí — auto_play:true lo inicia el propio iframe
+      // evitando el bloqueo de autoplay de Chrome en callbacks asíncronos
       clearTimeout(_scEndTimer);
       _scEndTimer = setTimeout(() => { _cleanupSoundCloud(); if (_scOnEnd) _scOnEnd(); }, 32000);
     });
@@ -197,6 +197,29 @@ function stopSoundCloud() {
   if (_scWidget) {
     try { _scWidget.pause(); } catch (_) {}
   }
+}
+
+// Precarga la API y el iframe de SC antes de que el usuario pulse play
+function prewarmSoundCloud(url) {
+  _loadScApi(() => {
+    if (_scIframe) return;
+    _scIframe = document.createElement('iframe');
+    _scIframe.allow = 'autoplay';
+    _scIframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px';
+    _scIframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=false`;
+    document.body.appendChild(_scIframe);
+    _scWidget = SC.Widget(_scIframe);
+    _scWidget.bind(SC.Widget.Events.FINISH, () => {
+      _cleanupSoundCloud();
+      if (_scOnEnd) _scOnEnd();
+    });
+    _scWidget.bind(SC.Widget.Events.PLAY, () => {
+      if (_scPendingSeek > 0) {
+        _scWidget.seekTo(_scPendingSeek);
+        _scPendingSeek = 0;
+      }
+    });
+  });
 }
 
 // ─── API unificada ────────────────────────────────────────────────────────────
