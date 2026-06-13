@@ -171,6 +171,50 @@
       border-radius: 10px;
       box-shadow: 0 8px 48px rgba(0,0,0,0.8);
     }
+    .volume-ctrl {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+    }
+    .volume-slider-wrap {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.2s ease, opacity 0.2s ease;
+      opacity: 0;
+      display: flex;
+      justify-content: center;
+    }
+    .volume-ctrl:hover .volume-slider-wrap {
+      max-height: 110px;
+      opacity: 1;
+    }
+    #muteBtn {
+      font-size: 20px;
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      line-height: 1;
+      border-radius: 6px;
+    }
+    #muteBtn:hover { background: var(--panel2); }
+    #volumeSlider {
+      writing-mode: vertical-lr;
+      direction: rtl;
+      appearance: slider-vertical;
+      -webkit-appearance: slider-vertical;
+      width: 6px;
+      height: 90px;
+      cursor: pointer;
+      accent-color: var(--accent);
+      margin: 4px 0;
+    }
     .scroll-btns {
       position: fixed;
       bottom: 20px;
@@ -319,8 +363,14 @@
     .yt-row > label { min-width: 0; }
     .yt-row input { width: 100%; min-width: 0; }
     input[data-field="startSeconds"], #newStart { width: 65px; min-width: 0; }
-    .yt-row--extra { position: relative; }
-    .yt-row--extra > button.danger { position: absolute; left: -34px; bottom: 0; }
+    .track-block { display: flex; flex-direction: column; gap: 4px; }
+    .track-block + .track-block { margin-top: 6px; }
+    .track-block--extra { position: relative; }
+    .track-block--extra > button.danger { position: absolute; left: -34px; bottom: 0; }
+    .track-title-input { width: 100%; min-width: 0; font-size: 13px; }
+    .video-wrap--audio { display: flex; align-items: center; background: var(--panel2); }
+    .video-wrap--audio audio { width: 100%; }
+    .video-wrap--embed { aspect-ratio: unset; height: 166px; max-height: none; }
     label {
       display: grid;
       gap: 4px;
@@ -400,7 +450,7 @@
     }
     .add-row2 {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 65px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 65px;
       gap: 8px;
       align-items: end;
     }
@@ -466,15 +516,16 @@
     </div>
     <div style="display:flex;gap:6px">
       <a href="https://www.youtube.com" target="_blank" rel="noopener" style="background:#ff0000;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">YouTube</a>
+      <a href="https://soundcloud.com" target="_blank" rel="noopener" style="background:#ff5500;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">SoundCloud</a>
       <a href="https://www.igdb.com" target="_blank" rel="noopener" style="background:#8c44b0;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">IGDB</a>
+      <a href="https://downloads.khinsider.com/" target="_blank" rel="noopener" style="background:#111;color:#fff;border:1px solid #444;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Khinside</a>
+      <a href="https://archive.org" target="_blank" rel="noopener" style="background:#555;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Archive.org</a>
     </div>
   </div>
   <div class="toolbar">
     <button id="toggleAdd" class="success">Añadir entrada</button>
     <input id="search" type="search" placeholder="Buscar juego, ID, cover..." />
     <span id="searchStats" class="search-stats"></span>
-    <span id="incompletePill" class="pill warn" style="display:none">Incompletas: <strong id="countIncomplete">0</strong></span>
-    <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
     <div style="flex:1"></div>
     <input id="fileInput" type="file" accept=".js,.txt,.json" />
     <button id="sheetsBtn">↓ Google Sheets</button>
@@ -483,6 +534,9 @@
       <button id="downloadJs" class="primary">Descargar JS</button>
       <button id="downloadJson">JSON</button>
       <button id="downloadCsv">CSV</button>
+    </div>
+    <div id="pillRow" style="flex-basis:100%;display:none;gap:8px">
+      <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
     </div>
   </div>
   <div id="protocolWarn" class="notice" style="display:none;margin:8px 0 0;text-align:center">
@@ -537,7 +591,8 @@
         <label><span>Pop (1–6)</span><input id="newPop" type="number" min="1" max="6" step="1" value="5" /></label>
       </div>
       <div class="add-row2">
-        <label><span>YouTube ID o URL</span><input id="newYoutubeId" class="field-youtube" placeholder="dQw4w9WgXcQ o URL completa" /></label>
+        <label><span>Canción</span><input id="newTitle" placeholder="Canción (opcional)" /></label>
+        <label><input id="newYoutubeId" class="field-youtube" placeholder="YouTube, SoundCloud, Spotify, MP3…" /></label>
         <label><span>Inicio (m:ss)</span><input id="newStart" class="field-youtube" placeholder="0:00" value="0:00" /></label>
       </div>
     </div>
@@ -560,6 +615,13 @@
     <div id="custom-confirm-msg"></div>
     <div id="custom-confirm-btns"></div>
   </div>
+</div>
+
+<div class="volume-ctrl">
+  <div class="volume-slider-wrap">
+    <input type="range" id="volumeSlider" min="0" max="100" value="80" />
+  </div>
+  <button id="muteBtn" title="Silenciar / Restaurar volumen">🔊</button>
 </div>
 
 <div class="scroll-btns">
@@ -595,9 +657,13 @@
     });
   }
 
+  function updatePillRow() {
+    $("pillRow").style.display = $("dirtyPill").style.display !== "none" ? "flex" : "none";
+  }
   function setDirty(value = true) {
     dirty = value;
     $("dirtyPill").style.display = dirty ? "" : "none";
+    updatePillRow();
   }
 
   function escapeHtml(value) {
@@ -635,17 +701,66 @@
     return String(value || "").trim();
   }
 
+  function trackType(track) {
+    if (!track) return null;
+    if (track.soundcloudUrl) return 'soundcloud';
+    if (track.spotifyId)     return 'spotify';
+    if (track.mp3Url)        return 'mp3';
+    if (track.youtubeId)     return 'youtube';
+    return null;
+  }
+
+  function trackSourceVal(track) {
+    if (track.soundcloudUrl) return track.soundcloudUrl;
+    if (track.spotifyId)     return `https://open.spotify.com/track/${track.spotifyId}`;
+    if (track.mp3Url)        return track.mp3Url;
+    return track.youtubeId || '';
+  }
+
+  function detectSourceType(val) {
+    if (!val) return 'youtube';
+    if (/soundcloud\.com/.test(val)) return 'soundcloud';
+    if (/open\.spotify\.com\/track\/|spotify:track:/.test(val)) return 'spotify';
+    if (/\.(mp3|ogg|wav|aac|m4a|flac)(\?|$)/i.test(val)) return 'mp3';
+    if (/archive\.org\/(details|download)\//.test(val)) return 'mp3';
+    return 'youtube';
+  }
+
+  function normalizeAudioUrl(url) {
+    return url.replace('archive.org/details/', 'archive.org/download/');
+  }
+
+  function extractSpotifyId(val) {
+    const m = val.match(/open\.spotify\.com\/track\/([A-Za-z0-9]+)/);
+    if (m) return m[1];
+    const m2 = val.match(/spotify:track:([A-Za-z0-9]+)/);
+    if (m2) return m2[1];
+    return val;
+  }
+
+  function watchLabel(item) {
+    const type = trackType(item.tracks?.[0]);
+    if (type === 'soundcloud') return 'abrir en SoundCloud';
+    if (type === 'spotify')    return 'abrir en Spotify';
+    if (type === 'mp3')        return 'abrir MP3';
+    return 'abrir en YouTube';
+  }
+
   function embedSrc(item) {
     const track = item.tracks?.[0] ?? item;
     const id = encodeURIComponent(track.youtubeId || "");
     const start = Math.max(0, Number(track.startSeconds) || 0);
     const origin = location.protocol.startsWith("http") ? encodeURIComponent(location.origin) : "";
     const originParam = origin ? `&origin=${origin}` : "";
-    return `https://www.youtube.com/embed/${id}?start=${start}&rel=0&modestbranding=1${originParam}`;
+    return `https://www.youtube.com/embed/${id}?start=${start}&rel=0&modestbranding=1&enablejsapi=1${originParam}`;
   }
 
   function watchUrl(item) {
     const track = item.tracks?.[0] ?? item;
+    const type = trackType(track);
+    if (type === 'soundcloud') return track.soundcloudUrl;
+    if (type === 'spotify')    return `https://open.spotify.com/track/${track.spotifyId}`;
+    if (type === 'mp3')        return track.mp3Url;
     const id = encodeURIComponent(track.youtubeId || "");
     const start = Math.max(0, Number(track.startSeconds) || 0);
     return `https://www.youtube.com/watch?v=${id}&t=${start}s`;
@@ -653,23 +768,25 @@
 
   function tracksSectionHtml(tracks) {
     const rows = tracks.map((track, ti) => {
-      const ytVal = escapeHtml(track.youtubeId);
-      const stVal = escapeHtml(secondsToTime(track.startSeconds));
-      if (ti === 0) {
-        return `<div class="yt-row">
-          <label><span>YouTube ID o URL</span><input class="field-youtube" data-field="youtubeId" data-track="0" value="${ytVal}" /></label>
-          <label><span>Inicio (m:ss)</span><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="0" value="${stVal}" /></label>
-          <button class="small" data-action="loadTrack" data-track="0">Cargar</button>
+      const srcVal = escapeHtml(trackSourceVal(track));
+      const stVal  = escapeHtml(secondsToTime(track.startSeconds));
+      const titleVal = escapeHtml(track.title || "");
+      const isFirst = ti === 0;
+      const titleLabel = `<label><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>`;
+      const srcRow = `<div class="yt-row">
+          <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="YouTube, SoundCloud, Spotify, MP3…" value="${srcVal}" /></label>
+          <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
+          <button class="small" data-action="loadTrack" data-track="${ti}">Cargar</button>
         </div>`;
+      if (isFirst) {
+        return `<div class="track-block">${titleLabel}${srcRow}</div>`;
       }
-      return `<div class="yt-row yt-row--extra">
+      return `<div class="track-block track-block--extra">
         <button class="small danger" data-action="removeTrack" data-track="${ti}">✕</button>
-        <label><input class="field-youtube" data-field="youtubeId" data-track="${ti}" value="${ytVal}" /></label>
-        <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
-        <button class="small" data-action="loadTrack" data-track="${ti}">Cargar</button>
+        ${titleLabel}${srcRow}
       </div>`;
     }).join("");
-    return rows + `<button class="small" data-action="addTrack" style="margin-top:4px">+</button>`;
+    return rows + `<button class="small" data-action="addTrack" style="margin-top:6px">+</button>`;
   }
 
   function parseGameDb(text) {
@@ -720,16 +837,16 @@
   }
 
   function normalizeTracks(x) {
-    if (Array.isArray(x.tracks) && x.tracks.length > 0) {
-      return x.tracks.map(t => ({
-        youtubeId: extractYoutubeId(String(t.youtubeId ?? "")),
-        startSeconds: Math.max(0, Number(t.startSeconds) || 0)
-      }));
-    }
-    return [{
-      youtubeId: extractYoutubeId(String(x.youtubeId ?? "")),
-      startSeconds: Math.max(0, Number(x.startSeconds) || 0)
-    }];
+    const norm = t => ({
+      title:         String(t.title ?? "").trim(),
+      youtubeId:     extractYoutubeId(String(t.youtubeId ?? "")),
+      soundcloudUrl: String(t.soundcloudUrl ?? "").trim(),
+      spotifyId:     String(t.spotifyId ?? "").trim(),
+      mp3Url:        String(t.mp3Url ?? "").trim(),
+      startSeconds:  Math.max(0, Number(t.startSeconds) || 0),
+    });
+    if (Array.isArray(x.tracks) && x.tracks.length > 0) return x.tracks.map(norm);
+    return [norm(x)];
   }
 
   function normalizeDb(arr) {
@@ -764,9 +881,7 @@
     const visible = [...document.querySelectorAll(".row")].filter(r => !r.classList.contains("hidden")).length;
     const q = $("search").value.trim();
     $("searchStats").textContent = total === 0 ? "" : q ? `${visible} de ${total}` : `${total} entradas`;
-    const incomplete = db.filter(x => !x.game || !x.tracks?.[0]?.youtubeId).length;
-    $("countIncomplete").textContent = incomplete;
-    $("incompletePill").style.display = incomplete > 0 ? "" : "none";
+    updatePillRow();
   }
 
   function coverHtml(item) {
@@ -818,11 +933,8 @@
         </div>
 
         <div class="video-col">
-          <div class="video-wrap video-facade" data-src="${escapeHtml(embedSrc(item))}">
-            <img class="yt-thumb" src="https://img.youtube.com/vi/${escapeHtml(item.tracks[0].youtubeId)}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" />
-            <button class="yt-play" aria-label="Reproducir">▶</button>
-          </div>
-          <a class="watch-link" target="_blank" rel="noopener" href="${escapeHtml(watchUrl(item))}">abrir en YouTube</a>
+          ${initialVideoHtml(item)}
+          <a class="watch-link" target="_blank" rel="noopener" href="${escapeHtml(watchUrl(item))}">${watchLabel(item)}</a>
         </div>
       `;
 
@@ -830,6 +942,13 @@
     });
 
     list.appendChild(frag);
+    list.querySelectorAll('iframe[src*="soundcloud.com"]').forEach(iframe => {
+      const row = iframe.closest('.row');
+      if (!row) return;
+      const index = Number(row.dataset.index);
+      const track = db[index]?.tracks?.[0];
+      if (track) setupScIframe(iframe, track.startSeconds);
+    });
     applySearch();
     updateStats();
   }
@@ -842,15 +961,24 @@
     let value = input.value;
 
     if (trackIdx !== null) {
-      if (field === "youtubeId") value = extractYoutubeId(value);
-      if (field === "startSeconds") value = timeToSeconds(value);
-      db[index].tracks[trackIdx][field] = value;
-      if (field === "youtubeId") input.value = value;
-      if (field === "startSeconds") input.value = secondsToTime(value);
+      const track = db[index].tracks[trackIdx];
+      if (field === "source") {
+        const type = detectSourceType(value);
+        track.youtubeId = track.soundcloudUrl = track.spotifyId = track.mp3Url = "";
+        if (type === 'youtube')    { track.youtubeId = extractYoutubeId(value); input.value = track.youtubeId; }
+        if (type === 'soundcloud') { track.soundcloudUrl = value; }
+        if (type === 'spotify')    { track.spotifyId = extractSpotifyId(value); input.value = `https://open.spotify.com/track/${track.spotifyId}`; }
+        if (type === 'mp3')        { track.mp3Url = normalizeAudioUrl(value); input.value = track.mp3Url; }
+      } else if (field === "startSeconds") {
+        track.startSeconds = timeToSeconds(value);
+        input.value = secondsToTime(track.startSeconds);
+      } else if (field === "title") {
+        track.title = value;
+      }
       if (trackIdx === 0) {
         reloadRowVideo(row);
         const link = row.querySelector(".watch-link");
-        if (link) link.href = watchUrl(db[index]);
+        if (link) { link.href = watchUrl(db[index]); link.textContent = watchLabel(db[index]); }
       }
     } else {
       if (field === "cover") value = cleanUrl(value);
@@ -870,15 +998,115 @@
     updateStats();
   }
 
+  function currentVolume() { return Number($("volumeSlider").value); }
+
+  function applyVolume(vol) {
+    document.querySelectorAll('audio').forEach(el => el.volume = vol / 100);
+    document.querySelectorAll('iframe[src*="youtube.com/embed"]').forEach(iframe => {
+      try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [vol] }), '*'); } catch {}
+    });
+    document.querySelectorAll('iframe[src*="soundcloud.com"]').forEach(iframe => {
+      try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'setVolume', value: vol }), '*'); } catch {}
+    });
+  }
+
+  function setupScIframe(iframe, startSeconds, autoplay = false) {
+    let done = false;
+    function sendCommands() {
+      if (done) return;
+      done = true;
+      try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'setVolume', value: currentVolume() }), '*'); } catch {}
+      if (startSeconds > 0) {
+        setTimeout(() => {
+          try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'seekTo', value: startSeconds * 1000 }), '*'); } catch {}
+          if (autoplay) {
+            setTimeout(() => {
+              try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
+            }, 100);
+          }
+        }, 50);
+      } else if (autoplay) {
+        try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
+      }
+    }
+    const onMsg = (e) => {
+      try {
+        const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        if (d.soundcloud && d.method === 'ready' && e.source === iframe.contentWindow) {
+          window.removeEventListener('message', onMsg);
+          sendCommands();
+        }
+      } catch {}
+    };
+    window.addEventListener('message', onMsg);
+    iframe.addEventListener('load', () => setTimeout(() => { window.removeEventListener('message', onMsg); sendCommands(); }, 3000), { once: true });
+  }
+
+  function setupYtIframe(iframe) {
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [currentVolume()] }), '*'); } catch {}
+      }, 500);
+    }, { once: true });
+  }
+
+  function initialVideoHtml(item) {
+    const track = item.tracks?.[0];
+    const type = trackType(track);
+    if (type === 'youtube') {
+      return `<div class="video-wrap video-facade" data-src="${escapeHtml(embedSrc(item))}"><img class="yt-thumb" src="https://img.youtube.com/vi/${escapeHtml(track.youtubeId)}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button></div>`;
+    }
+    if (type === 'soundcloud') {
+      return `<div class="video-wrap video-wrap--embed"><iframe src="https://w.soundcloud.com/player/?url=${encodeURIComponent(track.soundcloudUrl)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&visual=false&color=%2328d7e8&api_widget=true" width="100%" height="100%" frameborder="0" scrolling="no" allow="autoplay"></iframe></div>`;
+    }
+    if (type === 'spotify') {
+      return `<div class="video-wrap video-wrap--embed"><iframe src="https://open.spotify.com/embed/track/${encodeURIComponent(track.spotifyId)}?theme=0" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe></div>`;
+    }
+    if (type === 'mp3') {
+      return `<div class="video-wrap video-wrap--audio"><audio controls src="${escapeHtml(track.mp3Url)}"></audio></div>`;
+    }
+    return `<div class="video-wrap"></div>`;
+  }
+
   function reloadRowVideo(row) {
     const index = Number(row.dataset.index);
     const item = db[index];
     const track = item.tracks[0];
     const wrap = row.querySelector(".video-wrap");
     if (!wrap) return;
-    wrap.classList.add("video-facade");
-    wrap.dataset.src = embedSrc(item);
-    wrap.innerHTML = `<img class="yt-thumb" src="https://img.youtube.com/vi/${encodeURIComponent(track.youtubeId)}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button>`;
+    const type = trackType(track);
+    wrap.className = "video-wrap";
+    wrap.dataset.src = "";
+    if (type === 'youtube') {
+      wrap.classList.add("video-facade");
+      wrap.dataset.src = embedSrc(item);
+      wrap.innerHTML = `<img class="yt-thumb" src="https://img.youtube.com/vi/${encodeURIComponent(track.youtubeId)}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button>`;
+    } else if (type === 'soundcloud') {
+      wrap.classList.add("video-wrap--embed");
+      const existingSc = wrap.querySelector('iframe[src*="soundcloud.com"]');
+      if (existingSc && existingSc.src.includes(encodeURIComponent(track.soundcloudUrl))) {
+        if (track.startSeconds > 0) {
+          try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'seekTo', value: track.startSeconds * 1000 }), '*'); } catch {}
+        }
+      } else {
+        wrap.innerHTML = `<iframe src="https://w.soundcloud.com/player/?url=${encodeURIComponent(track.soundcloudUrl)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&visual=false&color=%2328d7e8&api_widget=true" width="100%" height="100%" frameborder="0" scrolling="no" allow="autoplay"></iframe>`;
+        setupScIframe(wrap.querySelector('iframe'), track.startSeconds);
+      }
+    } else if (type === 'spotify') {
+      wrap.classList.add("video-wrap--embed");
+      wrap.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${encodeURIComponent(track.spotifyId)}?theme=0" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+    } else if (type === 'mp3') {
+      wrap.classList.add("video-wrap--audio");
+      wrap.innerHTML = `<audio controls src="${escapeHtml(track.mp3Url)}"></audio>`;
+      const audioEl = wrap.querySelector('audio');
+      audioEl.volume = 0.3;
+        $("volumeSlider").value = 30;
+        localStorage.setItem("ostquest_volume", 30);
+        updateMuteIcon();
+      if (track.startSeconds > 0) audioEl.addEventListener('loadedmetadata', () => { audioEl.currentTime = track.startSeconds; }, { once: true });
+    } else {
+      wrap.innerHTML = "";
+    }
   }
 
   function reloadRowCover(row) {
@@ -934,13 +1162,50 @@
       const track = db[index].tracks[ti];
       const wrap = row.querySelector(".video-wrap");
       if (!wrap) return;
-      const src = embedSrc({ tracks: [track] }) + "&autoplay=1";
-      wrap.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
-      wrap.classList.remove("video-facade");
+      const type = trackType(track);
+      wrap.className = "video-wrap";
+      if (type === 'youtube') {
+        const src = embedSrc({ tracks: [track] }) + "&autoplay=1";
+        wrap.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+        setupYtIframe(wrap.querySelector('iframe'));
+      } else if (type === 'soundcloud') {
+        wrap.classList.add("video-wrap--embed");
+        const existingSc = wrap.querySelector('iframe[src*="soundcloud.com"]');
+        if (existingSc) {
+          try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'setVolume', value: currentVolume() }), '*'); } catch {}
+          setTimeout(() => {
+            if (track.startSeconds > 0) {
+              try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'seekTo', value: track.startSeconds * 1000 }), '*'); } catch {}
+            }
+            setTimeout(() => {
+              try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
+            }, 100);
+          }, 50);
+        } else {
+          wrap.innerHTML = `<iframe src="https://w.soundcloud.com/player/?url=${encodeURIComponent(track.soundcloudUrl)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&visual=false&color=%2328d7e8&api_widget=true" width="100%" height="100%" frameborder="0" scrolling="no" allow="autoplay"></iframe>`;
+          setupScIframe(wrap.querySelector('iframe'), track.startSeconds, true);
+        }
+      } else if (type === 'spotify') {
+        wrap.classList.add("video-wrap--embed");
+        wrap.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${encodeURIComponent(track.spotifyId)}?theme=0" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+      } else if (type === 'mp3') {
+        wrap.classList.add("video-wrap--audio");
+        wrap.innerHTML = `<audio controls autoplay src="${escapeHtml(track.mp3Url)}"></audio>`;
+        const audioEl = wrap.querySelector('audio');
+        audioEl.volume = 0.3;
+        $("volumeSlider").value = 30;
+        localStorage.setItem("ostquest_volume", 30);
+        updateMuteIcon();
+        if (track.startSeconds > 0) audioEl.addEventListener('loadedmetadata', () => { audioEl.currentTime = track.startSeconds; }, { once: true });
+      }
+      if (ti === 0) {
+        const link = row.querySelector(".watch-link");
+        if (link) { link.href = watchUrl(db[index]); link.textContent = watchLabel(db[index]); }
+      }
     } else if (action === "reloadCover") {
       reloadRowCover(row);
     } else if (action === "addTrack") {
-      db[index].tracks.push({ youtubeId: "", startSeconds: 0 });
+      db[index].tracks.push({ title: "", youtubeId: "", soundcloudUrl: "", spotifyId: "", mp3Url: "", startSeconds: 0 });
       setDirty(true);
       row.querySelector(".tracks-section").innerHTML = tracksSectionHtml(db[index].tracks);
     } else if (action === "removeTrack") {
@@ -989,6 +1254,7 @@
   $("clearNew").addEventListener("click", () => {
     $("newGame").value = "";
     $("newCover").value = "";
+    $("newTitle").value = "";
     $("newYoutubeId").value = "";
     $("newStart").value = "0:00";
     $("newPop").value = 6;
@@ -998,16 +1264,25 @@
   $("addEntry").addEventListener("click", () => {
     const game = $("newGame").value.trim();
     const cover = cleanUrl($("newCover").value);
-    const youtubeId = extractYoutubeId($("newYoutubeId").value);
+    const title = $("newTitle").value.trim();
+    const sourceVal = $("newYoutubeId").value.trim();
     const startSeconds = timeToSeconds($("newStart").value);
     const pop = Math.max(1, Math.min(10, Number($("newPop").value) || 6));
     const year = Number($("newYear").value) || new Date().getFullYear();
 
     if (!game) return alert("Falta el nombre del juego.");
-    if (!youtubeId) return alert("Falta el YouTube ID.");
+    if (!sourceVal) return alert("Falta la fuente (YouTube, SoundCloud, Spotify o MP3).");
+
+    const type = detectSourceType(sourceVal);
+    const track = { title, startSeconds: type !== 'spotify' ? startSeconds : 0,
+      youtubeId: "", soundcloudUrl: "", spotifyId: "", mp3Url: "" };
+    if (type === 'youtube')    track.youtubeId = extractYoutubeId(sourceVal);
+    if (type === 'soundcloud') track.soundcloudUrl = sourceVal;
+    if (type === 'spotify')    track.spotifyId = extractSpotifyId(sourceVal);
+    if (type === 'mp3')        track.mp3Url = normalizeAudioUrl(sourceVal);
 
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
-    db.push({ id: maxId + 1, game, cover, pop, year, tracks: [{ youtubeId, startSeconds }] });
+    db.push({ id: maxId + 1, game, cover, pop, year, tracks: [track] });
     setDirty(true);
     $("clearNew").click();
     render();
@@ -1029,7 +1304,16 @@
   function toJs() {
     const lines = db.map(item => {
       const coverPart = item.cover ? ` cover: "${jsString(item.cover)}",` : "";
-      const tracksPart = item.tracks.map(t => `{ youtubeId: "${jsString(t.youtubeId)}", startSeconds: ${Number(t.startSeconds) || 0} }`).join(", ");
+      const tracksPart = item.tracks.map(t => {
+        const p = [];
+        if (t.title)         p.push(`title: "${jsString(t.title)}"`);
+        if (t.youtubeId)     { p.push(`youtubeId: "${jsString(t.youtubeId)}"`); p.push(`startSeconds: ${Number(t.startSeconds) || 0}`); }
+        if (t.soundcloudUrl) { p.push(`soundcloudUrl: "${jsString(t.soundcloudUrl)}"`); if (t.startSeconds > 0) p.push(`startSeconds: ${Number(t.startSeconds)}`); }
+        if (t.spotifyId)     p.push(`spotifyId: "${jsString(t.spotifyId)}"`);
+        if (t.mp3Url)        { p.push(`mp3Url: "${jsString(t.mp3Url)}"`); if (t.startSeconds > 0) p.push(`startSeconds: ${Number(t.startSeconds)}`); }
+        if (p.length === 0)  p.push(`youtubeId: "", startSeconds: 0`);
+        return `{ ${p.join(", ")} }`;
+      }).join(", ");
       return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0}, tracks: [${tracksPart}] },`;
     });
     return `const GAME_DB = [\n${lines.join("\n")}\n];\n`;
@@ -1076,6 +1360,37 @@
 
   $("newYear").value = new Date().getFullYear();
   if (location.protocol === "file:") $("protocolWarn").style.display = "";
+
+  const savedVol = localStorage.getItem("ostquest_volume");
+  if (savedVol !== null) $("volumeSlider").value = savedVol;
+
+  let _prevVol = currentVolume();
+  let _muted = false;
+
+  function updateMuteIcon() {
+    $("muteBtn").textContent = _muted || currentVolume() === 0 ? "🔇" : "🔊";
+  }
+
+  $("volumeSlider").addEventListener("input", () => {
+    _muted = false;
+    _prevVol = currentVolume();
+    localStorage.setItem("ostquest_volume", $("volumeSlider").value);
+    applyVolume(currentVolume());
+    updateMuteIcon();
+  });
+
+  $("muteBtn").addEventListener("click", () => {
+    if (_muted) {
+      $("volumeSlider").value = _prevVol || 80;
+      _muted = false;
+    } else {
+      _prevVol = currentVolume() || 80;
+      $("volumeSlider").value = 0;
+      _muted = true;
+    }
+    applyVolume(currentVolume());
+    updateMuteIcon();
+  });
 
   // ── Google Sheets import ────────────────────────────────────────────────────
 
