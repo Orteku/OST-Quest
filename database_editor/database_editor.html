@@ -519,7 +519,7 @@
       <a href="https://soundcloud.com" target="_blank" rel="noopener" style="background:#ff5500;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">SoundCloud</a>
       <a href="https://www.igdb.com" target="_blank" rel="noopener" style="background:#8c44b0;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">IGDB</a>
       <a href="https://downloads.khinsider.com/" target="_blank" rel="noopener" style="background:#111;color:#fff;border:1px solid #444;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Khinside</a>
-      <a href="https://archive.org" target="_blank" rel="noopener" style="background:#555;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Archive.org</a>
+      <a href="https://archive.org/details/audio" target="_blank" rel="noopener" style="background:#555;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Archive.org</a>
     </div>
   </div>
   <div class="toolbar">
@@ -619,7 +619,7 @@
 
 <div class="volume-ctrl">
   <div class="volume-slider-wrap">
-    <input type="range" id="volumeSlider" min="0" max="100" value="80" />
+    <input type="range" id="volumeSlider" min="0" max="100" value="25" />
   </div>
   <button id="muteBtn" title="Silenciar / Restaurar volumen">🔊</button>
 </div>
@@ -1099,10 +1099,7 @@
       wrap.classList.add("video-wrap--audio");
       wrap.innerHTML = `<audio controls src="${escapeHtml(track.mp3Url)}"></audio>`;
       const audioEl = wrap.querySelector('audio');
-      audioEl.volume = 0.3;
-        $("volumeSlider").value = 30;
-        localStorage.setItem("ostquest_volume", 30);
-        updateMuteIcon();
+      audioEl.volume = currentVolume() / 100;
       if (track.startSeconds > 0) audioEl.addEventListener('loadedmetadata', () => { audioEl.currentTime = track.startSeconds; }, { once: true });
     } else {
       wrap.innerHTML = "";
@@ -1192,10 +1189,7 @@
         wrap.classList.add("video-wrap--audio");
         wrap.innerHTML = `<audio controls autoplay src="${escapeHtml(track.mp3Url)}"></audio>`;
         const audioEl = wrap.querySelector('audio');
-        audioEl.volume = 0.3;
-        $("volumeSlider").value = 30;
-        localStorage.setItem("ostquest_volume", 30);
-        updateMuteIcon();
+        audioEl.volume = currentVolume() / 100;
         if (track.startSeconds > 0) audioEl.addEventListener('loadedmetadata', () => { audioEl.currentTime = track.startSeconds; }, { once: true });
       }
       if (ti === 0) {
