@@ -146,10 +146,7 @@ function renderColumn(gi, wrapper) {
     item.innerHTML = `
       <img src="${asset.cover || fallback}" alt="${cv.game}" loading="lazy"
            onerror="this.onerror=null;this.src='${fallback}'">
-      <span class="cover-item__label" style="font-size:${labelFs}">
-        <span class="cover-item__name">${cv.game}</span>
-        ${cv.year ? `<span class="cover-item__year">${cv.year}</span>` : ''}
-      </span>`;
+      <span class="cover-item__label" style="font-size:${labelFs}">${cv.game}</span>`;
 
     if (!st.locked) {
       if (!st.solved) {
@@ -251,7 +248,7 @@ function openGuessModal(gi, cv, ci) {
            onerror="this.onerror=null;this.src='${fallback}'">
     </div>
     <div class="modal__body">
-      <h2 class="modal__game-name">${cv.game}</h2>
+      <h2 class="modal__game-name">${cv.game}${cv.year ? `<span class="modal__game-year">${cv.year}</span>` : ''}</h2>
       <button class="btn btn--guess" id="confirm-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
           <polyline points="20 6 9 17 4 12"/>
@@ -315,7 +312,7 @@ function openInfoModal(cv, asset) {
            onerror="this.onerror=null;this.src='${fallback}'">
     </div>
     <div class="modal__body">
-      <h2 class="modal__game-name">${cv.game}</h2>
+      <h2 class="modal__game-name">${cv.game}${cv.year ? `<span class="modal__game-year">${cv.year}</span>` : ''}</h2>
       ${_buildMediaWidget(asset, false)}
     </div>`;
 
@@ -340,7 +337,7 @@ function openResultModal(gi, pickedCv, isCorrect) {
            onerror="this.onerror=null;this.src='${fallback}'">
     </div>
     <div class="modal__body">
-      <h2 class="modal__game-name">${g.answer.game}</h2>
+      <h2 class="modal__game-name">${g.answer.game}${g.answer.year ? `<span class="modal__game-year">${g.answer.year}</span>` : ''}</h2>
       <button class="btn ${btnClass}" disabled>${btnText}</button>
       <div class="modal__result-info">
         <p class="modal__result-text">${msg}</p>
