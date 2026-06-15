@@ -1010,7 +1010,17 @@
     });
   }
 
-  function setupScIframe(iframe, startSeconds, autoplay = false) {
+  function stopAllMedia() {
+    document.querySelectorAll('audio').forEach(a => a.pause());
+    document.querySelectorAll('iframe[src*="youtube.com/embed"]').forEach(iframe => {
+      try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*'); } catch {}
+    });
+    document.querySelectorAll('iframe[src*="soundcloud.com"]').forEach(iframe => {
+      try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'pause' }), '*'); } catch {}
+    });
+  }
+
+  function setupScIframe(iframe, startSeconds, autoplay = false, onReady = null) {
     let done = false;
     function sendCommands() {
       if (done) return;
@@ -1022,12 +1032,14 @@
           if (autoplay) {
             setTimeout(() => {
               try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
+              if (onReady) onReady();
             }, 100);
-          }
+          } else if (onReady) onReady();
         }, 50);
       } else if (autoplay) {
         try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
-      }
+        if (onReady) onReady();
+      } else if (onReady) onReady();
     }
     const onMsg = (e) => {
       try {
@@ -1142,6 +1154,7 @@
 
     const facade = e.target.closest(".video-facade");
     if (facade) {
+      stopAllMedia();
       const src = facade.dataset.src + "&autoplay=1";
       facade.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
       facade.classList.remove("video-facade");
@@ -1159,11 +1172,19 @@
       const track = db[index].tracks[ti];
       const wrap = row.querySelector(".video-wrap");
       if (!wrap) return;
+
+      stopAllMedia();
+      const origText = btn.textContent;
+      btn.textContent = "Cargando…";
+      btn.disabled = true;
+      const restoreBtn = () => { btn.textContent = origText; btn.disabled = false; };
+
       const type = trackType(track);
       wrap.className = "video-wrap";
       if (type === 'youtube') {
         const src = embedSrc({ tracks: [track] }) + "&autoplay=1";
         wrap.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+        wrap.querySelector('iframe').addEventListener('load', restoreBtn, { once: true });
         setupYtIframe(wrap.querySelector('iframe'));
       } else if (type === 'soundcloud') {
         wrap.classList.add("video-wrap--embed");
@@ -1176,20 +1197,23 @@
             }
             setTimeout(() => {
               try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
+              restoreBtn();
             }, 100);
           }, 50);
         } else {
           wrap.innerHTML = `<iframe src="https://w.soundcloud.com/player/?url=${encodeURIComponent(track.soundcloudUrl)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&visual=false&color=%2328d7e8&api_widget=true" width="100%" height="100%" frameborder="0" scrolling="no" allow="autoplay"></iframe>`;
-          setupScIframe(wrap.querySelector('iframe'), track.startSeconds, true);
+          setupScIframe(wrap.querySelector('iframe'), track.startSeconds, true, restoreBtn);
         }
       } else if (type === 'spotify') {
         wrap.classList.add("video-wrap--embed");
         wrap.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${encodeURIComponent(track.spotifyId)}?theme=0" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+        wrap.querySelector('iframe').addEventListener('load', restoreBtn, { once: true });
       } else if (type === 'mp3') {
         wrap.classList.add("video-wrap--audio");
         wrap.innerHTML = `<audio controls autoplay src="${escapeHtml(track.mp3Url)}"></audio>`;
         const audioEl = wrap.querySelector('audio');
         audioEl.volume = currentVolume() / 100;
+        audioEl.addEventListener('canplay', restoreBtn, { once: true });
         if (track.startSeconds > 0) audioEl.addEventListener('loadedmetadata', () => { audioEl.currentTime = track.startSeconds; }, { once: true });
       }
       if (ti === 0) {
