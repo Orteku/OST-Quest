@@ -146,7 +146,10 @@ function renderColumn(gi, wrapper) {
     item.innerHTML = `
       <img src="${asset.cover || fallback}" alt="${cv.game}" loading="lazy"
            onerror="this.onerror=null;this.src='${fallback}'">
-      <span class="cover-item__label" style="font-size:${labelFs}">${cv.game}</span>`;
+      <span class="cover-item__label" style="font-size:${labelFs}">
+        <span class="cover-item__name">${cv.game}</span>
+        ${cv.year ? `<span class="cover-item__year">${cv.year}</span>` : ''}
+      </span>`;
 
     if (!st.locked) {
       if (!st.solved) {

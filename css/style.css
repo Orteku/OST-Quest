@@ -231,11 +231,24 @@ ul, li { list-style: none; }
   opacity: 0;
   transition: opacity 0.18s;
   line-height: 1.3;
-  text-align: center;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+.cover-item__name {
+  flex: 1;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+}
+.cover-item__year {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 400;
+  color: #a0a090;
+  white-space: nowrap;
+  line-height: 1.6;
 }
 .cover-item:hover .cover-item__label { opacity: 1; }
 
