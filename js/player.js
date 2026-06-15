@@ -1,11 +1,10 @@
-// OST Quest - YouTube IFrame API Player
+// OST Quest - Unified Audio Player (YouTube / HTML5 / SoundCloud)
 
-let ytPlayer     = null;
-let ytApiReady   = false;
-let ytPending    = null;
-let ytOnEnd      = null;
-let ytEndTimer   = null;
-let ytVolume     = 80; // 0-100, persiste entre reproducciones
+let ytPlayer   = null;
+let ytApiReady = false;
+let ytPending  = null;
+let ytOnEnd    = null;
+let ytVolume   = 80; // 0-100
 
 window.onYouTubeIframeAPIReady = function () {
   ytApiReady = true;
@@ -25,7 +24,11 @@ function onPlayerReady() {
 }
 
 function onPlayerStateChange(e) {
-  if (e.data === YT.PlayerState.ENDED) { _cleanup(); if (ytOnEnd) ytOnEnd(); }
+  if (e.data === YT.PlayerState.ENDED) {
+    const cb = ytOnEnd; ytOnEnd = null;
+    _cleanupPreview();
+    if (cb) cb();
+  }
 }
 
 function _doPlay(videoId, startSeconds, onEnd) {
@@ -33,12 +36,7 @@ function _doPlay(videoId, startSeconds, onEnd) {
   ytPlayer.loadVideoById({ videoId, startSeconds: startSeconds || 0 });
   ytPlayer.setVolume(ytVolume);
   ytPlayer.playVideo();
-  clearTimeout(ytEndTimer);
-  ytEndTimer = setTimeout(() => { _cleanup(); if (ytOnEnd) ytOnEnd(); }, 30000);
-}
-
-function _cleanup() {
-  clearTimeout(ytEndTimer); ytEndTimer = null; ytOnEnd = null;
+  _startPreview(onEnd);
 }
 
 function playYouTube(videoId, startSeconds, onEnd) {
@@ -56,7 +54,7 @@ function playYouTube(videoId, startSeconds, onEnd) {
 }
 
 function stopYouTube() {
-  _cleanup(); ytPending = null;
+  ytOnEnd = null; ytPending = null;
   if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
     try { ytPlayer.stopVideo(); } catch (_) {}
   }
@@ -64,9 +62,7 @@ function stopYouTube() {
 
 function setYouTubeVolume(vol) {
   ytVolume = Math.max(0, Math.min(100, vol));
-  if (ytPlayer && typeof ytPlayer.setVolume === 'function') {
-    ytPlayer.setVolume(ytVolume);
-  }
+  if (ytPlayer && typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(ytVolume);
   if (_audioEl) _audioEl.volume = ytVolume / 100;
   if (_scWidget) { try { _scWidget.setVolume(ytVolume); } catch (_) {} }
   localStorage.setItem('ostquest_vol', ytVolume);
@@ -81,18 +77,70 @@ function youtubeThumbnail(videoId) {
   return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 }
 
-// ─── HTML5 audio (para URLs directas tipo archive.org / Khinsider) ───────────
+// ─── Preview: 30 s con fade out en los últimos 3 s ───────────────────────────
 
-let _audioEl            = null;
-let _audioOnEnd         = null;
-let _audioEndTimer      = null;
-const _audioPreloadCache = new Map(); // url → Audio (precacheado)
+const PREVIEW_MS   = 30000;
+const FADE_MS      = 3000;
+const FADE_STEPS   = 20;
+
+let _previewStopTimer    = null;
+let _previewFadeInterval = null;
+
+function _applyFadeRatio(ratio) {
+  const vol = ytVolume * ratio;
+  if (ytPlayer && typeof ytPlayer.setVolume === 'function') {
+    try { ytPlayer.setVolume(vol); } catch (_) {}
+  }
+  if (_audioEl) _audioEl.volume = vol / 100;
+  if (_scWidget) { try { _scWidget.setVolume(vol); } catch (_) {} }
+}
+
+function _startPreview(onEnd) {
+  _cleanupPreview();
+  _previewStopTimer = setTimeout(() => {
+    let step = 0;
+    _previewFadeInterval = setInterval(() => {
+      step++;
+      _applyFadeRatio(1 - step / FADE_STEPS);
+      if (step >= FADE_STEPS) {
+        clearInterval(_previewFadeInterval);
+        _previewFadeInterval = null;
+        _stopAllPlayers();
+        _applyFadeRatio(1);
+        if (onEnd) onEnd();
+      }
+    }, FADE_MS / FADE_STEPS);
+  }, PREVIEW_MS - FADE_MS);
+}
+
+function _cleanupPreview() {
+  clearTimeout(_previewStopTimer);
+  clearInterval(_previewFadeInterval);
+  _previewStopTimer    = null;
+  _previewFadeInterval = null;
+  _applyFadeRatio(1);
+}
+
+function _stopAllPlayers() {
+  if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
+    try { ytPlayer.stopVideo(); } catch (_) {}
+  }
+  if (_audioEl) _audioEl.pause();
+  if (_scWidget) { try { _scWidget.pause(); } catch (_) {} }
+}
+
+// ─── HTML5 audio (archive.org / Khinsider / Spotify previews) ────────────────
+
+let _audioEl             = null;
+let _audioOnEnd          = null;
+const _audioPreloadCache = new Map();
 
 function _makeAudioEl() {
   const el = new Audio();
   el.addEventListener('ended', () => {
-    _cleanupDirectAudio();
-    if (_audioOnEnd) _audioOnEnd();
+    const cb = _audioOnEnd; _audioOnEnd = null;
+    _cleanupPreview();
+    if (cb) cb();
   });
   return el;
 }
@@ -100,12 +148,6 @@ function _makeAudioEl() {
 function _getAudioEl() {
   if (!_audioEl) _audioEl = _makeAudioEl();
   return _audioEl;
-}
-
-function _cleanupDirectAudio() {
-  clearTimeout(_audioEndTimer);
-  _audioEndTimer = null;
-  _audioOnEnd    = null;
 }
 
 function prewarmDirectAudio(url) {
@@ -117,10 +159,9 @@ function prewarmDirectAudio(url) {
 }
 
 function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying) {
-  _cleanupDirectAudio();
+  _audioOnEnd = null;
   if (_audioEl) _audioEl.pause();
 
-  // Usar elemento precacheado si existe, si no crear uno nuevo
   const cached = _audioPreloadCache.get(url);
   if (cached) {
     if (_audioEl && _audioEl !== cached) _audioEl.src = '';
@@ -131,8 +172,8 @@ function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying) {
     _audioEl.src = url;
   }
 
-  _audioOnEnd      = onEnd;
-  _audioEl.volume  = ytVolume / 100;
+  _audioOnEnd     = onEnd;
+  _audioEl.volume = ytVolume / 100;
 
   if (startSeconds) {
     if (_audioEl.readyState >= 1) {
@@ -159,12 +200,11 @@ function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying) {
   }
 
   _audioEl.play().catch(() => {});
-  clearTimeout(_audioEndTimer);
-  _audioEndTimer = setTimeout(() => { _cleanupDirectAudio(); if (onEnd) onEnd(); }, 32000);
+  _startPreview(onEnd);
 }
 
 function _stopDirectAudio() {
-  _cleanupDirectAudio();
+  _audioOnEnd = null;
   if (_audioEl) { _audioEl.pause(); _audioEl.src = ''; }
 }
 
@@ -173,10 +213,9 @@ function _stopDirectAudio() {
 let _scWidget      = null;
 let _scIframe      = null;
 let _scOnEnd       = null;
-let _scEndTimer    = null;
 let _scApiLoaded   = false;
 let _scApiQueue    = [];
-let _scPendingSeek = 0; // ms; applied on first PLAY event after load
+let _scPendingSeek = 0;
 
 function _loadScApi(cb) {
   if (_scApiLoaded) { cb(); return; }
@@ -192,12 +231,6 @@ function _loadScApi(cb) {
   document.head.appendChild(tag);
 }
 
-function _cleanupSoundCloud() {
-  clearTimeout(_scEndTimer);
-  _scEndTimer = null;
-  _scOnEnd    = null;
-}
-
 function playSoundCloud(url, startSeconds, onEnd) {
   _scOnEnd       = onEnd;
   _scPendingSeek = startSeconds ? startSeconds * 1000 : 0;
@@ -210,8 +243,9 @@ function playSoundCloud(url, startSeconds, onEnd) {
       document.body.appendChild(_scIframe);
       _scWidget = SC.Widget(_scIframe);
       _scWidget.bind(SC.Widget.Events.FINISH, () => {
-        _cleanupSoundCloud();
-        if (_scOnEnd) _scOnEnd();
+        const cb = _scOnEnd; _scOnEnd = null;
+        _cleanupPreview();
+        if (cb) cb();
       });
       _scWidget.bind(SC.Widget.Events.PLAY, () => {
         if (_scPendingSeek > 0) {
@@ -226,23 +260,17 @@ function playSoundCloud(url, startSeconds, onEnd) {
     _scWidget.bind(SC.Widget.Events.READY, function onScReady() {
       _scWidget.unbind(SC.Widget.Events.READY);
       _scWidget.setVolume(ytVolume);
-      // No llamamos play() aquí — auto_play:true lo inicia el propio iframe
-      // evitando el bloqueo de autoplay de Chrome en callbacks asíncronos
-      clearTimeout(_scEndTimer);
-      _scEndTimer = setTimeout(() => { _cleanupSoundCloud(); if (_scOnEnd) _scOnEnd(); }, 32000);
+      _startPreview(_scOnEnd);
     });
   });
 }
 
 function stopSoundCloud() {
   _scPendingSeek = 0;
-  _cleanupSoundCloud();
-  if (_scWidget) {
-    try { _scWidget.pause(); } catch (_) {}
-  }
+  _scOnEnd = null;
+  if (_scWidget) { try { _scWidget.pause(); } catch (_) {} }
 }
 
-// Precarga la API y el iframe de SC antes de que el usuario pulse play
 function prewarmSoundCloud(url) {
   _loadScApi(() => {
     if (_scIframe) return;
@@ -253,8 +281,9 @@ function prewarmSoundCloud(url) {
     document.body.appendChild(_scIframe);
     _scWidget = SC.Widget(_scIframe);
     _scWidget.bind(SC.Widget.Events.FINISH, () => {
-      _cleanupSoundCloud();
-      if (_scOnEnd) _scOnEnd();
+      const cb = _scOnEnd; _scOnEnd = null;
+      _cleanupPreview();
+      if (cb) cb();
     });
     _scWidget.bind(SC.Widget.Events.PLAY, () => {
       if (_scPendingSeek > 0) {
@@ -280,6 +309,7 @@ function playTrack(asset, onEnd, onWaiting, onPlaying) {
 }
 
 function stopTrack() {
+  _cleanupPreview();
   stopYouTube();
   _stopDirectAudio();
   stopSoundCloud();
