@@ -969,9 +969,13 @@
         if (type === 'soundcloud') { track.soundcloudUrl = value; }
         if (type === 'spotify')    { track.spotifyId = extractSpotifyId(value); input.value = `https://open.spotify.com/track/${track.spotifyId}`; }
         if (type === 'mp3')        { track.mp3Url = normalizeAudioUrl(value); input.value = track.mp3Url; }
+        const loadBtn = row.querySelector(`button[data-action="loadTrack"][data-track="${trackIdx}"]`);
+        if (loadBtn) { loadBtn.textContent = "Cargar"; loadBtn.disabled = false; }
       } else if (field === "startSeconds") {
         track.startSeconds = timeToSeconds(value);
         input.value = secondsToTime(track.startSeconds);
+        const loadBtn = row.querySelector(`button[data-action="loadTrack"][data-track="${trackIdx}"]`);
+        if (loadBtn) { loadBtn.textContent = "Cargar"; loadBtn.disabled = false; }
       } else if (field === "title") {
         track.title = value;
       }
