@@ -694,7 +694,7 @@
       const m = s.match(re);
       if (m) return m[1].slice(0, 20);
     }
-    return s.replace(/[^\w-]/g, "").slice(0, 20);
+    return s;
   }
 
   function cleanUrl(value) {
@@ -748,7 +748,7 @@
 
   function embedSrc(item) {
     const track = item.tracks?.[0] ?? item;
-    const id = encodeURIComponent(track.youtubeId || "");
+    const id = encodeURIComponent(extractYoutubeId(track.youtubeId) || "");
     const start = Math.max(0, Number(track.startSeconds) || 0);
     const origin = location.protocol.startsWith("http") ? encodeURIComponent(location.origin) : "";
     const originParam = origin ? `&origin=${origin}` : "";
@@ -761,7 +761,7 @@
     if (type === 'soundcloud') return track.soundcloudUrl;
     if (type === 'spotify')    return `https://open.spotify.com/track/${track.spotifyId}`;
     if (type === 'mp3')        return track.mp3Url;
-    const id = encodeURIComponent(track.youtubeId || "");
+    const id = encodeURIComponent(extractYoutubeId(track.youtubeId) || "");
     const start = Math.max(0, Number(track.startSeconds) || 0);
     return `https://www.youtube.com/watch?v=${id}&t=${start}s`;
   }
@@ -839,7 +839,7 @@
   function normalizeTracks(x) {
     const norm = t => ({
       title:         String(t.title ?? "").trim(),
-      youtubeId:     extractYoutubeId(String(t.youtubeId ?? "")),
+      youtubeId:     String(t.youtubeId ?? "").trim(),
       soundcloudUrl: String(t.soundcloudUrl ?? "").trim(),
       spotifyId:     String(t.spotifyId ?? "").trim(),
       mp3Url:        String(t.mp3Url ?? "").trim(),
@@ -965,7 +965,7 @@
       if (field === "source") {
         const type = detectSourceType(value);
         track.youtubeId = track.soundcloudUrl = track.spotifyId = track.mp3Url = "";
-        if (type === 'youtube')    { track.youtubeId = extractYoutubeId(value); input.value = track.youtubeId; }
+        if (type === 'youtube')    { track.youtubeId = value; }
         if (type === 'soundcloud') { track.soundcloudUrl = value; }
         if (type === 'spotify')    { track.spotifyId = extractSpotifyId(value); input.value = `https://open.spotify.com/track/${track.spotifyId}`; }
         if (type === 'mp3')        { track.mp3Url = normalizeAudioUrl(value); input.value = track.mp3Url; }
@@ -1070,7 +1070,7 @@
     const track = item.tracks?.[0];
     const type = trackType(track);
     if (type === 'youtube') {
-      return `<div class="video-wrap video-facade" data-src="${escapeHtml(embedSrc(item))}"><img class="yt-thumb" src="https://img.youtube.com/vi/${escapeHtml(track.youtubeId)}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button></div>`;
+      return `<div class="video-wrap video-facade" data-src="${escapeHtml(embedSrc(item))}"><img class="yt-thumb" src="https://img.youtube.com/vi/${escapeHtml(extractYoutubeId(track.youtubeId))}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button></div>`;
     }
     if (type === 'soundcloud') {
       return `<div class="video-wrap video-wrap--embed"><iframe src="https://w.soundcloud.com/player/?url=${encodeURIComponent(track.soundcloudUrl)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&visual=false&color=%2328d7e8&api_widget=true" width="100%" height="100%" frameborder="0" scrolling="no" allow="autoplay"></iframe></div>`;
@@ -1096,7 +1096,7 @@
     if (type === 'youtube') {
       wrap.classList.add("video-facade");
       wrap.dataset.src = embedSrc(item);
-      wrap.innerHTML = `<img class="yt-thumb" src="https://img.youtube.com/vi/${encodeURIComponent(track.youtubeId)}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button>`;
+      wrap.innerHTML = `<img class="yt-thumb" src="https://img.youtube.com/vi/${encodeURIComponent(extractYoutubeId(track.youtubeId))}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button>`;
     } else if (type === 'soundcloud') {
       wrap.classList.add("video-wrap--embed");
       const existingSc = wrap.querySelector('iframe[src*="soundcloud.com"]');
@@ -1298,7 +1298,7 @@
     const type = detectSourceType(sourceVal);
     const track = { title, startSeconds: type !== 'spotify' ? startSeconds : 0,
       youtubeId: "", soundcloudUrl: "", spotifyId: "", mp3Url: "" };
-    if (type === 'youtube')    track.youtubeId = extractYoutubeId(sourceVal);
+    if (type === 'youtube')    track.youtubeId = sourceVal;
     if (type === 'soundcloud') track.soundcloudUrl = sourceVal;
     if (type === 'spotify')    track.spotifyId = extractSpotifyId(sourceVal);
     if (type === 'mp3')        track.mp3Url = normalizeAudioUrl(sourceVal);
