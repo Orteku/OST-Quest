@@ -42,6 +42,14 @@
     </div>
   </header>
 
+  <button class="icon-btn icon-btn--ghost" id="btn-help" aria-label="Ayuda">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-width="2.5"/>
+    </svg>
+  </button>
+
 
   <!-- Score bar hidden, values kept for JS -->
   <div class="score-bar">
@@ -62,10 +70,19 @@
         <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="80">
       </div>
     </div>
-    <select class="lang-select" id="lang-select" aria-label="Idioma">
-      <option value="es">Español</option>
-      <option value="en">English</option>
-    </select>
+    <div class="lang-dropdown" id="lang-dropdown">
+      <button class="lang-dropdown__btn" id="lang-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+        <span id="lang-dropdown-flag">🇪🇸</span>
+        <span id="lang-dropdown-label">Español</span>
+        <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="lang-dropdown__chevron">
+          <path d="M1 1l4 4 4-4"/>
+        </svg>
+      </button>
+      <div class="lang-dropdown__menu" id="lang-dropdown-menu">
+        <button class="lang-dropdown__option" data-lang="es"><span>🇪🇸</span> Español</button>
+        <button class="lang-dropdown__option" data-lang="en"><span>🇬🇧</span> English</button>
+      </div>
+    </div>
   </div>
 
   <div id="loading-screen">

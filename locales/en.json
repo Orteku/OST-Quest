@@ -39,6 +39,15 @@
     "EZ clap",
     "You're a legend!"
   ],
+  "tutorial_title":    "How to play",
+  "tutorial_listen_h": "Listen",
+  "tutorial_listen_b": "Press ▶ to play a 30-second clip from the game's soundtrack.",
+  "tutorial_guess_h":  "Guess",
+  "tutorial_guess_b":  "Pick the cover of the game you think the music belongs to.",
+  "tutorial_unlock_h": "Advance",
+  "tutorial_unlock_b": "There are 3 rounds. Answering one unlocks the next.",
+  "tutorial_score_h":  "Score",
+  "tutorial_score_b":  "Earn a HIT if correct, MISS if wrong. Try to get all 3!",
   "msg_fail": [
     "Bad luck",
     "Next time",

@@ -334,6 +334,42 @@ function openGuessModal(gi, cv, ci) {
   openModal();
 }
 
+// ─── Tutorial ────────────────────────────────────────────────────────────────
+
+function openTutorialModal() {
+  document.getElementById('modal-inner').innerHTML = `
+    <button class="modal__close-x" id="tutorial-close">&times;</button>
+    <div class="modal__body">
+      <h2 class="modal__tutorial-title">${t('tutorial_title')}</h2>
+      <ul class="tutorial-steps">
+        <li>
+          <span class="tutorial-step__icon">▶</span>
+          <div><strong>${t('tutorial_listen_h')}</strong><p>${t('tutorial_listen_b')}</p></div>
+        </li>
+        <li>
+          <span class="tutorial-step__icon">?</span>
+          <div><strong>${t('tutorial_guess_h')}</strong><p>${t('tutorial_guess_b')}</p></div>
+        </li>
+        <li>
+          <span class="tutorial-step__icon">🔓</span>
+          <div><strong>${t('tutorial_unlock_h')}</strong><p>${t('tutorial_unlock_b')}</p></div>
+        </li>
+        <li>
+          <span class="tutorial-step__icon tutorial-step__icon--score">
+            <span class="tutorial-hit">HIT</span><span class="tutorial-miss">MISS</span>
+          </span>
+          <div><strong>${t('tutorial_score_h')}</strong><p>${t('tutorial_score_b')}</p></div>
+        </li>
+      </ul>
+    </div>`;
+
+  document.getElementById('tutorial-close').addEventListener('click', () => {
+    localStorage.setItem('ostquest_tutorial', '1');
+    closeModal();
+  });
+  openModal();
+}
+
 // ─── Media widget helpers ─────────────────────────────────────────────────────
 
 const _YT_ICON  = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>`;
@@ -732,7 +768,19 @@ function showToast(msg) {
 document.addEventListener('DOMContentLoaded', async () => {
   await initI18n();
 
-  document.getElementById('lang-select').addEventListener('change', e => setLang(e.target.value));
+  const langDropdown = document.getElementById('lang-dropdown');
+  document.getElementById('lang-dropdown-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    const open = langDropdown.classList.toggle('lang-dropdown--open');
+    e.currentTarget.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.lang-dropdown__option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setLang(btn.dataset.lang);
+      langDropdown.classList.remove('lang-dropdown--open');
+    });
+  });
+  document.addEventListener('click', () => langDropdown.classList.remove('lang-dropdown--open'));
 
   const today = getGameDay();
 
@@ -746,6 +794,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('btn-stats').addEventListener('click', openStatsModal);
   document.getElementById('btn-archive').addEventListener('click', openArchive);
+  document.getElementById('btn-help').addEventListener('click', openTutorialModal);
   document.getElementById('btn-today').addEventListener('click', () => {
     stopAudio();
     const banner = document.getElementById('archive-banner');
@@ -753,9 +802,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     initGame(today, false);
   });
 
+  if (!localStorage.getItem('ostquest_tutorial')) openTutorialModal();
+
   initGame(today, false);
-
-
 
   // Volume control
   const volSlider  = document.getElementById('vol-slider');

@@ -25,8 +25,13 @@ function _applyDOM() {
     const v = _t[el.dataset.i18nAria];
     if (typeof v === 'string') el.setAttribute('aria-label', v);
   });
-  const sel = document.getElementById('lang-select');
-  if (sel) sel.value = _lang;
+  const flag  = document.getElementById('lang-dropdown-flag');
+  const label = document.getElementById('lang-dropdown-label');
+  if (flag)  flag.textContent  = _lang === 'es' ? '🇪🇸' : '🇬🇧';
+  if (label) label.textContent = _lang === 'es' ? 'Español' : 'English';
+  document.querySelectorAll('.lang-dropdown__option').forEach(btn => {
+    btn.classList.toggle('lang-dropdown__option--active', btn.dataset.lang === _lang);
+  });
   document.documentElement.lang = _lang;
 }
 
