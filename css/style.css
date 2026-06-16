@@ -22,7 +22,7 @@ ul, li { list-style: none; }
 .app-wrapper {
   max-width: 760px;
   margin: 0 auto;
-  padding: 0 12px 40px;
+  padding: 0 12px 16px;
 }
 
 /* ─── Header ───────────────────────────────────────────────────────────────── */
@@ -696,6 +696,20 @@ ul, li { list-style: none; }
   text-align: center;
 }
 #toast.toast--show { transform: translateX(-50%) translateY(0); }
+
+/* ─── Footer ─────────────────────────────────────────────────────────────────── */
+.site-footer {
+  margin-top: 20px;
+  padding-bottom: 12px;
+  text-align: center;
+}
+.site-footer p {
+  font-family: 'Barlow', sans-serif;
+  font-size: 11px;
+  color: #55555f;
+  margin: 3px 0;
+  line-height: 1.4;
+}
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 520px) {
