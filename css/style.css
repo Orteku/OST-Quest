@@ -405,12 +405,61 @@ ul, li { list-style: none; }
   color: #b8e030;
 }
 
-/* Inline audio player */
-.modal__audio-player {
-  width: 100%;
-  margin-top: 4px;
-  accent-color: #b8e030;
-  border-radius: 4px;
+/* Custom audio player */
+.modal-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.modal-player__btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #b8e030;
+  color: #1a1b1f;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.modal-player__btn:hover { background: #caf040; }
+
+.modal-player__track {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.modal-player__bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  cursor: default;
+  position: relative;
+}
+.modal-player__fill {
+  height: 100%;
+  width: 0%;
+  background: #b8e030;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.modal-player__time {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #7a7a6e;
+  line-height: 1;
 }
 
 /* Modal close X button */
@@ -746,5 +795,36 @@ ul, li { list-style: none; }
   0%   { opacity: 1; transform: translateX(-50%) translateY(-50%) scale(1.3); }
   20%  { opacity: 1; transform: translateX(-50%) translateY(calc(-50% - 14px)) scale(1); }
   100% { opacity: 0; transform: translateX(-50%) translateY(calc(-50% - 80px)) scale(0.9); }
+}
+
+/* Wasted effect */
+.wasted-active .app-wrapper {
+  filter: grayscale(1);
+  transition: filter 0.5s ease;
+}
+
+.wasted-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+.wasted-overlay--fading { opacity: 0; }
+
+.wasted-img {
+  width: min(736px, calc(100vw - 24px));
+  height: auto;
+  animation: wasted-in 0.12s ease-out;
+}
+
+@keyframes wasted-in {
+  from { transform: scaleX(5); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
 }
 

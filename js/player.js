@@ -4,7 +4,7 @@ let ytPlayer   = null;
 let ytApiReady = false;
 let ytPending  = null;
 let ytOnEnd    = null;
-let ytVolume   = 80; // 0-100
+let gameVolume   = 80; // 0-100
 
 window.onYouTubeIframeAPIReady = function () {
   ytApiReady = true;
@@ -16,7 +16,7 @@ window.onYouTubeIframeAPIReady = function () {
 };
 
 function onPlayerReady() {
-  ytPlayer.setVolume(ytVolume);
+  ytPlayer.setVolume(gameVolume);
   if (ytPending) {
     const p = ytPending; ytPending = null;
     _doPlay(p.videoId, p.startSeconds, p.onEnd);
@@ -34,7 +34,7 @@ function onPlayerStateChange(e) {
 function _doPlay(videoId, startSeconds, onEnd) {
   ytOnEnd = onEnd;
   ytPlayer.loadVideoById({ videoId, startSeconds: startSeconds || 0 });
-  ytPlayer.setVolume(ytVolume);
+  ytPlayer.setVolume(gameVolume);
   ytPlayer.playVideo();
   _startPreview(onEnd);
 }
@@ -60,17 +60,17 @@ function stopYouTube() {
   }
 }
 
-function setYouTubeVolume(vol) {
-  ytVolume = Math.max(0, Math.min(100, vol));
-  if (ytPlayer && typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(ytVolume);
-  if (_audioEl) _audioEl.volume = ytVolume / 100;
-  if (_scWidget) { try { _scWidget.setVolume(ytVolume); } catch (_) {} }
-  localStorage.setItem('ostquest_vol', ytVolume);
+function setGameVolume(vol) {
+  gameVolume = Math.max(0, Math.min(100, vol));
+  if (ytPlayer && typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(gameVolume);
+  if (_audioEl) _audioEl.volume = gameVolume / 100;
+  if (_scWidget) { try { _scWidget.setVolume(gameVolume); } catch (_) {} }
+  localStorage.setItem('ostquest_vol', gameVolume);
 }
 
 function loadSavedVolume() {
   const saved = parseInt(localStorage.getItem('ostquest_vol'));
-  if (!isNaN(saved)) ytVolume = saved;
+  if (!isNaN(saved)) gameVolume = saved;
 }
 
 function youtubeThumbnail(videoId) {
@@ -87,7 +87,7 @@ let _previewStopTimer    = null;
 let _previewFadeInterval = null;
 
 function _applyFadeRatio(ratio) {
-  const vol = ytVolume * ratio;
+  const vol = gameVolume * ratio;
   if (ytPlayer && typeof ytPlayer.setVolume === 'function') {
     try { ytPlayer.setVolume(vol); } catch (_) {}
   }
@@ -173,7 +173,7 @@ function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying) {
   }
 
   _audioOnEnd     = onEnd;
-  _audioEl.volume = ytVolume / 100;
+  _audioEl.volume = gameVolume / 100;
 
   if (startSeconds) {
     if (_audioEl.readyState >= 1) {
@@ -259,7 +259,7 @@ function playSoundCloud(url, startSeconds, onEnd) {
     }
     _scWidget.bind(SC.Widget.Events.READY, function onScReady() {
       _scWidget.unbind(SC.Widget.Events.READY);
-      _scWidget.setVolume(ytVolume);
+      _scWidget.setVolume(gameVolume);
       _startPreview(_scOnEnd);
     });
   });
