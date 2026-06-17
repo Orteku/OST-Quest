@@ -351,14 +351,8 @@ function openTutorialModal() {
           <div><strong>${t('tutorial_guess_h')}</strong><p>${t('tutorial_guess_b')}</p></div>
         </li>
         <li>
-          <span class="tutorial-step__icon">🔓</span>
-          <div><strong>${t('tutorial_unlock_h')}</strong><p>${t('tutorial_unlock_b')}</p></div>
-        </li>
-        <li>
-          <span class="tutorial-step__icon tutorial-step__icon--score">
-            <span class="tutorial-hit">HIT</span><span class="tutorial-miss">MISS</span>
-          </span>
-          <div><strong>${t('tutorial_score_h')}</strong><p>${t('tutorial_score_b')}</p></div>
+          <span class="tutorial-step__icon">★</span>
+          <div><strong>${t('tutorial_daily_h')}</strong><p>${t('tutorial_daily_b')}</p></div>
         </li>
       </ul>
     </div>`;
