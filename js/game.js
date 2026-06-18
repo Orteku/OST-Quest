@@ -473,10 +473,13 @@ function openEndModal(score) {
 
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__end">
-      <div class="modal__end-score">
-        <span class="modal__end-num modal__end-num--${score}">${score}</span>
-        <span class="modal__end-denom">/ 3</span>
-      </div>
+      ${score === 0
+        ? `<img src="fx/wasted.png" alt="WASTED" class="modal__wasted-img">`
+        : `<div class="modal__end-score">
+             <span class="modal__end-num modal__end-num--${score}">${score}</span>
+             <span class="modal__end-denom">/ 3</span>
+           </div>`
+      }
       <p class="modal__end-label">${
         score === 3 ? t('end_3') :
         score === 2 ? t('end_2') :
@@ -501,6 +504,22 @@ function openEndModal(score) {
   });
   if (!isArchiveMode) tickEndCountdown();
   openModal();
+
+  if (score === 0) {
+    const sfx     = new Audio('fx/wasted.mp3');
+    const sfxVol  = (gameVolume / 100) * 0.35;
+    sfx.volume    = sfxVol;
+    sfx.play().catch(() => {});
+    const FADE_STEPS = 20, FADE_MS = 800;
+    setTimeout(() => {
+      let step = 0;
+      const iv = setInterval(() => {
+        step++;
+        try { sfx.volume = Math.max(0, sfxVol * (1 - step / FADE_STEPS)); } catch (_) {}
+        if (step >= FADE_STEPS) { clearInterval(iv); sfx.pause(); }
+      }, FADE_MS / FADE_STEPS);
+    }, 3000 - FADE_MS);
+  }
 }
 
 function tickEndCountdown() {
@@ -619,9 +638,6 @@ function resolveGuess(gi, pickedCv, pickedPos) {
   showScorePopup(correct);
   setTimeout(() => openResultModal(gi, pickedCv, correct), 60);
 
-  if (!correct && colStates.every(s => s.solved && !s.correct)) {
-    setTimeout(triggerWastedEffect, 150);
-  }
 }
 
 // Store last click position for popup
@@ -688,43 +704,6 @@ function triggerLineEffect(pos) {
     document.body.appendChild(gif);
     gif.addEventListener('animationend', () => gif.remove());
   }
-}
-
-function triggerWastedEffect() {
-  document.body.classList.add('wasted-active');
-  _applyFadeRatio(0.15);
-
-  const overlay = document.createElement('div');
-  overlay.className = 'wasted-overlay';
-  const img = document.createElement('img');
-  img.className = 'wasted-img';
-  img.src = 'fx/wasted.png';
-  img.alt = '';
-  overlay.appendChild(img);
-  document.body.appendChild(overlay);
-
-  const sfx = new Audio('fx/wasted.mp3');
-  sfx.volume = gameVolume / 100;
-  sfx.play().catch(() => {});
-
-  const FADE_STEPS = 20;
-  const FADE_MS    = 600;
-  setTimeout(() => {
-    overlay.addEventListener('transitionend', () => {
-      overlay.remove();
-      _applyFadeRatio(1);
-    }, { once: true });
-    overlay.classList.add('wasted-overlay--fading');
-    document.body.classList.remove('wasted-active');
-
-    const baseVol = sfx.volume;
-    let step = 0;
-    const iv = setInterval(() => {
-      step++;
-      try { sfx.volume = Math.max(0, baseVol * (1 - step / FADE_STEPS)); } catch (_) {}
-      if (step >= FADE_STEPS) { clearInterval(iv); sfx.pause(); }
-    }, FADE_MS / FADE_STEPS);
-  }, 3000);
 }
 
 // ─── Score / Countdown ────────────────────────────────────────────────────────

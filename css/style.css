@@ -578,6 +578,12 @@ ul, li { list-style: none; }
   font-family: 'Barlow Condensed', sans-serif;
   margin-bottom: 6px;
 }
+.modal__wasted-img {
+  width: min(300px, 100%);
+  height: auto;
+  display: block;
+  margin: 0 auto 10px;
+}
 .modal__end-num {
   font-size: 64px;
   font-weight: 800;
@@ -951,34 +957,4 @@ ul, li { list-style: none; }
   100% { opacity: 0; transform: translateX(-50%) translateY(calc(-50% - 80px)) scale(0.9); }
 }
 
-/* Wasted effect */
-.wasted-active .app-wrapper {
-  filter: grayscale(1);
-  transition: filter 0.5s ease;
-}
-
-.wasted-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 1;
-  transition: opacity 0.6s ease;
-}
-.wasted-overlay--fading { opacity: 0; }
-
-.wasted-img {
-  width: min(736px, calc(100vw - 24px));
-  height: auto;
-  animation: wasted-in 0.12s ease-out;
-}
-
-@keyframes wasted-in {
-  from { transform: scaleX(5); opacity: 0; }
-  to   { transform: scaleX(1); opacity: 1; }
-}
 
