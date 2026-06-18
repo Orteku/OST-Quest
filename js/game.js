@@ -607,6 +607,7 @@ function openArchive() {
       const [ay,am,ad] = ds.split('-');
       const banner = document.getElementById('archive-banner');
       if (banner) { banner.textContent = `Quest ${ad}-${am}-${ay}`; banner.style.display = 'block'; }
+      document.body.classList.add('is-archive');
       initGame(ds, true);
     });
   });
@@ -772,6 +773,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     stopAudio();
     const banner = document.getElementById('archive-banner');
     if (banner) banner.style.display = 'none';
+    document.body.classList.remove('is-archive');
     initGame(today, false);
   });
 

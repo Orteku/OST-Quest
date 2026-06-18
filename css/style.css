@@ -35,7 +35,7 @@ ul, li { list-style: none; }
   gap: 10px;
   position: relative;
 }
-.site-header__left { display: flex; align-items: baseline; gap: 10px; }
+.site-header__left { display: flex; align-items: baseline; gap: 10px; flex-shrink: 0; }
 .site-title {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 26px;
@@ -63,7 +63,7 @@ ul, li { list-style: none; }
   color: #555960;
   letter-spacing: 1px;
 }
-.header-countdown span { color: #b8e030; }
+.header-countdown span { color: #b8e030; font-variant-numeric: tabular-nums; }
 
 .icon-btn {
   width: 36px; height: 36px;
@@ -738,13 +738,57 @@ ul, li { list-style: none; }
 @media (max-width: 520px) {
   .site-title { font-size: 20px; }
   .site-subtitle { display: none; }
-  .header-countdown { font-size: 11px; }
   .col { border-radius: 8px; }
   .modal__stats { grid-template-columns: repeat(2, 1fr); }
+
+  /* Banner: scale down proportionally on narrow screens */
+  .site-banner {
+    height: auto;
+    max-height: 36px;
+    max-width: 44vw;
+  }
+
+  /* Help button → bottom-right corner */
+  #btn-help {
+    top: auto;
+    bottom: 20px;
+    right: 20px;
+  }
+
+  /* Header: two rows (countdown top-right, buttons bottom-right) */
+  .site-header { align-items: flex-start; }
+  .site-header__right {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  .header-countdown {
+    flex: 0 0 100%;
+    text-align: right;
+    font-size: 11px;
+  }
+
+  /* Archive banner on mobile: flows inline replacing countdown */
+  .archive-banner {
+    position: static;
+    transform: none;
+    flex: 0 0 100%;
+    text-align: right;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 4px 0;
+    background: none;
+    border: none;
+    order: -1;
+  }
+  body.is-archive .header-countdown { display: none; }
 }
 @media (max-width: 360px) {
   .columns-wrapper { gap: 5px; }
   .covers-grid { gap: 4px; padding: 5px; }
+}
+@media (hover: none) and (pointer: coarse) {
+  .vol-control { display: none; }
 }
 
 
