@@ -45,6 +45,11 @@ ul, li { list-style: none; }
   color: #b8e030;
   line-height: 1;
 }
+.site-banner {
+  height: 36px;
+  width: auto;
+  display: block;
+}
 .site-subtitle {
   font-size: 12px;
   color: #555960;
@@ -445,6 +450,18 @@ ul, li { list-style: none; }
   border-radius: 8px;
   font-size: 16px;
   color: #ddd9cf;
+}
+.tutorial-steps li:nth-child(1) .tutorial-step__icon {
+  color: #b8e030;
+  background: rgba(184, 224, 48, 0.12);
+}
+.tutorial-steps li:nth-child(2) .tutorial-step__icon {
+  color: #4ea8de;
+  background: rgba(78, 168, 222, 0.12);
+}
+.tutorial-steps li:nth-child(3) .tutorial-step__icon {
+  color: #ffc400;
+  background: rgba(255, 196, 0, 0.12);
 }
 
 .tutorial-step__icon--score {

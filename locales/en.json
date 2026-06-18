@@ -1,4 +1,5 @@
 {
+  "page_title":  "Oesti Quest — Your daily video game music quest",
   "next_quest":          "Next quest:",
   "btn_today":           "Today",
   "btn_archive_label":   "Quest Log",
@@ -15,7 +16,7 @@
   "watch_on":            "Listen on",
   "result_correct":      "Correct!",
   "result_wrong":        "Wrong!",
-  "end_3":               "You're a legend!",
+  "end_3":               "You're the GOAT!",
   "end_2":               "Not bad at all",
   "end_1":               "You tried your best",
   "end_0":               "Massive skill issue",
@@ -40,7 +41,7 @@
     "You're a legend!"
   ],
   "footer_music":  "Music sourced from Archive.org and KHInsider.",
-  "footer_credit": "OST Quest developed by Orteku in collaboration with Vyrka.",
+  "footer_credit": "Oesti Quest developed by Orteku in collaboration with Vyrka · Contact: oestiquest@gmail.com",
   "tutorial_title":    "How to play",
   "tutorial_listen_h": "Listen",
   "tutorial_listen_b": "Press ▶ to play a soundtrack clip and try to recognize it.",

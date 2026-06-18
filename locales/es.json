@@ -1,10 +1,11 @@
 {
+  "page_title":  "Oesti Quest — Tu misión diaria de música de videojuegos",
   "next_quest":          "Siguiente quest:",
   "btn_today":           "Hoy",
   "btn_archive_label":   "Quest Log",
   "btn_stats_label":     "Estadísticas",
-  "score_hits":          "Hits:",
-  "score_miss":          "Miss:",
+  "score_hits":          "Aciertos:",
+  "score_miss":          "Fallos:",
   "loading":             "Cargando bandas sonoras…",
   "col_locked":          "Bloqueado",
   "col_play_hint":       "Pulsa ▶ para escuchar",
@@ -40,7 +41,7 @@
     "¡Crack! ¡Fiera! ¡Mastodonte!"
   ],
   "footer_music":  "Música provista por Archive.org y KHInsider.",
-  "footer_credit": "OST Quest desarrollado por Orteku en colaboración con Vyrka.",
+  "footer_credit": "Oesti Quest desarrollado por Orteku en colaboración con Vyrka · Contacto: oestiquest@gmail.com",
   "tutorial_title":    "¿Cómo se juega?",
   "tutorial_listen_h": "Escucha",
   "tutorial_listen_b": "Pulsa ▶ para reproducir un fragmento de la banda sonora e intenta reconocerla.",

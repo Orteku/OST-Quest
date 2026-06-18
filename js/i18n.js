@@ -36,6 +36,7 @@ function _applyDOM() {
     btn.classList.toggle('lang-dropdown__option--active', btn.dataset.lang === _lang);
   });
   document.documentElement.lang = _lang;
+  if (_t.page_title) document.title = _t.page_title;
 }
 
 async function setLang(lang) {
