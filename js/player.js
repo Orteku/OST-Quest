@@ -135,6 +135,18 @@ let _audioEl             = null;
 let _audioOnEnd          = null;
 const _audioPreloadCache = new Map();
 
+let _audioListenersEl = null;
+let _audioWaitingCb   = null;
+let _audioPlayingCb   = null;
+
+function _cleanupAudioListeners() {
+  if (_audioListenersEl) {
+    if (_audioWaitingCb) _audioListenersEl.removeEventListener('waiting',    _audioWaitingCb);
+    if (_audioPlayingCb) _audioListenersEl.removeEventListener('timeupdate', _audioPlayingCb);
+  }
+  _audioListenersEl = _audioWaitingCb = _audioPlayingCb = null;
+}
+
 function _makeAudioEl() {
   const el = new Audio();
   el.addEventListener('ended', () => {
@@ -186,17 +198,15 @@ function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying) {
     }
   }
 
+  _cleanupAudioListeners();
+  _audioListenersEl = _audioEl;
   if (onWaiting) {
-    _audioEl.addEventListener('waiting', function h() {
-      _audioEl.removeEventListener('waiting', h);
-      onWaiting();
-    });
+    _audioWaitingCb = () => onWaiting();
+    _audioEl.addEventListener('waiting', _audioWaitingCb);
   }
   if (onPlaying) {
-    _audioEl.addEventListener('playing', function h() {
-      _audioEl.removeEventListener('playing', h);
-      onPlaying();
-    });
+    _audioPlayingCb = () => { if (!_audioEl.paused) onPlaying(); };
+    _audioEl.addEventListener('timeupdate', _audioPlayingCb);
   }
 
   _audioEl.play().catch(() => {});
@@ -204,6 +214,7 @@ function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying) {
 }
 
 function _stopDirectAudio() {
+  _cleanupAudioListeners();
   _audioOnEnd = null;
   if (_audioEl) { _audioEl.pause(); _audioEl.src = ''; }
 }
@@ -307,6 +318,8 @@ function playTrack(asset, onEnd, onWaiting, onPlaying) {
     playYouTube(asset.youtubeId, asset.startSeconds || 0, onEnd);
   }
 }
+
+function getDirectAudioEl() { return _audioEl; }
 
 function stopTrack() {
   _cleanupPreview();

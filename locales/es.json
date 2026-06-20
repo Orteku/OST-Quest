@@ -8,6 +8,7 @@
   "score_miss":          "Fallos:",
   "loading":             "Cargando bandas sonoras…",
   "col_locked":          "Bloqueado",
+  "col_guessing":  "Adivinando",
   "col_play_hint":       "Pulsa ▶ para escuchar",
   "audio_unavailable":   "Audio no disponible para este grupo.",
   "audio_loading":       "Cargando audio…",

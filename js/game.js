@@ -100,7 +100,11 @@ function renderColumn(gi, wrapper) {
     ? t('audio_loading')
     : st.solved
       ? `<strong>${g.answer.game}</strong>`
-      : st.locked ? t('col_locked') : t('col_play_hint');
+      : st.locked
+        ? t('col_locked')
+        : playingCol === gi
+          ? `<span class="col__hint-guessing">${t('col_guessing')}</span>`
+          : t('col_play_hint');
 
   hdr.innerHTML = `
     <button class="play-btn" aria-label="Reproducir / pausar" ${st.locked ? 'disabled' : ''}>
@@ -153,7 +157,7 @@ function renderColumn(gi, wrapper) {
         item.addEventListener('click', () => openGuessModal(gi, cv, ci));
       } else {
         // Columna resuelta: mostrar info + link YouTube
-        item.addEventListener('click', () => openInfoModal(cv, asset));
+        item.addEventListener('click', () => openInfoModal(cv, asset, gi));
       }
     }
     grid.appendChild(item);
@@ -219,7 +223,7 @@ function togglePlay(gi) {
     asset,
     () => { stopAudio(); rerenderColumn(gi); },
     () => { loadingCol = gi; rerenderColumn(gi); },
-    () => { loadingCol = -1; rerenderColumn(gi); }
+    () => { if (loadingCol === gi) { loadingCol = -1; rerenderColumn(gi); } }
   );
 }
 
@@ -251,7 +255,7 @@ function closeModal() {
   document.getElementById('modal').classList.remove('modal--open');
 }
 
-function _initModalAudioPlayer() {
+function _initModalAudioPlayer(startSeconds = 0) {
   const wrap = document.querySelector('.modal-player');
   if (!wrap) return;
   const audio = wrap.querySelector('.modal-player__audio');
@@ -267,11 +271,21 @@ function _initModalAudioPlayer() {
   }
   function updateBtn() { btn.innerHTML = audio.paused ? _PLAY_SM : _PAUSE_SM; }
 
+  function seekToStart() {
+    if (audio.readyState >= 1) {
+      audio.currentTime = startSeconds;
+    } else {
+      audio.addEventListener('loadedmetadata', () => { audio.currentTime = startSeconds; }, { once: true });
+    }
+  }
+  seekToStart();
+
   function startModalPreview() {
     _stopModalPreview();
     const fadeSecs  = 3;
     const fadeSteps = 20;
-    const remaining = (MODAL_PREVIEW_SECS - audio.currentTime) * 1000;
+    const elapsed   = Math.max(0, audio.currentTime - startSeconds);
+    const remaining = (MODAL_PREVIEW_SECS - elapsed) * 1000;
 
     _modalStopTimer = setTimeout(() => {
       const baseVol = audio.volume;
@@ -282,7 +296,7 @@ function _initModalAudioPlayer() {
         if (step >= fadeSteps) {
           clearInterval(_modalFadeInterval); _modalFadeInterval = null;
           audio.pause();
-          audio.currentTime = 0;
+          audio.currentTime = startSeconds;
           audio.volume = gameVolume / 100;
           fill.style.width = '0%';
           time.textContent = `${fmt(0)} / ${fmt(MODAL_PREVIEW_SECS)}`;
@@ -293,14 +307,21 @@ function _initModalAudioPlayer() {
   }
 
   btn.addEventListener('click', () => {
-    if (audio.paused) audio.play().catch(() => {});
-    else { audio.pause(); _stopModalPreview(); }
+    if (audio.paused) {
+      const prev = playingCol;
+      stopAudio();
+      if (prev >= 0) rerenderColumn(prev);
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+      _stopModalPreview();
+    }
   });
   audio.addEventListener('play',  () => { updateBtn(); startModalPreview(); });
   audio.addEventListener('pause', updateBtn);
   audio.addEventListener('ended', () => { updateBtn(); _stopModalPreview(); });
   audio.addEventListener('timeupdate', () => {
-    const elapsed = Math.min(audio.currentTime, MODAL_PREVIEW_SECS);
+    const elapsed = Math.min(Math.max(0, audio.currentTime - startSeconds), MODAL_PREVIEW_SECS);
     fill.style.width  = `${(elapsed / MODAL_PREVIEW_SECS) * 100}%`;
     time.textContent  = `${fmt(elapsed)} / ${fmt(MODAL_PREVIEW_SECS)}`;
   });
@@ -413,8 +434,30 @@ function _buildMediaWidget(asset, compact) {
 }
 
 // Info modal para portadas de columnas ya resueltas
-function openInfoModal(cv, asset) {
-  const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(cv.game)}`;
+function openInfoModal(cv, asset, gi) {
+  const fallback  = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(cv.game)}`;
+  const audioEl   = getDirectAudioEl();
+  const startSecs = asset.startSeconds || 0;
+  const isSynced  = playingCol === gi
+    && audioEl
+    && !audioEl.paused
+    && !!asset.audioUrl
+    && audioEl.src === new URL(asset.audioUrl, location.href).href;
+
+  function fmt(s) {
+    s = Math.max(0, Math.floor(s));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  const playerHtml = isSynced ? `
+    ${asset.title ? `<p class="modal__track-title">${asset.title}</p>` : ''}
+    <div class="modal-player">
+      <button class="modal-player__btn" id="info-player-btn" aria-label="Pausar">${_PAUSE_SM}</button>
+      <div class="modal-player__track">
+        <div class="modal-player__bar"><div class="modal-player__fill" id="info-player-fill"></div></div>
+        <span class="modal-player__time" id="info-player-time">${fmt(0)} / ${fmt(30)}</span>
+      </div>
+    </div>` : _buildMediaWidget(asset, false);
 
   document.getElementById('modal-inner').innerHTML = `
     <button class="modal__close-x" id="info-close">&times;</button>
@@ -424,11 +467,52 @@ function openInfoModal(cv, asset) {
     </div>
     <div class="modal__body">
       <h2 class="modal__game-name">${cv.game}${cv.year ? `<span class="modal__game-year">${cv.year}</span>` : ''}</h2>
-      ${_buildMediaWidget(asset, false)}
+      ${playerHtml}
     </div>`;
 
   document.getElementById('info-close').addEventListener('click', closeModal);
-  _initModalAudioPlayer();
+
+  if (isSynced) {
+    const fillEl  = document.getElementById('info-player-fill');
+    const timeEl  = document.getElementById('info-player-time');
+    const playBtn = document.getElementById('info-player-btn');
+    let rafId;
+
+    function tick() {
+      if (!fillEl || !fillEl.isConnected) { cancelAnimationFrame(rafId); return; }
+      const elapsed = Math.min(30, Math.max(0, audioEl.currentTime - startSecs));
+      fillEl.style.width = `${(elapsed / 30) * 100}%`;
+      timeEl.textContent = `${fmt(elapsed)} / ${fmt(30)}`;
+      rafId = requestAnimationFrame(tick);
+    }
+    tick();
+
+    playBtn.addEventListener('click', () => {
+      if (audioEl.paused) {
+        cancelAnimationFrame(rafId);
+        audioEl.play().catch(() => {});
+        playBtn.innerHTML = _PAUSE_SM;
+        playBtn.setAttribute('aria-label', 'Pausar');
+        tick();
+      } else {
+        cancelAnimationFrame(rafId);
+        audioEl.pause();
+        playBtn.innerHTML = _PLAY_SM;
+        playBtn.setAttribute('aria-label', 'Reproducir');
+      }
+    });
+
+    function onAudioPause() {
+      if (!playBtn.isConnected) { audioEl.removeEventListener('pause', onAudioPause); return; }
+      cancelAnimationFrame(rafId);
+      playBtn.innerHTML = _PLAY_SM;
+      playBtn.setAttribute('aria-label', 'Reproducir');
+    }
+    audioEl.addEventListener('pause', onAudioPause);
+  } else {
+    _initModalAudioPlayer(startSecs);
+  }
+
   openModal();
 }
 
@@ -442,6 +526,28 @@ function openResultModal(gi, pickedCv, isCorrect) {
   const btnText  = isCorrect ? t('result_correct') : t('result_wrong');
   const msg      = tRandom(isCorrect ? 'msg_success' : 'msg_fail');
 
+  const audioEl   = getDirectAudioEl();
+  const startSecs = ansAsset.startSeconds || 0;
+  const isPlaying = audioEl && !audioEl.paused;
+
+  function fmt(s) {
+    s = Math.max(0, Math.floor(s));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  const titleHtml = ansAsset.title
+    ? `<p class="modal__track-title">${ansAsset.title}</p>` : '';
+
+  const syncedPlayer = isPlaying ? `
+    ${titleHtml}
+    <div class="modal-player">
+      <button class="modal-player__btn" id="result-player-btn" aria-label="Pausar">${_PAUSE_SM}</button>
+      <div class="modal-player__track">
+        <div class="modal-player__bar"><div class="modal-player__fill" id="result-player-fill"></div></div>
+        <span class="modal-player__time" id="result-player-time">${fmt(0)} / ${fmt(30)}</span>
+      </div>
+    </div>` : _buildMediaWidget(ansAsset, true);
+
   document.getElementById('modal-inner').innerHTML = `
     <button class="modal__close-x" id="result-close">&times;</button>
     <div class="modal__cover-wrap">
@@ -451,11 +557,38 @@ function openResultModal(gi, pickedCv, isCorrect) {
     <div class="modal__body">
       <h2 class="modal__game-name">${g.answer.game}${g.answer.year ? `<span class="modal__game-year">${g.answer.year}</span>` : ''}</h2>
       <button class="btn ${btnClass}" disabled>${btnText}</button>
+      <p class="modal__result-text">${msg}</p>
       <div class="modal__result-info">
-        <p class="modal__result-text">${msg}</p>
-        ${_buildMediaWidget(ansAsset, true)}
+        ${syncedPlayer}
       </div>
     </div>`;
+
+  if (isPlaying) {
+    const fillEl = document.getElementById('result-player-fill');
+    const timeEl = document.getElementById('result-player-time');
+    const playBtn = document.getElementById('result-player-btn');
+    let rafId;
+
+    function tick() {
+      if (!fillEl || !fillEl.isConnected) return;
+      const elapsed = Math.min(30, Math.max(0, audioEl.currentTime - startSecs));
+      fillEl.style.width = `${(elapsed / 30) * 100}%`;
+      timeEl.textContent = `${fmt(elapsed)} / ${fmt(30)}`;
+      rafId = requestAnimationFrame(tick);
+    }
+    tick();
+
+    playBtn.addEventListener('click', () => {
+      cancelAnimationFrame(rafId);
+      stopAudio();
+      playBtn.innerHTML = _PLAY_SM;
+      playBtn.disabled = true;
+    });
+
+    audioEl.addEventListener('pause', () => {
+      cancelAnimationFrame(rafId);
+    }, { once: true });
+  }
 
   document.getElementById('result-close').addEventListener('click', () => {
     closeModal();
