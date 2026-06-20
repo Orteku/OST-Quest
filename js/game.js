@@ -269,7 +269,11 @@ function _initModalAudioPlayer(startSeconds = 0) {
     s = Math.max(0, Math.floor(s));
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
-  function updateBtn() { btn.innerHTML = audio.paused ? _PLAY_SM : _PAUSE_SM; }
+
+  let _modalWaiting = false;
+  function updateBtn() {
+    btn.innerHTML = _modalWaiting ? _LOADING_SM : audio.paused ? _PLAY_SM : _PAUSE_SM;
+  }
 
   function seekToStart() {
     if (audio.readyState >= 1) {
@@ -317,9 +321,11 @@ function _initModalAudioPlayer(startSeconds = 0) {
       _stopModalPreview();
     }
   });
-  audio.addEventListener('play',  () => { updateBtn(); startModalPreview(); });
-  audio.addEventListener('pause', updateBtn);
-  audio.addEventListener('ended', () => { updateBtn(); _stopModalPreview(); });
+  audio.addEventListener('play',     () => { _modalWaiting = false; updateBtn(); startModalPreview(); });
+  audio.addEventListener('playing',  () => { _modalWaiting = false; updateBtn(); });
+  audio.addEventListener('waiting',  () => { _modalWaiting = true;  updateBtn(); });
+  audio.addEventListener('pause',    () => { _modalWaiting = false; updateBtn(); });
+  audio.addEventListener('ended',    () => { _modalWaiting = false; updateBtn(); _stopModalPreview(); });
   audio.addEventListener('timeupdate', () => {
     const elapsed = Math.min(Math.max(0, audio.currentTime - startSeconds), MODAL_PREVIEW_SECS);
     fill.style.width  = `${(elapsed / MODAL_PREVIEW_SECS) * 100}%`;
@@ -388,8 +394,9 @@ function openTutorialModal() {
 // ─── Media widget helpers ─────────────────────────────────────────────────────
 
 const _YT_ICON  = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>`;
-const _PLAY_SM  = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>`;
-const _PAUSE_SM = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+const _PLAY_SM    = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>`;
+const _PAUSE_SM   = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+const _LOADING_SM = `<svg class="col__loading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M12 2a10 10 0 1 0 10 10"/></svg>`;
 const _SC_ICON  = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M1.175 12.225c-.105 0-.19.08-.19.18l-.233 2.154.233 2.105c0 .1.085.18.19.18.1 0 .18-.08.183-.18l.267-2.105-.267-2.154c-.003-.1-.083-.18-.183-.18zm1.558-.89c-.12 0-.217.1-.217.22l-.2 3.044.2 2.899c0 .12.097.22.217.22.12 0 .217-.1.217-.22l.226-2.899-.226-3.044c0-.12-.097-.22-.217-.22zm1.567-.35c-.14 0-.25.11-.25.25l-.167 3.394.167 2.803c0 .14.11.25.25.25s.25-.11.25-.25l.189-2.803-.189-3.394c0-.14-.11-.25-.25-.25zm1.567.09c-.155 0-.28.125-.28.28l-.133 3.304.133 2.717c0 .155.125.28.28.28.155 0 .28-.125.28-.28l.15-2.717-.15-3.304c0-.155-.125-.28-.28-.28zm1.568.5c-.17 0-.31.14-.31.31l-.1 2.804.1 2.63c0 .17.14.31.31.31.17 0 .31-.14.31-.31l.114-2.63-.114-2.804c0-.17-.14-.31-.31-.31zm1.567-.27c-.185 0-.337.152-.337.337l-.067 3.074.067 2.544c0 .185.152.337.337.337.185 0 .337-.152.337-.337l.075-2.544-.075-3.074c0-.185-.152-.337-.337-.337zm1.568.07c-.2 0-.363.163-.363.363l-.033 3.004.033 2.477c0 .2.163.363.363.363.2 0 .363-.163.363-.363l.038-2.477-.038-3.004c0-.2-.163-.363-.363-.363zm1.567-.59c-.217 0-.393.176-.393.393l0 3.597 0 2.41c0 .217.176.393.393.393.217 0 .393-.176.393-.393l0-2.41 0-3.597c0-.217-.176-.393-.393-.393zm1.568.14c-.233 0-.42.187-.42.42l0 3.457 0 2.343c0 .233.187.42.42.42.233 0 .42-.187.42-.42l0-2.343 0-3.457c0-.233-.187-.42-.42-.42zm1.567 4.52v-3.03c.237-.563.79-.957 1.437-.957 1.033 0 1.87.837 1.87 1.87 0 .037-.003.073-.007.11.36.165.61.53.61.953 0 .577-.467 1.043-1.043 1.043h-2.867z"/></svg>`;
 const _SP_ICON  = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.623.623 0 0 1-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 0 1-.277-1.215c3.809-.87 7.077-.496 9.712 1.115a.623.623 0 0 1 .207.857zm1.223-2.722a.78.78 0 0 1-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 0 1-.43-1.497c3.633-1.102 8.147-.568 11.235 1.334a.78.78 0 0 1 .232 1.072zm.105-2.835C14.692 8.95 9.375 8.775 6.297 9.71a.937.937 0 1 1-.543-1.794c3.543-1.073 9.431-.866 13.158 1.235a.937.937 0 0 1-.998 1.716z"/></svg>`;
 
