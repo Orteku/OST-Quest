@@ -577,7 +577,7 @@ function openResultModal(gi, pickedCv, isCorrect) {
     let rafId;
 
     function tick() {
-      if (!fillEl || !fillEl.isConnected) return;
+      if (!fillEl || !fillEl.isConnected) { cancelAnimationFrame(rafId); return; }
       const elapsed = Math.min(30, Math.max(0, audioEl.currentTime - startSecs));
       fillEl.style.width = `${(elapsed / 30) * 100}%`;
       timeEl.textContent = `${fmt(elapsed)} / ${fmt(30)}`;
@@ -586,15 +586,27 @@ function openResultModal(gi, pickedCv, isCorrect) {
     tick();
 
     playBtn.addEventListener('click', () => {
-      cancelAnimationFrame(rafId);
-      stopAudio();
-      playBtn.innerHTML = _PLAY_SM;
-      playBtn.disabled = true;
+      if (audioEl.paused) {
+        cancelAnimationFrame(rafId);
+        audioEl.play().catch(() => {});
+        playBtn.innerHTML = _PAUSE_SM;
+        playBtn.setAttribute('aria-label', 'Pausar');
+        tick();
+      } else {
+        cancelAnimationFrame(rafId);
+        audioEl.pause();
+        playBtn.innerHTML = _PLAY_SM;
+        playBtn.setAttribute('aria-label', 'Reproducir');
+      }
     });
 
-    audioEl.addEventListener('pause', () => {
+    function onAudioPause() {
+      if (!playBtn.isConnected) { audioEl.removeEventListener('pause', onAudioPause); return; }
       cancelAnimationFrame(rafId);
-    }, { once: true });
+      playBtn.innerHTML = _PLAY_SM;
+      playBtn.setAttribute('aria-label', 'Reproducir');
+    }
+    audioEl.addEventListener('pause', onAudioPause);
   }
 
   document.getElementById('result-close').addEventListener('click', () => {
