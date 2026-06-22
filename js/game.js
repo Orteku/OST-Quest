@@ -618,6 +618,8 @@ function openResultModal(gi, pickedCv, isCorrect) {
 
   if (isPlaying) {
     _attachSyncedPlayer('result-player-fill', 'result-player-time', 'result-player-btn', audioEl, startSecs);
+  } else {
+    _initModalAudioPlayer(startSecs);
   }
 
   document.getElementById('result-close').addEventListener('click', () => {
