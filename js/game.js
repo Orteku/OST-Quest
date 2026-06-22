@@ -1,5 +1,7 @@
 // OST Quest - Main Game Controller
 
+const ARCHIVE_START = '2026-06-08'; // Primera quest disponible
+
 let currentGroups  = [];
 let colStates      = [];
 let currentDateStr = '';
@@ -7,6 +9,8 @@ let isArchiveMode  = false;
 let playingCol     = -1;
 let loadingCol     = -1;
 let gameFinished   = false;
+let _loadingToastTimer = null;
+let _toastTimer        = null;
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
@@ -41,12 +45,6 @@ async function initGame(dateStr, archiveMode) {
   renderAll();
   startCountdownTicker();
 
-  // Pre-calentar SoundCloud si hay algún track del día que lo use
-  for (const g of currentGroups) {
-    const scAsset = g.assets?.find(a => a.sourceType === 'soundcloud');
-    if (scAsset?.audioUrl) { prewarmSoundCloud(scAsset.audioUrl); break; }
-  }
-
   // Precachear el audio directo de las 3 columnas
   _prewarmAnswerAudio(0);
   _prewarmAnswerAudio(1);
@@ -58,11 +56,6 @@ async function initGame(dateStr, archiveMode) {
     setTimeout(() => openEndModal(colStates.filter(s => s.correct).length), 300);
   }
 }
-
-// ─── Progreso guardado ────────────────────────────────────────────────────────
-
-
-
 
 // ─── Rendering ────────────────────────────────────────────────────────────────
 
@@ -156,7 +149,7 @@ function renderColumn(gi, wrapper) {
       if (!st.solved) {
         item.addEventListener('click', () => openGuessModal(gi, cv, ci));
       } else {
-        // Columna resuelta: mostrar info + link YouTube
+        // Columna resuelta: mostrar info del juego
         item.addEventListener('click', () => openInfoModal(cv, asset, gi));
       }
     }
@@ -190,6 +183,9 @@ function rerenderColumn(gi) {
 // ─── Audio ────────────────────────────────────────────────────────────────────
 
 function stopAudio() {
+  clearTimeout(_loadingToastTimer);
+  _loadingToastTimer = null;
+  hideToast();
   stopTrack();
   playingCol = -1;
   loadingCol = -1;
@@ -197,9 +193,8 @@ function stopAudio() {
 
 function togglePlay(gi) {
   if (playingCol === gi) {
-    const prev = gi;
     stopAudio();
-    rerenderColumn(prev);
+    rerenderColumn(gi);
     return;
   }
 
@@ -211,7 +206,7 @@ function togglePlay(gi) {
   const ansIdx = g.covers.indexOf(g.answer);
   const asset  = g.assets[ansIdx];
 
-  if (!asset?.youtubeId && !asset?.audioUrl) {
+  if (!asset?.audioUrl) {
     showToast(t('audio_unavailable'));
     return;
   }
@@ -221,9 +216,37 @@ function togglePlay(gi) {
 
   playTrack(
     asset,
-    () => { stopAudio(); rerenderColumn(gi); },
-    () => { loadingCol = gi; rerenderColumn(gi); },
-    () => { if (loadingCol === gi) { loadingCol = -1; rerenderColumn(gi); } }
+    () => {
+      const wasLoading = loadingCol === gi;
+      stopAudio();
+      rerenderColumn(gi);
+      if (wasLoading) showToast(t('audio_error'), 'error', true);
+    },
+    () => {
+      loadingCol = gi;
+      rerenderColumn(gi);
+      if (asset.audioUrl.includes('archive.org')) {
+        _loadingToastTimer = setTimeout(() => {
+          _loadingToastTimer = null;
+          if (loadingCol === gi) showToast(t('audio_slow_archive'), 'warn', true);
+        }, 4000);
+      }
+    },
+    () => {
+      clearTimeout(_loadingToastTimer);
+      _loadingToastTimer = null;
+      hideToast();
+      if (loadingCol === gi) { loadingCol = -1; rerenderColumn(gi); }
+    },
+    () => {
+      clearTimeout(_loadingToastTimer);
+      _loadingToastTimer = null;
+      hideToast();
+      loadingCol = -1;
+      playingCol = -1;
+      rerenderColumn(gi);
+      showToast(t('audio_error'), 'error', true);
+    }
   );
 }
 
@@ -265,12 +288,9 @@ function _initModalAudioPlayer(startSeconds = 0) {
 
   audio.volume = gameVolume / 100;
 
-  function fmt(s) {
-    s = Math.max(0, Math.floor(s));
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  }
-
   let _modalWaiting = false;
+  let _hadError     = false;
+  let _modalPlayed  = false;
   function updateBtn() {
     btn.innerHTML = _modalWaiting ? _LOADING_SM : audio.paused ? _PLAY_SM : _PAUSE_SM;
   }
@@ -299,11 +319,18 @@ function _initModalAudioPlayer(startSeconds = 0) {
         audio.volume = baseVol * (1 - step / fadeSteps);
         if (step >= fadeSteps) {
           clearInterval(_modalFadeInterval); _modalFadeInterval = null;
+          const played = _modalPlayed;
           audio.pause();
           audio.currentTime = startSeconds;
           audio.volume = gameVolume / 100;
           fill.style.width = '0%';
-          time.textContent = `${fmt(0)} / ${fmt(MODAL_PREVIEW_SECS)}`;
+          time.textContent = `${_fmtTime(0)} / ${_fmtTime(MODAL_PREVIEW_SECS)}`;
+          if (!played) {
+            _clearSlowToast();
+            hideToast();
+            _hadError = true;
+            showToast(t('audio_error'), 'error', true);
+          }
           updateBtn();
         }
       }, (fadeSecs * 1000) / fadeSteps);
@@ -315,24 +342,47 @@ function _initModalAudioPlayer(startSeconds = 0) {
       const prev = playingCol;
       stopAudio();
       if (prev >= 0) rerenderColumn(prev);
+      if (_hadError) { audio.load(); _hadError = false; seekToStart(); }
       audio.play().catch(() => {});
     } else {
       audio.pause();
       _stopModalPreview();
     }
   });
-  audio.addEventListener('play',     () => { _modalWaiting = false; updateBtn(); startModalPreview(); });
-  audio.addEventListener('playing',  () => { _modalWaiting = false; updateBtn(); });
-  audio.addEventListener('waiting',  () => { _modalWaiting = true;  updateBtn(); });
-  audio.addEventListener('pause',    () => { _modalWaiting = false; updateBtn(); });
-  audio.addEventListener('ended',    () => { _modalWaiting = false; updateBtn(); _stopModalPreview(); });
+  function _startSlowToast() {
+    if (audio.src.includes('archive.org') && !_loadingToastTimer) {
+      _loadingToastTimer = setTimeout(() => {
+        _loadingToastTimer = null;
+        if (_modalWaiting) showToast(t('audio_slow_archive'), 'warn', true);
+      }, 4000);
+    }
+  }
+  function _clearSlowToast() { clearTimeout(_loadingToastTimer); _loadingToastTimer = null; }
+
+  audio.addEventListener('play',    () => {
+    _modalWaiting = false; updateBtn(); startModalPreview();
+    if (audio.readyState < 3) _startSlowToast();
+  });
+  audio.addEventListener('playing', () => { _modalWaiting = false; _modalPlayed = true; _clearSlowToast(); hideToast(); updateBtn(); });
+  audio.addEventListener('waiting', () => { _modalWaiting = true;  updateBtn(); _startSlowToast(); });
+  audio.addEventListener('pause',   () => { _modalWaiting = false; _clearSlowToast(); hideToast(); updateBtn(); });
+  audio.addEventListener('ended',   () => { _modalWaiting = false; updateBtn(); _stopModalPreview(); });
+  audio.addEventListener('error',   () => {
+    _hadError     = true;
+    _modalWaiting = false;
+    _clearSlowToast();
+    hideToast();
+    btn.innerHTML = _PLAY_SM;
+    btn.setAttribute('aria-label', 'Reproducir');
+    showToast(t('audio_error'), 'error', true);
+  });
   audio.addEventListener('timeupdate', () => {
     const elapsed = Math.min(Math.max(0, audio.currentTime - startSeconds), MODAL_PREVIEW_SECS);
     fill.style.width  = `${(elapsed / MODAL_PREVIEW_SECS) * 100}%`;
-    time.textContent  = `${fmt(elapsed)} / ${fmt(MODAL_PREVIEW_SECS)}`;
+    time.textContent  = `${_fmtTime(elapsed)} / ${_fmtTime(MODAL_PREVIEW_SECS)}`;
   });
 
-  time.textContent = `${fmt(0)} / ${fmt(MODAL_PREVIEW_SECS)}`;
+  time.textContent = `${_fmtTime(0)} / ${_fmtTime(MODAL_PREVIEW_SECS)}`;
 }
 
 function openGuessModal(gi, cv, ci) {
@@ -382,6 +432,30 @@ function openTutorialModal() {
           <div><strong>${t('tutorial_daily_h')}</strong><p>${t('tutorial_daily_b')}</p></div>
         </li>
       </ul>
+      <hr class="tutorial-divider">
+      <div class="tutorial-btns">
+        <div class="tutorial-btn-item">
+          <span class="tutorial-step__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
+              <path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"/>
+              <path d="M14 2v6h6"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="13" y2="17"/>
+            </svg>
+          </span>
+          <div><strong>${t('tutorial_archive_h')}</strong><p>${t('tutorial_archive_b')}</p></div>
+        </div>
+        <div class="tutorial-btn-item">
+          <span class="tutorial-step__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </span>
+          <div><strong>${t('tutorial_stats_h')}</strong><p>${t('tutorial_stats_b')}</p></div>
+        </div>
+      </div>
     </div>`;
 
   document.getElementById('tutorial-close').addEventListener('click', () => {
@@ -393,51 +467,68 @@ function openTutorialModal() {
 
 // ─── Media widget helpers ─────────────────────────────────────────────────────
 
-const _YT_ICON  = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>`;
 const _PLAY_SM    = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>`;
 const _PAUSE_SM   = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
 const _LOADING_SM = `<svg class="col__loading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M12 2a10 10 0 1 0 10 10"/></svg>`;
-const _SC_ICON  = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M1.175 12.225c-.105 0-.19.08-.19.18l-.233 2.154.233 2.105c0 .1.085.18.19.18.1 0 .18-.08.183-.18l.267-2.105-.267-2.154c-.003-.1-.083-.18-.183-.18zm1.558-.89c-.12 0-.217.1-.217.22l-.2 3.044.2 2.899c0 .12.097.22.217.22.12 0 .217-.1.217-.22l.226-2.899-.226-3.044c0-.12-.097-.22-.217-.22zm1.567-.35c-.14 0-.25.11-.25.25l-.167 3.394.167 2.803c0 .14.11.25.25.25s.25-.11.25-.25l.189-2.803-.189-3.394c0-.14-.11-.25-.25-.25zm1.567.09c-.155 0-.28.125-.28.28l-.133 3.304.133 2.717c0 .155.125.28.28.28.155 0 .28-.125.28-.28l.15-2.717-.15-3.304c0-.155-.125-.28-.28-.28zm1.568.5c-.17 0-.31.14-.31.31l-.1 2.804.1 2.63c0 .17.14.31.31.31.17 0 .31-.14.31-.31l.114-2.63-.114-2.804c0-.17-.14-.31-.31-.31zm1.567-.27c-.185 0-.337.152-.337.337l-.067 3.074.067 2.544c0 .185.152.337.337.337.185 0 .337-.152.337-.337l.075-2.544-.075-3.074c0-.185-.152-.337-.337-.337zm1.568.07c-.2 0-.363.163-.363.363l-.033 3.004.033 2.477c0 .2.163.363.363.363.2 0 .363-.163.363-.363l.038-2.477-.038-3.004c0-.2-.163-.363-.363-.363zm1.567-.59c-.217 0-.393.176-.393.393l0 3.597 0 2.41c0 .217.176.393.393.393.217 0 .393-.176.393-.393l0-2.41 0-3.597c0-.217-.176-.393-.393-.393zm1.568.14c-.233 0-.42.187-.42.42l0 3.457 0 2.343c0 .233.187.42.42.42.233 0 .42-.187.42-.42l0-2.343 0-3.457c0-.233-.187-.42-.42-.42zm1.567 4.52v-3.03c.237-.563.79-.957 1.437-.957 1.033 0 1.87.837 1.87 1.87 0 .037-.003.073-.007.11.36.165.61.53.61.953 0 .577-.467 1.043-1.043 1.043h-2.867z"/></svg>`;
-const _SP_ICON  = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.623.623 0 0 1-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 0 1-.277-1.215c3.809-.87 7.077-.496 9.712 1.115a.623.623 0 0 1 .207.857zm1.223-2.722a.78.78 0 0 1-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 0 1-.43-1.497c3.633-1.102 8.147-.568 11.235 1.334a.78.78 0 0 1 .232 1.072zm.105-2.835C14.692 8.95 9.375 8.775 6.297 9.71a.937.937 0 1 1-.543-1.794c3.543-1.073 9.431-.866 13.158 1.235a.937.937 0 0 1-.998 1.716z"/></svg>`;
 
-function _buildMediaWidget(asset, compact) {
-  const titleHtml = asset.title
-    ? `<p class="modal__track-title">${asset.title}</p>`
-    : '';
+function _fmtTime(s) {
+  s = Math.max(0, Math.floor(s));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
 
-  function _sourceLink(href, icon, prefix, platformName, type) {
-    const label = `${icon}${t(prefix)} <span class="source-name source-name--${type}">${platformName}</span>`;
-    return compact
-      ? `<a class="source-link" href="${href}" target="_blank" rel="noopener">${label}</a>`
-      : `<a class="btn btn--source-link" href="${href}" target="_blank" rel="noopener">${label}</a>`;
+// Conecta el reproductor sincronizado (rAF) al audioEl existente.
+// Gestiona play/pause desde el botón y limpia el rAF cuando el elemento se desconecta.
+function _attachSyncedPlayer(fillId, timeId, btnId, audioEl, startSecs) {
+  const fillEl  = document.getElementById(fillId);
+  const timeEl  = document.getElementById(timeId);
+  const playBtn = document.getElementById(btnId);
+  let rafId;
+
+  function tick() {
+    if (!fillEl || !fillEl.isConnected) { cancelAnimationFrame(rafId); return; }
+    const elapsed = Math.min(MODAL_PREVIEW_SECS, Math.max(0, audioEl.currentTime - startSecs));
+    fillEl.style.width = `${(elapsed / MODAL_PREVIEW_SECS) * 100}%`;
+    timeEl.textContent = `${_fmtTime(elapsed)} / ${_fmtTime(MODAL_PREVIEW_SECS)}`;
+    rafId = requestAnimationFrame(tick);
   }
+  tick();
 
-  if (asset.sourceType === 'youtube' && asset.sourceUrl) {
-    return titleHtml + _sourceLink(asset.sourceUrl, _YT_ICON, 'watch_on_yt', 'YouTube', 'yt');
+  playBtn.addEventListener('click', () => {
+    if (audioEl.paused) {
+      cancelAnimationFrame(rafId);
+      audioEl.play().catch(() => {});
+      playBtn.innerHTML = _PAUSE_SM;
+      playBtn.setAttribute('aria-label', 'Pausar');
+      tick();
+    } else {
+      cancelAnimationFrame(rafId);
+      audioEl.pause();
+      playBtn.innerHTML = _PLAY_SM;
+      playBtn.setAttribute('aria-label', 'Reproducir');
+    }
+  });
+
+  function onAudioPause() {
+    if (!playBtn.isConnected) { audioEl.removeEventListener('pause', onAudioPause); return; }
+    cancelAnimationFrame(rafId);
+    playBtn.innerHTML = _PLAY_SM;
+    playBtn.setAttribute('aria-label', 'Reproducir');
   }
+  audioEl.addEventListener('pause', onAudioPause);
+}
 
-  if (asset.sourceType === 'soundcloud' && asset.sourceUrl) {
-    return titleHtml + _sourceLink(asset.sourceUrl, _SC_ICON, 'watch_on', 'SoundCloud', 'sc');
-  }
-
-  if (asset.audioUrl) {
-    const spLink = (asset.sourceType === 'spotify' && asset.sourceUrl)
-      ? _sourceLink(asset.sourceUrl, _SP_ICON, 'watch_on', 'Spotify', 'sp')
-      : '';
-    if (compact) return `${titleHtml}${spLink}`;
-    const player = `
-      <div class="modal-player">
-        <audio class="modal-player__audio" src="${asset.audioUrl}" preload="metadata"></audio>
-        <button class="modal-player__btn" aria-label="Reproducir">${_PLAY_SM}</button>
-        <div class="modal-player__track">
-          <div class="modal-player__bar"><div class="modal-player__fill"></div></div>
-          <span class="modal-player__time">0:00</span>
-        </div>
-      </div>`;
-    return `${titleHtml}${player}${spLink}`;
-  }
-
-  return '';
+function _buildMediaWidget(asset) {
+  const titleHtml = asset.title ? `<p class="modal__track-title">${asset.title}</p>` : '';
+  if (!asset.audioUrl) return titleHtml;
+  return `${titleHtml}
+    <div class="modal-player">
+      <audio class="modal-player__audio" src="${asset.audioUrl}" preload="metadata"></audio>
+      <button class="modal-player__btn" aria-label="Reproducir">${_PLAY_SM}</button>
+      <div class="modal-player__track">
+        <div class="modal-player__bar"><div class="modal-player__fill"></div></div>
+        <span class="modal-player__time">0:00</span>
+      </div>
+    </div>`;
 }
 
 // Info modal para portadas de columnas ya resueltas
@@ -451,20 +542,15 @@ function openInfoModal(cv, asset, gi) {
     && !!asset.audioUrl
     && audioEl.src === new URL(asset.audioUrl, location.href).href;
 
-  function fmt(s) {
-    s = Math.max(0, Math.floor(s));
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  }
-
   const playerHtml = isSynced ? `
     ${asset.title ? `<p class="modal__track-title">${asset.title}</p>` : ''}
     <div class="modal-player">
       <button class="modal-player__btn" id="info-player-btn" aria-label="Pausar">${_PAUSE_SM}</button>
       <div class="modal-player__track">
         <div class="modal-player__bar"><div class="modal-player__fill" id="info-player-fill"></div></div>
-        <span class="modal-player__time" id="info-player-time">${fmt(0)} / ${fmt(30)}</span>
+        <span class="modal-player__time" id="info-player-time">${_fmtTime(0)} / ${_fmtTime(MODAL_PREVIEW_SECS)}</span>
       </div>
-    </div>` : _buildMediaWidget(asset, false);
+    </div>` : _buildMediaWidget(asset);
 
   document.getElementById('modal-inner').innerHTML = `
     <button class="modal__close-x" id="info-close">&times;</button>
@@ -480,42 +566,7 @@ function openInfoModal(cv, asset, gi) {
   document.getElementById('info-close').addEventListener('click', closeModal);
 
   if (isSynced) {
-    const fillEl  = document.getElementById('info-player-fill');
-    const timeEl  = document.getElementById('info-player-time');
-    const playBtn = document.getElementById('info-player-btn');
-    let rafId;
-
-    function tick() {
-      if (!fillEl || !fillEl.isConnected) { cancelAnimationFrame(rafId); return; }
-      const elapsed = Math.min(30, Math.max(0, audioEl.currentTime - startSecs));
-      fillEl.style.width = `${(elapsed / 30) * 100}%`;
-      timeEl.textContent = `${fmt(elapsed)} / ${fmt(30)}`;
-      rafId = requestAnimationFrame(tick);
-    }
-    tick();
-
-    playBtn.addEventListener('click', () => {
-      if (audioEl.paused) {
-        cancelAnimationFrame(rafId);
-        audioEl.play().catch(() => {});
-        playBtn.innerHTML = _PAUSE_SM;
-        playBtn.setAttribute('aria-label', 'Pausar');
-        tick();
-      } else {
-        cancelAnimationFrame(rafId);
-        audioEl.pause();
-        playBtn.innerHTML = _PLAY_SM;
-        playBtn.setAttribute('aria-label', 'Reproducir');
-      }
-    });
-
-    function onAudioPause() {
-      if (!playBtn.isConnected) { audioEl.removeEventListener('pause', onAudioPause); return; }
-      cancelAnimationFrame(rafId);
-      playBtn.innerHTML = _PLAY_SM;
-      playBtn.setAttribute('aria-label', 'Reproducir');
-    }
-    audioEl.addEventListener('pause', onAudioPause);
+    _attachSyncedPlayer('info-player-fill', 'info-player-time', 'info-player-btn', audioEl, startSecs);
   } else {
     _initModalAudioPlayer(startSecs);
   }
@@ -537,11 +588,6 @@ function openResultModal(gi, pickedCv, isCorrect) {
   const startSecs = ansAsset.startSeconds || 0;
   const isPlaying = audioEl && !audioEl.paused;
 
-  function fmt(s) {
-    s = Math.max(0, Math.floor(s));
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  }
-
   const titleHtml = ansAsset.title
     ? `<p class="modal__track-title">${ansAsset.title}</p>` : '';
 
@@ -551,9 +597,9 @@ function openResultModal(gi, pickedCv, isCorrect) {
       <button class="modal-player__btn" id="result-player-btn" aria-label="Pausar">${_PAUSE_SM}</button>
       <div class="modal-player__track">
         <div class="modal-player__bar"><div class="modal-player__fill" id="result-player-fill"></div></div>
-        <span class="modal-player__time" id="result-player-time">${fmt(0)} / ${fmt(30)}</span>
+        <span class="modal-player__time" id="result-player-time">${_fmtTime(0)} / ${_fmtTime(MODAL_PREVIEW_SECS)}</span>
       </div>
-    </div>` : _buildMediaWidget(ansAsset, true);
+    </div>` : _buildMediaWidget(ansAsset);
 
   document.getElementById('modal-inner').innerHTML = `
     <button class="modal__close-x" id="result-close">&times;</button>
@@ -571,42 +617,7 @@ function openResultModal(gi, pickedCv, isCorrect) {
     </div>`;
 
   if (isPlaying) {
-    const fillEl = document.getElementById('result-player-fill');
-    const timeEl = document.getElementById('result-player-time');
-    const playBtn = document.getElementById('result-player-btn');
-    let rafId;
-
-    function tick() {
-      if (!fillEl || !fillEl.isConnected) { cancelAnimationFrame(rafId); return; }
-      const elapsed = Math.min(30, Math.max(0, audioEl.currentTime - startSecs));
-      fillEl.style.width = `${(elapsed / 30) * 100}%`;
-      timeEl.textContent = `${fmt(elapsed)} / ${fmt(30)}`;
-      rafId = requestAnimationFrame(tick);
-    }
-    tick();
-
-    playBtn.addEventListener('click', () => {
-      if (audioEl.paused) {
-        cancelAnimationFrame(rafId);
-        audioEl.play().catch(() => {});
-        playBtn.innerHTML = _PAUSE_SM;
-        playBtn.setAttribute('aria-label', 'Pausar');
-        tick();
-      } else {
-        cancelAnimationFrame(rafId);
-        audioEl.pause();
-        playBtn.innerHTML = _PLAY_SM;
-        playBtn.setAttribute('aria-label', 'Reproducir');
-      }
-    });
-
-    function onAudioPause() {
-      if (!playBtn.isConnected) { audioEl.removeEventListener('pause', onAudioPause); return; }
-      cancelAnimationFrame(rafId);
-      playBtn.innerHTML = _PLAY_SM;
-      playBtn.setAttribute('aria-label', 'Reproducir');
-    }
-    audioEl.addEventListener('pause', onAudioPause);
+    _attachSyncedPlayer('result-player-fill', 'result-player-time', 'result-player-btn', audioEl, startSecs);
   }
 
   document.getElementById('result-close').addEventListener('click', () => {
@@ -621,7 +632,6 @@ function openEndModal(score) {
   closeModal();
   const stats = loadStats();
   const pct   = stats.played > 0 ? Math.round(((stats.totalHits || 0) / (stats.played * 3)) * 100) : 0;
-  // FIX 2: modal final es bloqueante, solo cierra con el botón
 
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__end">
@@ -710,13 +720,33 @@ function openStatsModal() {
 
 function openArchive() {
   const played = loadPlayedDays();
-  const days = [];
-  for (let i = 1; i <= 14; i++) {
-    days.push(getPastGameDay(i));
-  }
+  const today  = getGameDay();
 
+  // Generar todos los días desde el inicio hasta ayer
+  const days = [];
+  const cur  = new Date(ARCHIVE_START + 'T12:00:00Z');
+  while (true) {
+    const ds = cur.toISOString().slice(0, 10);
+    if (ds >= today) break;
+    days.push(ds);
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  days.reverse(); // más reciente primero
+
+  let prevMonth = null;
   const rows = days.map(ds => {
-    // Check both played registry and saved progress for this day
+    const [y, m, d] = ds.split('-');
+
+    // Separador de mes cuando cambia
+    let monthHeader = '';
+    const monthKey = `${y}-${m}`;
+    if (monthKey !== prevMonth) {
+      prevMonth = monthKey;
+      const label = new Date(`${y}-${m}-01T12:00:00Z`)
+        .toLocaleString(document.documentElement.lang, { month: 'long', year: 'numeric' });
+      monthHeader = `<li class="archive__month-sep">${label.charAt(0).toUpperCase() + label.slice(1)}</li>`;
+    }
+
     let result = played[ds];
     let inProgress = false;
     if (!result) {
@@ -736,9 +766,8 @@ function openArchive() {
       : inProgress
         ? `<span class="archive__badge archive__badge--ongoing">${t('archive_in_progress')}</span>`
         : `<span class="archive__badge archive__badge--new">${t('archive_play')}</span>`;
-    const [y,m,d] = ds.split('-');
     const isActive = ds === currentDateStr && isArchiveMode;
-    return `<li class="archive__item ${isActive ? 'archive__item--active' : ''}" data-date="${ds}">
+    return monthHeader + `<li class="archive__item ${isActive ? 'archive__item--active' : ''}" data-date="${ds}">
       <span class="archive__date">${d}-${m}-${y}</span>${badge}
     </li>`;
   }).join('');
@@ -773,7 +802,7 @@ function _prewarmAnswerAudio(gi) {
   if (!g) return;
   const ansIdx = g.covers.indexOf(g.answer);
   const asset  = g.assets?.[ansIdx];
-  if (asset?.sourceType === 'direct' && asset?.audioUrl) {
+  if (asset?.audioUrl) {
     prewarmDirectAudio(asset.audioUrl);
   }
 }
@@ -790,7 +819,6 @@ function resolveGuess(gi, pickedCv, pickedPos) {
   updateScoreDisplay();
   showScorePopup(correct);
   setTimeout(() => openResultModal(gi, pickedCv, correct), 60);
-
 }
 
 // Store last click position for popup
@@ -818,7 +846,7 @@ function checkFinished() {
   let isLine = false;
   if (score === 3) {
     const p = colStates[0].pickedPos;
-if (p !== null && colStates[1].pickedPos === p && colStates[2].pickedPos === p) {
+    if (p !== null && colStates[1].pickedPos === p && colStates[2].pickedPos === p) {
       isLine = true;
       setTimeout(() => triggerLineEffect(p), 80);
     }
@@ -882,11 +910,23 @@ function showLoadingScreen(show) {
   document.getElementById('game-area').style.display      = show ? 'none'  : 'block';
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('toast--show');
-  setTimeout(() => t.classList.remove('toast--show'), 3500);
+function showToast(msg, type, persistent) {
+  clearTimeout(_toastTimer);
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('toast--warn',  type === 'warn');
+  el.classList.toggle('toast--error', type === 'error');
+  el.classList.add('toast--show');
+  if (!persistent) {
+    _toastTimer = setTimeout(hideToast, 3500);
+  }
+}
+
+function hideToast() {
+  clearTimeout(_toastTimer);
+  _toastTimer = null;
+  const el = document.getElementById('toast');
+  el.classList.remove('toast--show', 'toast--warn', 'toast--error');
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────

@@ -516,7 +516,6 @@
     </div>
     <div style="display:flex;gap:6px">
       <a href="https://www.youtube.com" target="_blank" rel="noopener" style="background:#ff0000;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">YouTube</a>
-      <a href="https://soundcloud.com" target="_blank" rel="noopener" style="background:#ff5500;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">SoundCloud</a>
       <a href="https://www.igdb.com" target="_blank" rel="noopener" style="background:#8c44b0;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">IGDB</a>
       <a href="https://downloads.khinsider.com/" target="_blank" rel="noopener" style="background:#111;color:#fff;border:1px solid #444;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Khinside</a>
       <a href="https://archive.org/details/audio" target="_blank" rel="noopener" style="background:#555;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Archive.org</a>
@@ -538,10 +537,6 @@
     <div id="pillRow" style="flex-basis:100%;display:none;gap:8px">
       <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
     </div>
-  </div>
-  <div id="protocolWarn" class="notice" style="display:none;margin:8px 0 0;text-align:center">
-    Para evitar el error 153 de YouTube, abre el editor desde HTTP local:
-    <code>python -m http.server 8000</code> → <code>http://localhost:8000/database_editor.html</code>
   </div>
   <div id="sheetsPanel" class="sheets-panel">
     <div class="sheets-row">
@@ -592,7 +587,7 @@
       </div>
       <div class="add-row2">
         <label><span>Canción</span><input id="newTitle" placeholder="Canción (opcional)" /></label>
-        <label><input id="newYoutubeId" class="field-youtube" placeholder="YouTube, SoundCloud, Spotify, MP3…" /></label>
+        <label><input id="newMp3Url" class="field-youtube" placeholder="URL del MP3…" /></label>
         <label><span>Inicio (m:ss)</span><input id="newStart" class="field-youtube" placeholder="0:00" value="0:00" /></label>
       </div>
     </div>
@@ -680,90 +675,28 @@
       .replaceAll('"', '\\"');
   }
 
-  function extractYoutubeId(value) {
-    const s = String(value || "").trim();
-    if (!s) return "";
-    const patterns = [
-      /youtu\.be\/([a-zA-Z0-9_-]{6,})/,
-      /youtube\.com\/watch\?[^#]*v=([a-zA-Z0-9_-]{6,})/,
-      /youtube\.com\/embed\/([a-zA-Z0-9_-]{6,})/,
-      /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]{6,})/,
-      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{6,})/
-    ];
-    for (const re of patterns) {
-      const m = s.match(re);
-      if (m) return m[1].slice(0, 20);
-    }
-    return s;
-  }
-
   function cleanUrl(value) {
     return String(value || "").trim();
   }
 
   function trackType(track) {
     if (!track) return null;
-    if (track.soundcloudUrl) return 'soundcloud';
-    if (track.spotifyId)     return 'spotify';
-    if (track.mp3Url)        return 'mp3';
-    if (track.youtubeId)     return 'youtube';
+    if (track.mp3Url) return 'mp3';
     return null;
   }
 
   function trackSourceVal(track) {
-    if (track.soundcloudUrl) return track.soundcloudUrl;
-    if (track.spotifyId)     return `https://open.spotify.com/track/${track.spotifyId}`;
-    if (track.mp3Url)        return track.mp3Url;
-    return track.youtubeId || '';
-  }
-
-  function detectSourceType(val) {
-    if (!val) return 'youtube';
-    if (/soundcloud\.com/.test(val)) return 'soundcloud';
-    if (/open\.spotify\.com\/track\/|spotify:track:/.test(val)) return 'spotify';
-    if (/\.(mp3|ogg|wav|aac|m4a|flac)(\?|$)/i.test(val)) return 'mp3';
-    if (/archive\.org\/(details|download)\//.test(val)) return 'mp3';
-    return 'youtube';
+    return track.mp3Url || '';
   }
 
   function normalizeAudioUrl(url) {
     return url.replace('archive.org/details/', 'archive.org/download/');
   }
 
-  function extractSpotifyId(val) {
-    const m = val.match(/open\.spotify\.com\/track\/([A-Za-z0-9]+)/);
-    if (m) return m[1];
-    const m2 = val.match(/spotify:track:([A-Za-z0-9]+)/);
-    if (m2) return m2[1];
-    return val;
-  }
-
-  function watchLabel(item) {
-    const type = trackType(item.tracks?.[0]);
-    if (type === 'soundcloud') return 'abrir en SoundCloud';
-    if (type === 'spotify')    return 'abrir en Spotify';
-    if (type === 'mp3')        return 'abrir MP3';
-    return 'abrir en YouTube';
-  }
-
-  function embedSrc(item) {
-    const track = item.tracks?.[0] ?? item;
-    const id = encodeURIComponent(extractYoutubeId(track.youtubeId) || "");
-    const start = Math.max(0, Number(track.startSeconds) || 0);
-    const origin = location.protocol.startsWith("http") ? encodeURIComponent(location.origin) : "";
-    const originParam = origin ? `&origin=${origin}` : "";
-    return `https://www.youtube.com/embed/${id}?start=${start}&rel=0&modestbranding=1&enablejsapi=1${originParam}`;
-  }
+  function watchLabel() { return 'abrir MP3'; }
 
   function watchUrl(item) {
-    const track = item.tracks?.[0] ?? item;
-    const type = trackType(track);
-    if (type === 'soundcloud') return track.soundcloudUrl;
-    if (type === 'spotify')    return `https://open.spotify.com/track/${track.spotifyId}`;
-    if (type === 'mp3')        return track.mp3Url;
-    const id = encodeURIComponent(extractYoutubeId(track.youtubeId) || "");
-    const start = Math.max(0, Number(track.startSeconds) || 0);
-    return `https://www.youtube.com/watch?v=${id}&t=${start}s`;
+    return item.tracks?.[0]?.mp3Url || '';
   }
 
   function tracksSectionHtml(tracks) {
@@ -774,7 +707,7 @@
       const isFirst = ti === 0;
       const titleLabel = `<label><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>`;
       const srcRow = `<div class="yt-row">
-          <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="YouTube, SoundCloud, Spotify, MP3…" value="${srcVal}" /></label>
+          <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" /></label>
           <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
           <button class="small" data-action="loadTrack" data-track="${ti}">Cargar</button>
         </div>`;
@@ -838,12 +771,9 @@
 
   function normalizeTracks(x) {
     const norm = t => ({
-      title:         String(t.title ?? "").trim(),
-      youtubeId:     String(t.youtubeId ?? "").trim(),
-      soundcloudUrl: String(t.soundcloudUrl ?? "").trim(),
-      spotifyId:     String(t.spotifyId ?? "").trim(),
-      mp3Url:        String(t.mp3Url ?? "").trim(),
-      startSeconds:  Math.max(0, Number(t.startSeconds) || 0),
+      title:        String(t.title ?? "").trim(),
+      mp3Url:       String(t.mp3Url ?? t.url ?? "").trim(),
+      startSeconds: Math.max(0, Number(t.startSeconds) || 0),
     });
     if (Array.isArray(x.tracks) && x.tracks.length > 0) return x.tracks.map(norm);
     return [norm(x)];
@@ -901,7 +831,7 @@
       const row = document.createElement("article");
       row.className = "row";
       row.dataset.index = String(index);
-      row.dataset.search = `${item.game} ${item.tracks.map(t => t.youtubeId).join(" ")} ${item.cover} ${item.year} ${item.pop}`.toLowerCase();
+      row.dataset.search = `${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop}`.toLowerCase();
 
       row.innerHTML = `
         <div class="cover-box">
@@ -942,13 +872,6 @@
     });
 
     list.appendChild(frag);
-    list.querySelectorAll('iframe[src*="soundcloud.com"]').forEach(iframe => {
-      const row = iframe.closest('.row');
-      if (!row) return;
-      const index = Number(row.dataset.index);
-      const track = db[index]?.tracks?.[0];
-      if (track) setupScIframe(iframe, track.startSeconds);
-    });
     applySearch();
     updateStats();
   }
@@ -963,12 +886,8 @@
     if (trackIdx !== null) {
       const track = db[index].tracks[trackIdx];
       if (field === "source") {
-        const type = detectSourceType(value);
-        track.youtubeId = track.soundcloudUrl = track.spotifyId = track.mp3Url = "";
-        if (type === 'youtube')    { track.youtubeId = value; }
-        if (type === 'soundcloud') { track.soundcloudUrl = value; }
-        if (type === 'spotify')    { track.spotifyId = extractSpotifyId(value); input.value = `https://open.spotify.com/track/${track.spotifyId}`; }
-        if (type === 'mp3')        { track.mp3Url = normalizeAudioUrl(value); input.value = track.mp3Url; }
+        track.mp3Url = normalizeAudioUrl(value);
+        input.value  = track.mp3Url;
         const loadBtn = row.querySelector(`button[data-action="loadTrack"][data-track="${trackIdx}"]`);
         if (loadBtn) { loadBtn.textContent = "Cargar"; loadBtn.disabled = false; }
       } else if (field === "startSeconds") {
@@ -997,7 +916,7 @@
       if (field === "cover") reloadRowCover(row);
     }
 
-    row.dataset.search = `${db[index].game} ${db[index].tracks.map(t => t.youtubeId).join(" ")} ${db[index].cover} ${db[index].year} ${db[index].pop}`.toLowerCase();
+    row.dataset.search = `${db[index].game} ${db[index].tracks.map(t => t.mp3Url).join(" ")} ${db[index].cover} ${db[index].year} ${db[index].pop}`.toLowerCase();
     setDirty(true);
     updateStats();
   }
@@ -1006,79 +925,15 @@
 
   function applyVolume(vol) {
     document.querySelectorAll('audio').forEach(el => el.volume = vol / 100);
-    document.querySelectorAll('iframe[src*="youtube.com/embed"]').forEach(iframe => {
-      try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [vol] }), '*'); } catch {}
-    });
-    document.querySelectorAll('iframe[src*="soundcloud.com"]').forEach(iframe => {
-      try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'setVolume', value: vol }), '*'); } catch {}
-    });
   }
 
   function stopAllMedia() {
     document.querySelectorAll('audio').forEach(a => a.pause());
-    document.querySelectorAll('iframe[src*="youtube.com/embed"]').forEach(iframe => {
-      try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*'); } catch {}
-    });
-    document.querySelectorAll('iframe[src*="soundcloud.com"]').forEach(iframe => {
-      try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'pause' }), '*'); } catch {}
-    });
-  }
-
-  function setupScIframe(iframe, startSeconds, autoplay = false, onReady = null) {
-    let done = false;
-    function sendCommands() {
-      if (done) return;
-      done = true;
-      try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'setVolume', value: currentVolume() }), '*'); } catch {}
-      if (startSeconds > 0) {
-        setTimeout(() => {
-          try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'seekTo', value: startSeconds * 1000 }), '*'); } catch {}
-          if (autoplay) {
-            setTimeout(() => {
-              try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
-              if (onReady) onReady();
-            }, 100);
-          } else if (onReady) onReady();
-        }, 50);
-      } else if (autoplay) {
-        try { iframe.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
-        if (onReady) onReady();
-      } else if (onReady) onReady();
-    }
-    const onMsg = (e) => {
-      try {
-        const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (d.soundcloud && d.method === 'ready' && e.source === iframe.contentWindow) {
-          window.removeEventListener('message', onMsg);
-          sendCommands();
-        }
-      } catch {}
-    };
-    window.addEventListener('message', onMsg);
-    iframe.addEventListener('load', () => setTimeout(() => { window.removeEventListener('message', onMsg); sendCommands(); }, 3000), { once: true });
-  }
-
-  function setupYtIframe(iframe) {
-    iframe.addEventListener('load', () => {
-      setTimeout(() => {
-        try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [currentVolume()] }), '*'); } catch {}
-      }, 500);
-    }, { once: true });
   }
 
   function initialVideoHtml(item) {
     const track = item.tracks?.[0];
-    const type = trackType(track);
-    if (type === 'youtube') {
-      return `<div class="video-wrap video-facade" data-src="${escapeHtml(embedSrc(item))}"><img class="yt-thumb" src="https://img.youtube.com/vi/${escapeHtml(extractYoutubeId(track.youtubeId))}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button></div>`;
-    }
-    if (type === 'soundcloud') {
-      return `<div class="video-wrap video-wrap--embed"><iframe src="https://w.soundcloud.com/player/?url=${encodeURIComponent(track.soundcloudUrl)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&visual=false&color=%2328d7e8&api_widget=true" width="100%" height="100%" frameborder="0" scrolling="no" allow="autoplay"></iframe></div>`;
-    }
-    if (type === 'spotify') {
-      return `<div class="video-wrap video-wrap--embed"><iframe src="https://open.spotify.com/embed/track/${encodeURIComponent(track.spotifyId)}?theme=0" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe></div>`;
-    }
-    if (type === 'mp3') {
+    if (track?.mp3Url) {
       return `<div class="video-wrap video-wrap--audio"><audio controls src="${escapeHtml(track.mp3Url)}"></audio></div>`;
     }
     return `<div class="video-wrap"></div>`;
@@ -1086,32 +941,11 @@
 
   function reloadRowVideo(row) {
     const index = Number(row.dataset.index);
-    const item = db[index];
-    const track = item.tracks[0];
+    const track = db[index].tracks[0];
     const wrap = row.querySelector(".video-wrap");
     if (!wrap) return;
-    const type = trackType(track);
     wrap.className = "video-wrap";
-    wrap.dataset.src = "";
-    if (type === 'youtube') {
-      wrap.classList.add("video-facade");
-      wrap.dataset.src = embedSrc(item);
-      wrap.innerHTML = `<img class="yt-thumb" src="https://img.youtube.com/vi/${encodeURIComponent(extractYoutubeId(track.youtubeId))}/mqdefault.jpg" alt="${escapeHtml(item.game)}" loading="lazy" /><button class="yt-play" aria-label="Reproducir">▶</button>`;
-    } else if (type === 'soundcloud') {
-      wrap.classList.add("video-wrap--embed");
-      const existingSc = wrap.querySelector('iframe[src*="soundcloud.com"]');
-      if (existingSc && existingSc.src.includes(encodeURIComponent(track.soundcloudUrl))) {
-        if (track.startSeconds > 0) {
-          try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'seekTo', value: track.startSeconds * 1000 }), '*'); } catch {}
-        }
-      } else {
-        wrap.innerHTML = `<iframe src="https://w.soundcloud.com/player/?url=${encodeURIComponent(track.soundcloudUrl)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&visual=false&color=%2328d7e8&api_widget=true" width="100%" height="100%" frameborder="0" scrolling="no" allow="autoplay"></iframe>`;
-        setupScIframe(wrap.querySelector('iframe'), track.startSeconds);
-      }
-    } else if (type === 'spotify') {
-      wrap.classList.add("video-wrap--embed");
-      wrap.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${encodeURIComponent(track.spotifyId)}?theme=0" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-    } else if (type === 'mp3') {
+    if (track?.mp3Url) {
       wrap.classList.add("video-wrap--audio");
       wrap.innerHTML = `<audio controls src="${escapeHtml(track.mp3Url)}"></audio>`;
       const audioEl = wrap.querySelector('audio');
@@ -1156,15 +990,6 @@
       return;
     }
 
-    const facade = e.target.closest(".video-facade");
-    if (facade) {
-      stopAllMedia();
-      const src = facade.dataset.src + "&autoplay=1";
-      facade.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
-      facade.classList.remove("video-facade");
-      return;
-    }
-
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
     const row = btn.closest(".row");
@@ -1183,42 +1008,16 @@
       btn.disabled = true;
       const restoreBtn = () => { btn.textContent = origText; btn.disabled = false; };
 
-      const type = trackType(track);
       wrap.className = "video-wrap";
-      if (type === 'youtube') {
-        const src = embedSrc({ tracks: [track] }) + "&autoplay=1";
-        wrap.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
-        wrap.querySelector('iframe').addEventListener('load', restoreBtn, { once: true });
-        setupYtIframe(wrap.querySelector('iframe'));
-      } else if (type === 'soundcloud') {
-        wrap.classList.add("video-wrap--embed");
-        const existingSc = wrap.querySelector('iframe[src*="soundcloud.com"]');
-        if (existingSc) {
-          try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'setVolume', value: currentVolume() }), '*'); } catch {}
-          setTimeout(() => {
-            if (track.startSeconds > 0) {
-              try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'seekTo', value: track.startSeconds * 1000 }), '*'); } catch {}
-            }
-            setTimeout(() => {
-              try { existingSc.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*'); } catch {}
-              restoreBtn();
-            }, 100);
-          }, 50);
-        } else {
-          wrap.innerHTML = `<iframe src="https://w.soundcloud.com/player/?url=${encodeURIComponent(track.soundcloudUrl)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&visual=false&color=%2328d7e8&api_widget=true" width="100%" height="100%" frameborder="0" scrolling="no" allow="autoplay"></iframe>`;
-          setupScIframe(wrap.querySelector('iframe'), track.startSeconds, true, restoreBtn);
-        }
-      } else if (type === 'spotify') {
-        wrap.classList.add("video-wrap--embed");
-        wrap.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${encodeURIComponent(track.spotifyId)}?theme=0" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-        wrap.querySelector('iframe').addEventListener('load', restoreBtn, { once: true });
-      } else if (type === 'mp3') {
+      if (track?.mp3Url) {
         wrap.classList.add("video-wrap--audio");
         wrap.innerHTML = `<audio controls autoplay src="${escapeHtml(track.mp3Url)}"></audio>`;
         const audioEl = wrap.querySelector('audio');
         audioEl.volume = currentVolume() / 100;
         audioEl.addEventListener('canplay', restoreBtn, { once: true });
         if (track.startSeconds > 0) audioEl.addEventListener('loadedmetadata', () => { audioEl.currentTime = track.startSeconds; }, { once: true });
+      } else {
+        restoreBtn();
       }
       if (ti === 0) {
         const link = row.querySelector(".watch-link");
@@ -1227,7 +1026,7 @@
     } else if (action === "reloadCover") {
       reloadRowCover(row);
     } else if (action === "addTrack") {
-      db[index].tracks.push({ title: "", youtubeId: "", soundcloudUrl: "", spotifyId: "", mp3Url: "", startSeconds: 0 });
+      db[index].tracks.push({ title: "", mp3Url: "", startSeconds: 0 });
       setDirty(true);
       row.querySelector(".tracks-section").innerHTML = tracksSectionHtml(db[index].tracks);
     } else if (action === "removeTrack") {
@@ -1277,7 +1076,7 @@
     $("newGame").value = "";
     $("newCover").value = "";
     $("newTitle").value = "";
-    $("newYoutubeId").value = "";
+    $("newMp3Url").value = "";
     $("newStart").value = "0:00";
     $("newPop").value = 6;
     $("newYear").value = new Date().getFullYear();
@@ -1287,21 +1086,15 @@
     const game = $("newGame").value.trim();
     const cover = cleanUrl($("newCover").value);
     const title = $("newTitle").value.trim();
-    const sourceVal = $("newYoutubeId").value.trim();
+    const sourceVal = $("newMp3Url").value.trim();
     const startSeconds = timeToSeconds($("newStart").value);
     const pop = Math.max(1, Math.min(10, Number($("newPop").value) || 6));
     const year = Number($("newYear").value) || new Date().getFullYear();
 
     if (!game) return alert("Falta el nombre del juego.");
-    if (!sourceVal) return alert("Falta la fuente (YouTube, SoundCloud, Spotify o MP3).");
+    if (!sourceVal) return alert("Falta la URL del MP3.");
 
-    const type = detectSourceType(sourceVal);
-    const track = { title, startSeconds: type !== 'spotify' ? startSeconds : 0,
-      youtubeId: "", soundcloudUrl: "", spotifyId: "", mp3Url: "" };
-    if (type === 'youtube')    track.youtubeId = sourceVal;
-    if (type === 'soundcloud') track.soundcloudUrl = sourceVal;
-    if (type === 'spotify')    track.spotifyId = extractSpotifyId(sourceVal);
-    if (type === 'mp3')        track.mp3Url = normalizeAudioUrl(sourceVal);
+    const track = { title, mp3Url: normalizeAudioUrl(sourceVal), startSeconds };
 
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
     db.push({ id: maxId + 1, game, cover, pop, year, tracks: [track] });
@@ -1328,12 +1121,9 @@
       const coverPart = item.cover ? ` cover: "${jsString(item.cover)}",` : "";
       const tracksPart = item.tracks.map(t => {
         const p = [];
-        if (t.title)         p.push(`title: "${jsString(t.title)}"`);
-        if (t.youtubeId)     { p.push(`youtubeId: "${jsString(t.youtubeId)}"`); p.push(`startSeconds: ${Number(t.startSeconds) || 0}`); }
-        if (t.soundcloudUrl) { p.push(`soundcloudUrl: "${jsString(t.soundcloudUrl)}"`); if (t.startSeconds > 0) p.push(`startSeconds: ${Number(t.startSeconds)}`); }
-        if (t.spotifyId)     p.push(`spotifyId: "${jsString(t.spotifyId)}"`);
-        if (t.mp3Url)        { p.push(`mp3Url: "${jsString(t.mp3Url)}"`); if (t.startSeconds > 0) p.push(`startSeconds: ${Number(t.startSeconds)}`); }
-        if (p.length === 0)  p.push(`youtubeId: "", startSeconds: 0`);
+        if (t.title)  p.push(`title: "${jsString(t.title)}"`);
+        if (t.mp3Url) { p.push(`mp3Url: "${jsString(t.mp3Url)}"`); if (t.startSeconds > 0) p.push(`startSeconds: ${Number(t.startSeconds)}`); }
+        if (p.length === 0) p.push(`mp3Url: ""`);
         return `{ ${p.join(", ")} }`;
       }).join(", ");
       return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0}, tracks: [${tracksPart}] },`;
@@ -1381,7 +1171,6 @@
   $("scrollBottom").addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
 
   $("newYear").value = new Date().getFullYear();
-  if (location.protocol === "file:") $("protocolWarn").style.display = "";
 
   const savedVol = localStorage.getItem("ostquest_volume");
   if (savedVol !== null) $("volumeSlider").value = savedVol;
@@ -1423,9 +1212,9 @@
 
   function normalizeSheetKeys(obj) {
     const map = {
-      youtubeid: "youtubeId", youtube_id: "youtubeId", "youtube id": "youtubeId",
       startseconds: "startSeconds", start_seconds: "startSeconds", "start seconds": "startSeconds",
       start: "startSeconds", inicio: "startSeconds",
+      mp3url: "mp3Url", mp3: "mp3Url", url: "mp3Url",
       popularidad: "pop", popularity: "pop",
       juego: "game", "año": "year", ano: "year", portada: "cover",
     };

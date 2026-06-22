@@ -385,43 +385,6 @@ ul, li { list-style: none; }
 }
 .modal__result-text strong { color: #ddd9cf; }
 
-/* Source link — shared base (compact result modal + full info modal) */
-.source-link,
-.btn--source-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: #ddd9cf;
-  background: none;
-  border: none;
-  padding: 0;
-  line-height: 1;
-}
-.source-link svg,
-.btn--source-link svg { flex-shrink: 0; display: block; }
-
-/* Compact (result modal) */
-.source-link { font-size: 12px; margin-top: 8px; }
-
-/* Full-width (info modal) */
-.btn--source-link { font-size: 15px; margin-top: 10px; width: auto; justify-content: flex-start; }
-
-/* Platform name coloring */
-.source-name--yt { color: #7a9af0; }
-.source-name--sc { color: #f7931a; }
-.source-name--sp { color: #1db954; }
-
-.source-link:hover .source-name--yt,
-.btn--source-link:hover .source-name--yt { color: #aac0ff; }
-.source-link:hover .source-name--sc,
-.btn--source-link:hover .source-name--sc { color: #ffa940; }
-.source-link:hover .source-name--sp,
-.btn--source-link:hover .source-name--sp { color: #3fd972; }
 
 /* Track title */
 .modal__track-title {
@@ -493,7 +456,8 @@ ul, li { list-style: none; }
 .tutorial-hit  { color: #b8e030; }
 .tutorial-miss { color: #c84040; }
 
-.tutorial-steps strong {
+.tutorial-steps strong,
+.tutorial-btn-item strong {
   display: block;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 15px;
@@ -504,11 +468,35 @@ ul, li { list-style: none; }
   margin-bottom: 2px;
 }
 
-.tutorial-steps p {
+.tutorial-steps p,
+.tutorial-btn-item p {
   margin: 0;
   font-size: 13px;
   color: #7a7a6e;
   line-height: 1.4;
+}
+
+.tutorial-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  margin: 16px 0 14px;
+}
+
+.tutorial-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.tutorial-btn-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.tutorial-btn-item .tutorial-step__icon {
+  color: #a0a090;
+  background: rgba(255,255,255,0.05);
 }
 
 /* Custom audio player */
@@ -712,6 +700,16 @@ ul, li { list-style: none; }
   border-radius: 20px;
   letter-spacing: 0.5px;
 }
+.archive__month-sep {
+  padding: 8px 4px 4px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #555560;
+  cursor: default;
+}
 .archive__badge--ok      { background: #1a3008; color: #6bc832; }
 .archive__badge--partial { background: #2a2000; color: #d4a820; }
 .archive__badge--fail    { background: #300808; color: #c84040; }
@@ -736,6 +734,8 @@ ul, li { list-style: none; }
   text-align: center;
 }
 #toast.toast--show { transform: translateX(-50%) translateY(0); }
+#toast.toast--warn  { background: #7a3000; border-color: #c84800; color: #ffd9b3; }
+#toast.toast--error { background: #5a0000; border-color: #c80000; color: #ffc0c0; }
 
 /* ─── Footer ─────────────────────────────────────────────────────────────────── */
 .site-footer {

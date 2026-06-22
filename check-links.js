@@ -83,7 +83,7 @@ async function main() {
   }
 
   if (toCheck.length === 0) {
-    console.log('ℹ️  No hay enlaces directos en la base de datos. Solo YouTube/SoundCloud.');
+    console.log('ℹ️  No hay enlaces de audio en la base de datos.');
     return;
   }
 
