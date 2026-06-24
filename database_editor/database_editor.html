@@ -1100,8 +1100,9 @@
     db.push({ id: maxId + 1, game, cover, pop, year, tracks: [track] });
     setDirty(true);
     $("clearNew").click();
+    $("addPanel").classList.remove("open");
     render();
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
   });
 
   function loadText(text, filename) {
