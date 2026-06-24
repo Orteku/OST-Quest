@@ -290,6 +290,7 @@
       border-radius: 12px;
       padding: 10px;
       align-items: start;
+      min-height: 140px;
     }
     .row.hidden { display: none; }
     .cover-box {
@@ -822,9 +823,50 @@
       onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'cover-preview missing', textContent:'Cover no carga'}));" />`;
   }
 
+  function buildRowContent(item) {
+    return `
+      <div class="cover-box">
+        <div class="cover-holder">${coverHtml(item)}</div>
+        ${item.cover ? `<a class="cover-link" target="_blank" rel="noopener" href="${escapeHtml(item.cover)}">abrir cover</a>` : `<span class="cover-link" style="color:var(--muted)">sin enlace</span>`}
+      </div>
+      <div class="meta">
+        <div class="titleline">
+          <span class="row-id">#${escapeHtml(item.id)}</span>
+          <span class="game-title">${escapeHtml(item.game || "(sin título)")}</span>
+          <button class="small" data-action="duplicate">Duplicar</button>
+          <button class="small danger" data-action="delete">Eliminar</button>
+        </div>
+        <div class="game-row">
+          <label><span>Juego</span><input class="game-input" data-field="game" value="${escapeHtml(item.game)}" /></label>
+          <label><span>Año</span><input type="number" min="1970" max="2100" step="1" data-field="year" value="${escapeHtml(item.year)}" /></label>
+          <label><span>Pop (1–6)</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
+        </div>
+        <div class="cover-field">
+          <label><span>Cover URL</span><input class="field-cover" data-field="cover" value="${escapeHtml(item.cover)}" placeholder="https://..." /></label>
+          <button class="small" data-action="reloadCover">Recargar cover</button>
+        </div>
+        <div class="tracks-section">${tracksSectionHtml(item.tracks)}</div>
+      </div>
+      <div class="video-col">
+        ${initialVideoHtml(item)}
+        <a class="watch-link" target="_blank" rel="noopener" href="${escapeHtml(watchUrl(item))}">${watchLabel(item)}</a>
+      </div>
+    `;
+  }
+
+  let _rowObserver = null;
+
+  function fillRow(row) {
+    if (row.dataset.filled) return;
+    row.dataset.filled = "1";
+    row.innerHTML = buildRowContent(db[Number(row.dataset.index)]);
+    if (_rowObserver) _rowObserver.unobserve(row);
+  }
+
   function render() {
     document.body.classList.toggle("compact", compact);
     list.innerHTML = "";
+    if (_rowObserver) { _rowObserver.disconnect(); _rowObserver = null; }
     const frag = document.createDocumentFragment();
 
     db.forEach((item, index) => {
@@ -832,46 +874,17 @@
       row.className = "row";
       row.dataset.index = String(index);
       row.dataset.search = `${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop}`.toLowerCase();
-
-      row.innerHTML = `
-        <div class="cover-box">
-          <div class="cover-holder">${coverHtml(item)}</div>
-          ${item.cover ? `<a class="cover-link" target="_blank" rel="noopener" href="${escapeHtml(item.cover)}">abrir cover</a>` : `<span class="cover-link" style="color:var(--muted)">sin enlace</span>`}
-        </div>
-
-        <div class="meta">
-          <div class="titleline">
-            <span class="row-id">#${escapeHtml(item.id)}</span>
-            <span class="game-title">${escapeHtml(item.game || "(sin título)")}</span>
-            <button class="small" data-action="duplicate">Duplicar</button>
-            <button class="small danger" data-action="delete">Eliminar</button>
-          </div>
-
-          <div class="game-row">
-            <label><span>Juego</span><input class="game-input" data-field="game" value="${escapeHtml(item.game)}" /></label>
-            <label><span>Año</span><input type="number" min="1970" max="2100" step="1" data-field="year" value="${escapeHtml(item.year)}" /></label>
-            <label><span>Pop (1–6)</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
-          </div>
-
-          <div class="cover-field">
-            <label><span>Cover URL</span><input class="field-cover" data-field="cover" value="${escapeHtml(item.cover)}" placeholder="https://..." /></label>
-            <button class="small" data-action="reloadCover">Recargar cover</button>
-          </div>
-
-          <div class="tracks-section">${tracksSectionHtml(item.tracks)}</div>
-
-        </div>
-
-        <div class="video-col">
-          ${initialVideoHtml(item)}
-          <a class="watch-link" target="_blank" rel="noopener" href="${escapeHtml(watchUrl(item))}">${watchLabel(item)}</a>
-        </div>
-      `;
-
       frag.appendChild(row);
     });
 
     list.appendChild(frag);
+
+    _rowObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) fillRow(e.target); });
+    }, { rootMargin: "500px 0px" });
+
+    list.querySelectorAll(".row").forEach(row => _rowObserver.observe(row));
+
     applySearch();
     updateStats();
   }
@@ -1053,7 +1066,9 @@
   function applySearch() {
     const q = $("search").value.trim().toLowerCase();
     document.querySelectorAll(".row").forEach(row => {
-      row.classList.toggle("hidden", q && !row.dataset.search.includes(q));
+      const visible = !q || row.dataset.search.includes(q);
+      row.classList.toggle("hidden", !visible);
+      if (visible) fillRow(row);
     });
     updateStats();
   }
