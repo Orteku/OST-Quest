@@ -1059,7 +1059,7 @@ function openGmPanel() {
           const tv = parseInt(document.getElementById(`gm-track-${gi}`).value);
           trackIdx = isNaN(tv) ? 0 : tv;
         } else {
-          trackIdx = Math.floor(Math.random() * answer.tracks.length);
+          trackIdx = Math.floor(Math.random() * byId[answerId].tracks.length);
         }
       }
       usedIds.add(answerId);
