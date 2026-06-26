@@ -661,11 +661,14 @@ function openEndModal(score) {
         <div class="modal__countdown">${t('next_quest_in')} &nbsp; <strong id="end-countdown">--:--:--</strong></div>
       ` : ''}
       <button class="btn btn--new" id="close-end-btn">${t('btn_close')}</button>
+      ${currentDateStr === '__gm__' ? `<button class="btn btn--reconfig" id="gm-reconfig-btn">↩ Reconfigurar</button>` : ''}
     </div>`;
 
   document.getElementById('close-end-btn').addEventListener('click', () => {
       closeModal();
   });
+  const gmReconfigBtn = document.getElementById('gm-reconfig-btn');
+  if (gmReconfigBtn) gmReconfigBtn.addEventListener('click', () => { closeModal(); openGmPanel(); });
   if (!isArchiveMode) tickEndCountdown();
   openModal();
 
@@ -931,6 +934,143 @@ function hideToast() {
   el.classList.remove('toast--show', 'toast--warn', 'toast--error');
 }
 
+// ─── GM Mode ──────────────────────────────────────────────────────────────────
+
+function openGmPanel() {
+  document.getElementById('loading-screen').style.display = 'none';
+  const panel = document.getElementById('gm-panel');
+  panel.style.display = 'block';
+
+  const sorted = [...GAME_DB].sort((a, b) => a.game.localeCompare(b.game));
+  const opts   = sorted.map(g =>
+    `<option value="${g.id}">${g.game}${g.year ? ' (' + g.year + ')' : ''}</option>`
+  ).join('');
+
+  const colsHtml = [0, 1, 2].map(gi => `
+    <div class="gm-col">
+      <h3 class="gm-col__title">Columna ${gi + 1}</h3>
+      <span class="gm-label">Respuesta</span>
+      <select class="gm-select" id="gm-answer-${gi}">
+        <option value="">— Elegir —</option>${opts}
+      </select>
+      <select class="gm-select" id="gm-track-${gi}" style="display:none"></select>
+      <span class="gm-label gm-decoy-label">Señuelos</span>
+      ${[0, 1, 2].map(di => `
+        <select class="gm-select" id="gm-decoy-${gi}-${di}">
+          <option value="">— Señuelo ${di + 1} —</option>${opts}
+        </select>`).join('')}
+    </div>`).join('');
+
+  panel.innerHTML = `
+    <div class="gm-panel__inner">
+      <div class="gm-panel__header">
+        <h2 class="gm-panel__title">GM Mode</h2>
+        <p class="gm-panel__sub">Configura las tres columnas para testear el juego</p>
+      </div>
+      <div class="gm-cols">${colsHtml}</div>
+      <div class="gm-panel__footer">
+        <p class="gm-error" id="gm-error"></p>
+        <button class="btn btn--guess" id="gm-start">Empezar juego</button>
+      </div>
+    </div>`;
+
+  const byId = Object.fromEntries(GAME_DB.map(g => [g.id, g]));
+
+  [0, 1, 2].forEach(gi => {
+    const ansEl   = document.getElementById(`gm-answer-${gi}`);
+    const trackEl = document.getElementById(`gm-track-${gi}`);
+    ansEl.addEventListener('change', () => {
+      const game = byId[parseInt(ansEl.value)];
+      if (game && game.tracks.length > 1) {
+        trackEl.innerHTML = game.tracks.map((tr, i) =>
+          `<option value="${i}">${i + 1}. ${tr.title || 'Pista ' + (i + 1)}</option>`
+        ).join('');
+        trackEl.style.display = 'block';
+      } else {
+        trackEl.innerHTML = '';
+        trackEl.style.display = 'none';
+      }
+    });
+  });
+
+  document.getElementById('gm-start').addEventListener('click', () => {
+    const errorEl = document.getElementById('gm-error');
+    errorEl.textContent = '';
+    const groups  = [];
+    const usedIds = new Set();
+
+    for (let gi = 0; gi < 3; gi++) {
+      const answerId = parseInt(document.getElementById(`gm-answer-${gi}`).value);
+      const trackIdx = parseInt(document.getElementById(`gm-track-${gi}`).value || '0') || 0;
+      const decoyIds = [0, 1, 2].map(di =>
+        parseInt(document.getElementById(`gm-decoy-${gi}-${di}`).value)
+      );
+
+      if (!answerId || decoyIds.some(id => !id)) {
+        errorEl.textContent = `Rellena todos los campos de la columna ${gi + 1}.`;
+        return;
+      }
+      const allIds = [answerId, ...decoyIds];
+      if (new Set(allIds).size !== 4) {
+        errorEl.textContent = `Columna ${gi + 1}: hay juegos repetidos.`;
+        return;
+      }
+      for (const id of allIds) {
+        if (usedIds.has(id)) {
+          errorEl.textContent = `"${byId[id].game}" aparece en más de una columna.`;
+          return;
+        }
+        usedIds.add(id);
+      }
+
+      const answer = byId[answerId];
+      const decoys = decoyIds.map(id => byId[id]);
+      const covers = [answer, ...decoys];
+      for (let i = covers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [covers[i], covers[j]] = [covers[j], covers[i]];
+      }
+      groups.push({ answer, covers, trackIndex: trackIdx });
+    }
+
+    panel.style.display = 'none';
+    initGmGame(groups);
+  });
+}
+
+async function initGmGame(gmGroups) {
+  currentDateStr = '__gm__';
+  isArchiveMode  = true;
+  gameFinished   = false;
+  stopAudio();
+
+  showLoadingScreen(true);
+  currentGroups = gmGroups;
+  colStates = [
+    { locked: false, solved: false, pickedId: null, pickedPos: null, correct: false },
+    { locked: true,  solved: false, pickedId: null, pickedPos: null, correct: false },
+    { locked: true,  solved: false, pickedId: null, pickedPos: null, correct: false },
+  ];
+
+  await Promise.all(currentGroups.map(async (g) => {
+    g.assets = await Promise.all(g.covers.map(cv =>
+      getGameAssets(cv, cv.id === g.answer.id ? (g.trackIndex || 0) : 0)
+    ));
+  }));
+
+  showLoadingScreen(false);
+
+  const banner = document.getElementById('archive-banner');
+  if (banner) { banner.textContent = 'GM Mode'; banner.style.display = 'block'; }
+  document.body.classList.add('is-archive');
+
+  renderAll();
+  startCountdownTicker();
+  _prewarmAnswerAudio(0);
+  _prewarmAnswerAudio(1);
+  _prewarmAnswerAudio(2);
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -971,9 +1111,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     initGame(today, false);
   });
 
-  if (!localStorage.getItem('ostquest_tutorial')) openTutorialModal();
-
-  initGame(today, false);
+  if (new URLSearchParams(location.search).has('gm')) {
+    openGmPanel();
+  } else {
+    if (!localStorage.getItem('ostquest_tutorial')) openTutorialModal();
+    initGame(today, false);
+  }
 
   // Volume control
   const volSlider  = document.getElementById('vol-slider');

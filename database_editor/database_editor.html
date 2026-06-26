@@ -573,6 +573,12 @@
       <button id="doSaveSupabase">Guardar en Supabase</button>
       <span id="supabaseStatus" class="sheets-status"></span>
     </div>
+    <div class="sheets-row" id="supaBaseDiffRow" style="border-top:1px solid var(--line);padding-top:8px;margin-top:4px">
+      <span class="sheets-label" style="color:var(--muted);font-size:12px">Sync parcial:</span>
+      <button id="doInsertSupabase" disabled>Añadir nuevas</button>
+      <button id="doUpdateSupabase" disabled>Modificar</button>
+      <button id="doUpsertSupabase" disabled>Añadir y modificar</button>
+    </div>
   </div>
 </header>
 
@@ -660,6 +666,7 @@
     dirty = value;
     $("dirtyPill").style.display = dirty ? "" : "none";
     updatePillRow();
+    if (typeof updateSupaDiffBtns === "function") updateSupaDiffBtns();
   }
 
   function escapeHtml(value) {
@@ -1384,6 +1391,7 @@
       }
       db = incoming;
       originalFilename = "database";
+      setSupaBaseline(incoming);
       setDirty(false);
       render();
       status.textContent = `✓ ${db.length} entradas cargadas`;
@@ -1434,6 +1442,7 @@
       if (delError) throw delError;
       const { error: insError } = await client.from(table).insert(db);
       if (insError) throw insError;
+      setSupaBaseline(db);
       status.textContent = `✓ ${db.length} entradas guardadas en Supabase`;
       status.className = "sheets-status ok";
       setDirty(false);
@@ -1442,6 +1451,77 @@
       status.className = "sheets-status error";
       console.error(err);
     }
+  });
+
+  // ── Supabase diff / sync parcial ─────────────────────────────────────────
+
+  let _supaBaseline = null;
+
+  function setSupaBaseline(data) {
+    _supaBaseline = new Map(data.map(item => [item.id, JSON.stringify(item)]));
+    updateSupaDiffBtns();
+  }
+
+  function getSupaDiff() {
+    if (!_supaBaseline) return { newEntries: [], modifiedEntries: [] };
+    const newEntries = [], modifiedEntries = [];
+    for (const item of db) {
+      if (!_supaBaseline.has(item.id)) newEntries.push(item);
+      else if (_supaBaseline.get(item.id) !== JSON.stringify(item)) modifiedEntries.push(item);
+    }
+    return { newEntries, modifiedEntries };
+  }
+
+  function updateSupaDiffBtns() {
+    const { newEntries, modifiedEntries } = getSupaDiff();
+    const hasNew = newEntries.length > 0, hasMod = modifiedEntries.length > 0;
+    $("doInsertSupabase").disabled  = !hasNew;
+    $("doUpdateSupabase").disabled  = !hasMod;
+    $("doUpsertSupabase").disabled  = !(hasNew && hasMod);
+    $("doInsertSupabase").textContent = hasNew ? `Añadir nuevas (${newEntries.length})` : "Añadir nuevas";
+    $("doUpdateSupabase").textContent = hasMod ? `Modificar (${modifiedEntries.length})` : "Modificar";
+    $("doUpsertSupabase").textContent = (hasNew && hasMod) ? `Añadir y modificar (${newEntries.length}+${modifiedEntries.length})` : "Añadir y modificar";
+  }
+
+  async function runPartialSync(entries, label) {
+    const status = $("supabaseStatus");
+    status.textContent = "Guardando...";
+    status.className = "sheets-status";
+    try {
+      const client = getSupaClient();
+      const table = $("supabaseTableInput").value.trim() || "games";
+      const { error } = await client.from(table).upsert(entries, { onConflict: "id" });
+      if (error) throw error;
+      entries.forEach(item => _supaBaseline.set(item.id, JSON.stringify(item)));
+      updateSupaDiffBtns();
+      status.textContent = `✓ ${label}`;
+      status.className = "sheets-status ok";
+    } catch (err) {
+      status.textContent = "Error: " + err.message;
+      status.className = "sheets-status error";
+      console.error(err);
+    }
+  }
+
+  $("doInsertSupabase").addEventListener("click", async () => {
+    const { newEntries } = getSupaDiff();
+    if (!newEntries.length) return;
+    if (!await customConfirm(`¿Añadir ${newEntries.length} entrada(s) nueva(s) a Supabase?`, { ok: "Añadir" })) return;
+    await runPartialSync(newEntries, `${newEntries.length} entrada(s) añadida(s)`);
+  });
+
+  $("doUpdateSupabase").addEventListener("click", async () => {
+    const { modifiedEntries } = getSupaDiff();
+    if (!modifiedEntries.length) return;
+    if (!await customConfirm(`¿Actualizar ${modifiedEntries.length} entrada(s) modificada(s) en Supabase?`, { ok: "Modificar" })) return;
+    await runPartialSync(modifiedEntries, `${modifiedEntries.length} entrada(s) modificada(s)`);
+  });
+
+  $("doUpsertSupabase").addEventListener("click", async () => {
+    const { newEntries, modifiedEntries } = getSupaDiff();
+    if (!newEntries.length && !modifiedEntries.length) return;
+    if (!await customConfirm(`¿Subir ${newEntries.length} nueva(s) y ${modifiedEntries.length} modificada(s) a Supabase?`, { ok: "Subir" })) return;
+    await runPartialSync([...newEntries, ...modifiedEntries], `${newEntries.length} añadida(s), ${modifiedEntries.length} modificada(s)`);
   });
 
   $("downloadCsv").addEventListener("click", () => {

@@ -363,6 +363,8 @@ ul, li { list-style: none; }
 .btn--result-ok  { background: #2e5018; color: #b8f060; }
 .btn--result-fail{ background: #501818; color: #f06060; }
 .btn--new        { background: #20202a; color: #b8e030; border: 1px solid #2a2a34; margin-top: 16px; }
+.btn--reconfig   { background: #1e2008; border: 1px solid #505a18; color: #b8e030; margin-top: 6px; font-size: 0.85rem; padding: 8px 20px; }
+.btn--reconfig:hover { background: #252b0a; }
 
 /* Result info row */
 .modal__result-info {
@@ -1018,4 +1020,56 @@ ul, li { list-style: none; }
   100% { opacity: 0; transform: translateX(-50%) translateY(calc(-50% - 80px)) scale(0.9); }
 }
 
+/* ─── GM Panel ──────────────────────────────────────────────────────────────── */
+#gm-panel { padding: 24px 0 48px; }
+.gm-panel__inner { max-width: 720px; margin: 0 auto; }
+.gm-panel__header { text-align: center; margin-bottom: 20px; }
+.gm-panel__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2rem; font-weight: 800;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: #b8e030;
+}
+.gm-panel__sub { color: #555560; font-size: 0.82rem; margin-top: 4px; }
+.gm-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.gm-col {
+  background: #1a1c22;
+  border: 1px solid #25272f;
+  border-radius: 8px;
+  padding: 14px 12px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.gm-col__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.95rem; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: #b8e030; margin-bottom: 4px;
+}
+.gm-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: #555560;
+}
+.gm-decoy-label { margin-top: 6px; }
+.gm-select {
+  background: #111318;
+  border: 1px solid #25272f;
+  border-radius: 4px;
+  color: #ccc8be;
+  font-family: 'Barlow', sans-serif;
+  font-size: 0.78rem;
+  padding: 5px 7px; width: 100%;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.gm-select:focus { outline: none; border-color: #b8e030; }
+.gm-select option { background: #111318; }
+.gm-panel__footer { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.gm-error { color: #c84040; font-size: 0.82rem; min-height: 1em; text-align: center; }
+@media (max-width: 600px) { .gm-cols { grid-template-columns: 1fr; } }
 
