@@ -1067,6 +1067,8 @@ ul, li { list-style: none; }
 }
 .gm-select--random { color: #707850; font-style: italic; }
 .gm-decoy-label { margin-top: 6px; }
+.gm-track-label { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #9090a0; cursor: pointer; }
+.gm-track-cb { cursor: pointer; accent-color: #b8e030; }
 .gm-select {
   background: #111318;
   border: 1px solid #25272f;

@@ -963,7 +963,13 @@ function openGmPanel() {
       <select class="gm-select gm-select--random" id="gm-answer-${gi}">
         ${randOpt}${opts}
       </select>
-      <select class="gm-select" id="gm-track-${gi}" style="display:none"></select>
+      <div id="gm-track-wrap-${gi}" style="display:none">
+        <label class="gm-track-label">
+          <input type="checkbox" id="gm-track-cb-${gi}" class="gm-track-cb">
+          <span>Pista concreta</span>
+        </label>
+        <select class="gm-select" id="gm-track-${gi}" style="display:none"></select>
+      </div>
       <span class="gm-label gm-decoy-label">Señuelos</span>
       ${[0, 1, 2].map(di => `
         <select class="gm-select gm-select--random" id="gm-decoy-${gi}-${di}">
@@ -991,11 +997,17 @@ function openGmPanel() {
   }
 
   [0, 1, 2].forEach(gi => {
-    const ansEl   = document.getElementById(`gm-answer-${gi}`);
-    const trackEl = document.getElementById(`gm-track-${gi}`);
-    const posEl   = document.getElementById(`gm-pos-${gi}`);
+    const ansEl      = document.getElementById(`gm-answer-${gi}`);
+    const trackEl    = document.getElementById(`gm-track-${gi}`);
+    const trackWrapEl = document.getElementById(`gm-track-wrap-${gi}`);
+    const trackCbEl  = document.getElementById(`gm-track-cb-${gi}`);
+    const posEl      = document.getElementById(`gm-pos-${gi}`);
 
     posEl.addEventListener('change', () => _gmStyle(posEl));
+
+    trackCbEl.addEventListener('change', () => {
+      trackEl.style.display = trackCbEl.checked ? 'block' : 'none';
+    });
 
     ansEl.addEventListener('change', () => {
       _gmStyle(ansEl);
@@ -1004,10 +1016,13 @@ function openGmPanel() {
         trackEl.innerHTML = game.tracks.map((tr, i) =>
           `<option value="${i}">${i + 1}. ${tr.title || 'Pista ' + (i + 1)}</option>`
         ).join('');
-        trackEl.style.display = 'block';
+        trackCbEl.checked = false;
+        trackEl.style.display = 'none';
+        trackWrapEl.style.display = 'block';
       } else {
         trackEl.innerHTML = '';
         trackEl.style.display = 'none';
+        trackWrapEl.style.display = 'none';
       }
     });
 
@@ -1039,8 +1054,13 @@ function openGmPanel() {
           errorEl.textContent = `"${byId[answerId].game}" ya está en uso.`;
           return;
         }
-        const tv = parseInt(document.getElementById(`gm-track-${gi}`).value);
-        trackIdx = isNaN(tv) ? 0 : tv;
+        const cb = document.getElementById(`gm-track-cb-${gi}`);
+        if (cb && cb.checked) {
+          const tv = parseInt(document.getElementById(`gm-track-${gi}`).value);
+          trackIdx = isNaN(tv) ? 0 : tv;
+        } else {
+          trackIdx = Math.floor(Math.random() * answer.tracks.length);
+        }
       }
       usedIds.add(answerId);
       const answer = byId[answerId];
