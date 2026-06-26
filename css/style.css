@@ -1056,7 +1056,7 @@ ul, li { list-style: none; }
   text-transform: uppercase; letter-spacing: 0.8px;
   color: #555560;
 }
-.gm-row-label { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.gm-row-label { display: flex; align-items: center; gap: 6px; }
 .gm-select--pos {
   width: 28px;
   flex-shrink: 0;
