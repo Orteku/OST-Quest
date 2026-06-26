@@ -661,7 +661,7 @@ function openEndModal(score) {
         <div class="modal__countdown">${t('next_quest_in')} &nbsp; <strong id="end-countdown">--:--:--</strong></div>
       ` : ''}
       <button class="btn btn--new" id="close-end-btn">${t('btn_close')}</button>
-      ${currentDateStr === '__gm__' ? `<button class="btn btn--reconfig" id="gm-reconfig-btn">↩ Reconfigurar</button>` : ''}
+      ${currentDateStr === '__gm__' ? `<button class="btn btn--reconfig" id="gm-reconfig-btn">↩ Game Master</button>` : ''}
     </div>`;
 
   document.getElementById('close-end-btn').addEventListener('click', () => {
@@ -941,30 +941,40 @@ function openGmPanel() {
   const panel = document.getElementById('gm-panel');
   panel.style.display = 'block';
 
-  const sorted = [...GAME_DB].sort((a, b) => a.game.localeCompare(b.game));
-  const opts   = sorted.map(g =>
+  const sorted  = [...GAME_DB].sort((a, b) => a.game.localeCompare(b.game));
+  const opts     = sorted.map(g =>
     `<option value="${g.id}">${g.game}${g.year ? ' (' + g.year + ')' : ''}</option>`
   ).join('');
+  const randOpt  = `<option value="-1" selected>Aleatorio</option>`;
 
   const colsHtml = [0, 1, 2].map(gi => `
     <div class="gm-col">
       <h3 class="gm-col__title">Columna ${gi + 1}</h3>
-      <span class="gm-label">Respuesta</span>
-      <select class="gm-select" id="gm-answer-${gi}">
-        <option value="">— Elegir —</option>${opts}
+      <div class="gm-row-label">
+        <span class="gm-label">Respuesta</span>
+        <select class="gm-select gm-select--pos gm-select--random" id="gm-pos-${gi}">
+          <option value="-1" selected>?</option>
+          <option value="0">1</option>
+          <option value="1">2</option>
+          <option value="2">3</option>
+          <option value="3">4</option>
+        </select>
+      </div>
+      <select class="gm-select gm-select--random" id="gm-answer-${gi}">
+        ${randOpt}${opts}
       </select>
       <select class="gm-select" id="gm-track-${gi}" style="display:none"></select>
       <span class="gm-label gm-decoy-label">Señuelos</span>
       ${[0, 1, 2].map(di => `
-        <select class="gm-select" id="gm-decoy-${gi}-${di}">
-          <option value="">— Señuelo ${di + 1} —</option>${opts}
+        <select class="gm-select gm-select--random" id="gm-decoy-${gi}-${di}">
+          ${randOpt}${opts}
         </select>`).join('')}
     </div>`).join('');
 
   panel.innerHTML = `
     <div class="gm-panel__inner">
       <div class="gm-panel__header">
-        <h2 class="gm-panel__title">GM Mode</h2>
+        <h2 class="gm-panel__title">Game Master</h2>
         <p class="gm-panel__sub">Configura las tres columnas para testear el juego</p>
       </div>
       <div class="gm-cols">${colsHtml}</div>
@@ -976,10 +986,19 @@ function openGmPanel() {
 
   const byId = Object.fromEntries(GAME_DB.map(g => [g.id, g]));
 
+  function _gmStyle(el) {
+    el.classList.toggle('gm-select--random', el.value === '-1');
+  }
+
   [0, 1, 2].forEach(gi => {
     const ansEl   = document.getElementById(`gm-answer-${gi}`);
     const trackEl = document.getElementById(`gm-track-${gi}`);
+    const posEl   = document.getElementById(`gm-pos-${gi}`);
+
+    posEl.addEventListener('change', () => _gmStyle(posEl));
+
     ansEl.addEventListener('change', () => {
+      _gmStyle(ansEl);
       const game = byId[parseInt(ansEl.value)];
       if (game && game.tracks.length > 1) {
         trackEl.innerHTML = game.tracks.map((tr, i) =>
@@ -991,45 +1010,76 @@ function openGmPanel() {
         trackEl.style.display = 'none';
       }
     });
+
+    [0, 1, 2].forEach(di => {
+      document.getElementById(`gm-decoy-${gi}-${di}`).addEventListener('change', function () {
+        _gmStyle(this);
+      });
+    });
   });
 
   document.getElementById('gm-start').addEventListener('click', () => {
     const errorEl = document.getElementById('gm-error');
     errorEl.textContent = '';
-    const groups  = [];
     const usedIds = new Set();
+    const groups  = [];
 
     for (let gi = 0; gi < 3; gi++) {
-      const answerId = parseInt(document.getElementById(`gm-answer-${gi}`).value);
-      const trackIdx = parseInt(document.getElementById(`gm-track-${gi}`).value || '0') || 0;
-      const decoyIds = [0, 1, 2].map(di =>
-        parseInt(document.getElementById(`gm-decoy-${gi}-${di}`).value)
-      );
-
-      if (!answerId || decoyIds.some(id => !id)) {
-        errorEl.textContent = `Rellena todos los campos de la columna ${gi + 1}.`;
-        return;
-      }
-      const allIds = [answerId, ...decoyIds];
-      if (new Set(allIds).size !== 4) {
-        errorEl.textContent = `Columna ${gi + 1}: hay juegos repetidos.`;
-        return;
-      }
-      for (const id of allIds) {
-        if (usedIds.has(id)) {
-          errorEl.textContent = `"${byId[id].game}" aparece en más de una columna.`;
+      // Resolver respuesta
+      let answerId = parseInt(document.getElementById(`gm-answer-${gi}`).value);
+      let trackIdx = 0;
+      if (isNaN(answerId) || answerId === -1) {
+        const avail = GAME_DB.filter(g => !usedIds.has(g.id));
+        if (!avail.length) { errorEl.textContent = 'No hay suficientes juegos disponibles.'; return; }
+        const picked = avail[Math.floor(Math.random() * avail.length)];
+        answerId = picked.id;
+        trackIdx = Math.floor(Math.random() * picked.tracks.length);
+      } else {
+        if (usedIds.has(answerId)) {
+          errorEl.textContent = `"${byId[answerId].game}" ya está en uso.`;
           return;
         }
-        usedIds.add(id);
+        const tv = parseInt(document.getElementById(`gm-track-${gi}`).value);
+        trackIdx = isNaN(tv) ? 0 : tv;
+      }
+      usedIds.add(answerId);
+      const answer = byId[answerId];
+
+      // Resolver señuelos
+      const resolvedDecoys = [];
+      for (let di = 0; di < 3; di++) {
+        let decoyId = parseInt(document.getElementById(`gm-decoy-${gi}-${di}`).value);
+        if (isNaN(decoyId) || decoyId === -1) {
+          const similar = GAME_DB.filter(g =>
+            !usedIds.has(g.id) && Math.abs(g.pop - answer.pop) <= 1
+          );
+          const pool = similar.length
+            ? similar
+            : GAME_DB.filter(g => !usedIds.has(g.id));
+          if (!pool.length) { errorEl.textContent = 'No hay suficientes juegos para los señuelos.'; return; }
+          decoyId = pool[Math.floor(Math.random() * pool.length)].id;
+        } else if (usedIds.has(decoyId)) {
+          errorEl.textContent = `"${byId[decoyId]?.game}" ya está en uso.`;
+          return;
+        }
+        resolvedDecoys.push(decoyId);
+        usedIds.add(decoyId);
       }
 
-      const answer = byId[answerId];
-      const decoys = decoyIds.map(id => byId[id]);
-      const covers = [answer, ...decoys];
-      for (let i = covers.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [covers[i], covers[j]] = [covers[j], covers[i]];
+      // Construir covers con posición opcional
+      const decoys = resolvedDecoys.map(id => byId[id]);
+      const posIdx = parseInt(document.getElementById(`gm-pos-${gi}`).value);
+      const covers = [...decoys];
+      if (!isNaN(posIdx) && posIdx >= 0) {
+        covers.splice(posIdx, 0, answer);
+      } else {
+        covers.unshift(answer);
+        for (let i = covers.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [covers[i], covers[j]] = [covers[j], covers[i]];
+        }
       }
+
       groups.push({ answer, covers, trackIndex: trackIdx });
     }
 
@@ -1061,7 +1111,7 @@ async function initGmGame(gmGroups) {
   showLoadingScreen(false);
 
   const banner = document.getElementById('archive-banner');
-  if (banner) { banner.textContent = 'GM Mode'; banner.style.display = 'block'; }
+  if (banner) { banner.textContent = 'Game Master'; banner.style.display = 'block'; }
   document.body.classList.add('is-archive');
 
   renderAll();
