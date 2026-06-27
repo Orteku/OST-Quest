@@ -35,7 +35,7 @@ ul, li { list-style: none; }
   gap: 10px;
   position: relative;
 }
-.site-header__left { display: flex; align-items: baseline; gap: 10px; flex-shrink: 0; }
+.site-header__left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .site-title {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 26px;
@@ -267,10 +267,12 @@ ul, li { list-style: none; }
 }
 .cover-item:hover .cover-item__label { opacity: 1; }
 
-.cover-item--correct-pick { outline: 3px solid #6bc832; outline-offset: -1px; }
-.cover-item--wrong-pick   { outline: 3px solid #c71717; outline-offset: -1px; }
+.cover-item--correct-pick { outline: 4px solid #6bc832; outline-offset: -2px; }
+.cover-item--correct-pick img { opacity: 0.6; }
+.cover-item--wrong-pick   { outline: 4px solid #c71717; outline-offset: -2px; }
 .cover-item--wrong-pick img { opacity: 0.6; }
-.cover-item--answer       { outline: 3px solid #6bc832; outline-offset: -1px; }
+.cover-item--answer       { outline: 4px solid #6bc832; outline-offset: -2px; }
+.cover-item--answer img   { opacity: 0.6; }
 .cover-item--dimmed       { opacity: 0.2; }
 
 /* ─── Lock overlay ──────────────────────────────────────────────────────────── */
@@ -1100,8 +1102,8 @@ ul, li { list-style: none; }
 .theme-btn:hover { color: #b8e030; border-color: #b8e030; }
 #btn-theme {
   position: fixed;
-  top: 10px;
-  left: max(8px, calc(50vw - 412px));
+  top: 20px;
+  left: 20px;
   z-index: 50;
 }
 
@@ -1129,8 +1131,8 @@ body.theme--light .theme-btn:hover { color: #4a6c10; border-color: #4a6c10; }
 /* Columns */
 body.theme--light .col { background: #eae8e2; border-color: #c6c4bc; }
 body.theme--light .col--active { border-color: #b6b4ac; }
-body.theme--light .col--correct { border-color: #458018; background: #cce8aa; }
-body.theme--light .col--wrong   { border-color: #b82020; background: #f0a0a0; }
+body.theme--light .col--correct { border-color: #458018; }
+body.theme--light .col--wrong   { border-color: #b82020; }
 body.theme--light .col__header  { background: #dddbd4; }
 body.theme--light .col__header:hover { background: #d4d2ca; }
 body.theme--light .col__header--playing { background: #cce0b0; animation-name: col-pulse-light; }
