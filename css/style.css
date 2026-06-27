@@ -1098,6 +1098,12 @@ ul, li { list-style: none; }
   flex-shrink: 0;
 }
 .theme-btn:hover { color: #b8e030; border-color: #b8e030; }
+#btn-theme {
+  position: fixed;
+  top: 10px;
+  left: max(8px, calc(50vw - 412px));
+  z-index: 50;
+}
 
 /* ─── Light Mode ─────────────────────────────────────────────────────────────── */
 @keyframes col-pulse-light {
@@ -1123,8 +1129,8 @@ body.theme--light .theme-btn:hover { color: #4a6c10; border-color: #4a6c10; }
 /* Columns */
 body.theme--light .col { background: #eae8e2; border-color: #c6c4bc; }
 body.theme--light .col--active { border-color: #b6b4ac; }
-body.theme--light .col--correct { border-color: #5a9020; background: #e4f0d4; }
-body.theme--light .col--wrong   { border-color: #c04040; background: #f4e0e0; }
+body.theme--light .col--correct { border-color: #458018; background: #cce8aa; }
+body.theme--light .col--wrong   { border-color: #b82020; background: #f0a0a0; }
 body.theme--light .col__header  { background: #dddbd4; }
 body.theme--light .col__header:hover { background: #d4d2ca; }
 body.theme--light .col__header--playing { background: #cce0b0; animation-name: col-pulse-light; }

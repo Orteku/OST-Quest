@@ -586,7 +586,7 @@ function openResultModal(gi, pickedCv, isCorrect) {
 
   const audioEl   = getDirectAudioEl();
   const startSecs = ansAsset.startSeconds || 0;
-  const isPlaying = audioEl && !audioEl.paused;
+  const isPlaying = playingCol === gi && audioEl && !audioEl.paused;
 
   const titleHtml = ansAsset.title
     ? `<p class="modal__track-title">${ansAsset.title}</p>` : '';
