@@ -662,11 +662,15 @@
   function updatePillRow() {
     $("pillRow").style.display = $("dirtyPill").style.display !== "none" ? "flex" : "none";
   }
+  let _diffTimer = null;
   function setDirty(value = true) {
     dirty = value;
     $("dirtyPill").style.display = dirty ? "" : "none";
     updatePillRow();
-    if (typeof updateSupaDiffBtns === "function") updateSupaDiffBtns();
+    if (typeof updateSupaDiffBtns === "function") {
+      clearTimeout(_diffTimer);
+      _diffTimer = setTimeout(updateSupaDiffBtns, 400);
+    }
   }
 
   function escapeHtml(value) {
@@ -872,19 +876,12 @@
 
   function render() {
     document.body.classList.toggle("compact", compact);
-    list.innerHTML = "";
     if (_rowObserver) { _rowObserver.disconnect(); _rowObserver = null; }
-    const frag = document.createDocumentFragment();
 
-    db.forEach((item, index) => {
-      const row = document.createElement("article");
-      row.className = "row";
-      row.dataset.index = String(index);
-      row.dataset.search = `${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop}`.toLowerCase();
-      frag.appendChild(row);
-    });
-
-    list.appendChild(frag);
+    list.innerHTML = db.map((item, index) => {
+      const search = escapeHtml(`${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop}`.toLowerCase());
+      return `<article class="row" data-index="${index}" data-search="${search}"></article>`;
+    }).join("");
 
     _rowObserver = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) fillRow(e.target); });
@@ -1073,9 +1070,10 @@
   function applySearch() {
     const q = $("search").value.trim().toLowerCase();
     document.querySelectorAll(".row").forEach(row => {
+      const wasHidden = row.classList.contains("hidden");
       const visible = !q || row.dataset.search.includes(q);
       row.classList.toggle("hidden", !visible);
-      if (visible) fillRow(row);
+      if (visible && wasHidden) fillRow(row);
     });
     updateStats();
   }
