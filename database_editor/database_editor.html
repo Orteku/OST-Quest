@@ -1122,7 +1122,10 @@
     $("clearNew").click();
     $("addPanel").classList.remove("open");
     render();
-    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
+    setTimeout(() => {
+      const lastRow = list.querySelector(".row:last-child");
+      if (lastRow) { fillRow(lastRow); lastRow.scrollIntoView({ behavior: "smooth", block: "end" }); }
+    }, 50);
   });
 
   function loadText(text, filename) {
