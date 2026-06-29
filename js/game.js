@@ -661,6 +661,7 @@ function openEndModal(score) {
         <div class="modal__countdown">${t('next_quest_in')} &nbsp; <strong id="end-countdown">--:--:--</strong></div>
       ` : ''}
       <button class="btn btn--new" id="close-end-btn">${t('btn_close')}</button>
+      ${!isArchiveMode && currentDateStr !== '__gm__' ? `<button class="btn btn--share" id="share-btn">${t('btn_share')}</button>` : ''}
       ${currentDateStr === '__gm__' ? `<button class="btn btn--reconfig" id="gm-reconfig-btn">↩ Game Master</button>` : ''}
     </div>`;
 
@@ -669,6 +670,23 @@ function openEndModal(score) {
   });
   const gmReconfigBtn = document.getElementById('gm-reconfig-btn');
   if (gmReconfigBtn) gmReconfigBtn.addEventListener('click', () => { closeModal(); openGmPanel(); });
+
+  const shareBtn = document.getElementById('share-btn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => {
+      const [y, m, d] = currentDateStr.split('-');
+      const emojis = colStates.map(s => s.correct ? '🟩' : '🟥').join('');
+      const text = `Oesti Quest 🎮 ${d}/${m}/${y}\n${emojis}\nhttps://oestiquest.com`;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(t('share_copied'));
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        showToast(t('share_copied'));
+      });
+    });
+  }
   if (!isArchiveMode) tickEndCountdown();
   openModal();
 

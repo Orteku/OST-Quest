@@ -24,6 +24,10 @@ function _applyDOM() {
     const v = _t[el.dataset.i18n];
     if (typeof v === 'string') el.textContent = v;
   });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const v = _t[el.dataset.i18nHtml];
+    if (typeof v === 'string') el.innerHTML = v;
+  });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => {
     const v = _t[el.dataset.i18nAria];
     if (typeof v === 'string') el.setAttribute('aria-label', v);

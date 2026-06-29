@@ -29,6 +29,8 @@
   "stat_max_streak": "Mejor racha",
   "next_quest_in": "Siguiente Quest en",
   "btn_close": "Cerrar",
+  "btn_share": "📋 Copiar resultado",
+  "share_copied": "¡Resultado copiado al portapapeles!",
   "archive_title": "Quest Log",
   "archive_in_progress": "En curso...",
   "archive_play": "Jugar",
@@ -42,7 +44,7 @@
     "¡Crack! ¡Fiera! ¡Mastodonte!"
   ],
   "footer_music": "Música provista por Archive.org y KHInsider.",
-  "footer_credit": "Oesti Quest desarrollado por Orteku en colaboración con Vyrka · Contacto: oestiquest@gmail.com",
+  "footer_credit": "Oesti Quest desarrollado por Orteku en colaboración con Vyrka · Contacto: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
   "tutorial_title": "¿Cómo se juega?",
   "tutorial_listen_h": "Escucha",
   "tutorial_listen_b": "Pulsa ▶ para reproducir un fragmento de la banda sonora e intenta reconocerla.",

@@ -29,6 +29,8 @@
   "stat_max_streak": "Best streak",
   "next_quest_in": "Next Quest in",
   "btn_close": "Close",
+  "btn_share": "📋 Copy result",
+  "share_copied": "Result copied to clipboard!",
   "archive_title": "Quest Log",
   "archive_in_progress": "In progress...",
   "archive_play": "Play",
@@ -42,7 +44,7 @@
     "You're a legend!"
   ],
   "footer_music": "Music sourced from Archive.org and KHInsider.",
-  "footer_credit": "Oesti Quest developed by Orteku in collaboration with Vyrka · Contact: oestiquest@gmail.com",
+  "footer_credit": "Oesti Quest developed by Orteku in collaboration with Vyrka · Contact: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
   "tutorial_title": "How to play",
   "tutorial_listen_h": "Listen",
   "tutorial_listen_b": "Press ▶ to play a soundtrack clip and try to recognize it.",

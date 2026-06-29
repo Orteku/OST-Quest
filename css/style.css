@@ -367,6 +367,7 @@ ul, li { list-style: none; }
 .btn--new        { background: #20202a; color: #b8e030; border: 1px solid #2a2a34; margin-top: 16px; }
 .btn--reconfig   { background: #1e2008; border: 1px solid #505a18; color: #b8e030; margin-top: 6px; font-size: 0.85rem; padding: 8px 20px; }
 .btn--reconfig:hover { background: #252b0a; }
+.btn--share      { background: #181e2c; border: 1px solid #2c3858; color: #90aad0; margin-top: 6px; font-size: 0.85rem; padding: 8px 20px; }
 
 /* Result info row */
 .modal__result-info {
@@ -1187,6 +1188,7 @@ body.theme--light .modal__countdown { color: #787888; }
 body.theme--light .modal__countdown strong { color: #4a6c10; }
 body.theme--light .btn--new    { background: #e0ddd6; border-color: #c6c4bc; color: #4a6c10; }
 body.theme--light .btn--reconfig { background: #dce8c4; border-color: #8aaa50; color: #3a5810; }
+body.theme--light .btn--share  { background: #d8dce8; border-color: #a0a8c0; color: #384068; }
 
 /* Archive */
 body.theme--light .archive__item { border-bottom-color: #d0cec6; }
