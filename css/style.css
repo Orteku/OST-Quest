@@ -118,7 +118,7 @@ ul, li { list-style: none; }
   padding: 6px 16px;
   border-radius: 6px;
   text-transform: uppercase;
-  white-space: nowrap;
+  text-align: center;
   pointer-events: none;
 }
 
@@ -367,7 +367,7 @@ ul, li { list-style: none; }
 .btn--new        { background: #20202a; color: #b8e030; border: 1px solid #2a2a34; margin-top: 16px; }
 .btn--reconfig   { background: #1e2008; border: 1px solid #505a18; color: #b8e030; margin-top: 6px; font-size: 0.85rem; padding: 8px 20px; }
 .btn--reconfig:hover { background: #252b0a; }
-.btn--share      { background: #181e2c; border: 1px solid #2c3858; color: #90aad0; margin-top: 6px; font-size: 0.85rem; padding: 8px 20px; }
+.btn--share      { background: #181e2c; border: 1px solid #2c3858; color: #90aad0; margin-top: 6px; font-size: 0.85rem; padding: 8px 20px; width: auto; display: inline-flex; }
 
 /* Result info row */
 .modal__result-info {
@@ -677,6 +677,8 @@ ul, li { list-style: none; }
   margin-bottom: 4px;
   text-align: left;
 }
+.archive__left { display: flex; align-items: center; gap: 8px; }
+.archive-banner__date { font-size: 11px; font-weight: 400; letter-spacing: 0.5px; text-transform: none; display: block; }
 .archive__item {
   display: flex;
   align-items: center;
@@ -770,10 +772,10 @@ ul, li { list-style: none; }
     max-width: 44vw;
   }
 
-  /* Help button → bottom-right corner */
+  /* Right column: help (top) + theme (bottom) */
   #btn-help {
     top: auto;
-    bottom: 20px;
+    bottom: 68px;
     right: 20px;
   }
 
@@ -1106,6 +1108,14 @@ ul, li { list-style: none; }
   top: 20px;
   left: 20px;
   z-index: 50;
+}
+@media (max-width: 520px) {
+  #btn-theme {
+    top: auto;
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+  }
 }
 
 /* ─── Light Mode ─────────────────────────────────────────────────────────────── */

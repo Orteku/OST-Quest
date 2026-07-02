@@ -584,6 +584,8 @@
 </header>
 
 <main>
+  <div id="list" class="list"></div>
+
   <section id="addPanel" class="add-panel">
     <h2 style="margin:0 0 10px;font-size:17px;">Añadir nueva entrada</h2>
     <div class="add-grid">
@@ -605,7 +607,6 @@
     </div>
   </section>
 
-  <div id="list" class="list"></div>
   <div class="footer-space"></div>
 </main>
 
@@ -1193,7 +1194,7 @@
   });
 
   $("scrollTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-  $("scrollBottom").addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+  $("scrollBottom").addEventListener("click", () => window.scrollTo({ top: 999999999, behavior: "smooth" }));
 
   $("newYear").value = new Date().getFullYear();
 

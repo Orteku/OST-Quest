@@ -675,8 +675,10 @@ function openEndModal(score) {
   if (shareBtn) {
     shareBtn.addEventListener('click', () => {
       const [y, m, d] = currentDateStr.split('-');
-      const emojis = colStates.map(s => s.correct ? '🟩' : '🟥').join('');
-      const text = `Oesti Quest 🎮 ${d}/${m}/${y}\n${emojis}\nhttps://oestiquest.com`;
+      const emojis  = colStates.map(s => s.correct ? '🟩' : '🟥').join('');
+      const pct     = Math.round(score / 3 * 100);
+      const questN  = getQuestNumber(currentDateStr);
+      const text = `🎮 Quest #${questN} ${d}/${m}/${y}\n${emojis} - ${pct}%\nhttps://oestiquest.com`;
       navigator.clipboard.writeText(text).then(() => {
         showToast(t('share_copied'));
       }).catch(() => {
@@ -783,15 +785,14 @@ function openArchive() {
       }
     }
     const badge = result
-      ? `<span class="archive__badge archive__badge--${result.score === 3 ? 'ok' : result.score > 0 ? 'partial' : 'fail'}">
-           ${result.score === 3 ? '✓' : result.score + '/3'}
-         </span>`
+      ? `<span class="archive__badge archive__badge--${result.score === 3 ? 'ok' : result.score > 0 ? 'partial' : 'fail'}">${result.score === 3 ? '✓' : result.score + '/3'}</span>`
       : inProgress
         ? `<span class="archive__badge archive__badge--ongoing">${t('archive_in_progress')}</span>`
-        : `<span class="archive__badge archive__badge--new">${t('archive_play')}</span>`;
+        : '';
     const isActive = ds === currentDateStr && isArchiveMode;
     return monthHeader + `<li class="archive__item ${isActive ? 'archive__item--active' : ''}" data-date="${ds}">
-      <span class="archive__date">${d}-${m}-${y}</span>${badge}
+      <span class="archive__left">Quest #${getQuestNumber(ds)}${badge}</span>
+      <span class="archive__date">${d}-${m}-${y}</span>
     </li>`;
   }).join('');
 
@@ -810,7 +811,7 @@ function openArchive() {
       stopAudio();
       const [ay,am,ad] = ds.split('-');
       const banner = document.getElementById('archive-banner');
-      if (banner) { banner.textContent = `Quest ${ad}-${am}-${ay}`; banner.style.display = 'block'; }
+      if (banner) { banner.innerHTML = `Quest #${getQuestNumber(ds)}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`; banner.style.display = 'block'; }
       document.body.classList.add('is-archive');
       initGame(ds, true);
     });

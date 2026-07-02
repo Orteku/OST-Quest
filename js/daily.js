@@ -2,6 +2,14 @@
 
 // ── Fechas ────────────────────────────────────────────────────────────────────
 
+const _QUEST_START = '2026-06-08';
+
+function getQuestNumber(dateStr) {
+  const start = new Date(_QUEST_START + 'T12:00:00Z');
+  const date  = new Date(dateStr  + 'T12:00:00Z');
+  return Math.round((date - start) / 86400000) + 1;
+}
+
 function getGameDay(date) {
   const d = date ? new Date(date) : new Date();
   if (d.getUTCHours() < 3) d.setUTCDate(d.getUTCDate() - 1);
