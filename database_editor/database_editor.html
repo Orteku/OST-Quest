@@ -292,7 +292,7 @@
       align-items: start;
       min-height: 140px;
     }
-    .row.hidden { display: none; }
+    .list.filtering .row.hidden { display: none; }
     .cover-box {
       display: grid;
       gap: 6px;
@@ -822,8 +822,8 @@
 
   function updateStats() {
     const total = db.length;
-    const visible = [...document.querySelectorAll(".row")].filter(r => !r.classList.contains("hidden")).length;
     const q = $("search").value.trim();
+    const visible = q ? [...document.querySelectorAll(".row")].filter(r => !r.classList.contains("hidden")).length : total;
     $("searchStats").textContent = total === 0 ? "" : q ? `${visible} de ${total}` : `${total} entradas`;
     updatePillRow();
   }
@@ -1071,9 +1071,14 @@
 
   function applySearch() {
     const q = $("search").value.trim().toLowerCase();
+    if (!q) {
+      list.classList.remove("filtering");
+      updateStats();
+      return;
+    }
+    list.classList.add("filtering");
     document.querySelectorAll(".row").forEach(row => {
-      const visible = !q || row.dataset.search.includes(q);
-      row.classList.toggle("hidden", !visible);
+      row.classList.toggle("hidden", !row.dataset.search.includes(q));
     });
     updateStats();
   }
