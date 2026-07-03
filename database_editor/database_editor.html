@@ -645,7 +645,7 @@
       const titleVal = escapeHtml(track.title || "");
       const isFirst = ti === 0;
       const titleLabel = `<label><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>`;
-      const mp3Link = track.mp3Url ? `<a class="mp3-link" data-mp3link="${ti}" href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener" title="Abrir MP3">↗</a>` : `<span class="mp3-link" data-mp3link="${ti}"></span>`;
+      const mp3Link = track.mp3Url ? `<a class="mp3-link" data-mp3link="${ti}" href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener">abrir MP3 ↗</a>` : `<span class="mp3-link" data-mp3link="${ti}"></span>`;
       const srcRow = `<div class="yt-row">
           <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" /></label>
           <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
@@ -767,7 +767,7 @@
     return `
       <div class="cover-box">
         <div class="cover-holder">${coverHtml(item)}</div>
-        ${item.cover ? `<a class="cover-link" target="_blank" rel="noopener" href="${escapeHtml(item.cover)}">abrir cover</a>` : `<span class="cover-link" style="color:var(--muted)">sin cover</span>`}
+        ${item.cover ? `<a class="cover-link" target="_blank" rel="noopener" href="${escapeHtml(item.cover)}">abrir cover ↗</a>` : `<span class="cover-link" style="color:var(--muted)">sin cover</span>`}
       </div>
       <div class="meta">
         <div class="titleline">
@@ -836,7 +836,7 @@
         if (loadBtn) { loadBtn.textContent = "▶ Cargar"; loadBtn.disabled = false; }
         const mp3LinkEl = row.querySelector(`[data-mp3link="${trackIdx}"]`);
         if (mp3LinkEl) {
-          if (track.mp3Url) { mp3LinkEl.href = track.mp3Url; mp3LinkEl.textContent = "↗"; }
+          if (track.mp3Url) { mp3LinkEl.href = track.mp3Url; mp3LinkEl.textContent = "abrir MP3 ↗"; }
           else mp3LinkEl.textContent = "";
         }
       } else if (field === "startSeconds") {
@@ -908,7 +908,7 @@
     if (holder) holder.innerHTML = coverHtml(db[index]);
     if (link) {
       if (db[index].cover) {
-        link.textContent = "abrir cover";
+        link.textContent = "abrir cover ↗";
         link.href = db[index].cover;
         link.style.color = "";
       } else {
