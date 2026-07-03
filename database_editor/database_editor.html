@@ -364,6 +364,18 @@
       backdrop-filter: blur(8px);
     }
     .global-player.active { display: flex; }
+    .gp-locator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .gp-locator:hover { background: var(--panel2); }
     .gp-cover {
       width: 46px;
       height: 46px;
@@ -562,10 +574,12 @@
 </div>
 
 <div id="globalPlayer" class="global-player">
-  <img id="gpCover" class="gp-cover" alt="" />
-  <div class="gp-info">
-    <div id="gpGame" class="gp-game"></div>
-    <div id="gpTrack" class="gp-track"></div>
+  <div id="gpLocator" class="gp-locator" title="Ir a la entrada">
+    <img id="gpCover" class="gp-cover" alt="" />
+    <div class="gp-info">
+      <div id="gpGame" class="gp-game"></div>
+      <div id="gpTrack" class="gp-track"></div>
+    </div>
   </div>
   <audio id="gpAudio" controls></audio>
 </div>
@@ -869,7 +883,10 @@
     $("gpAudio").pause();
   }
 
+  let _gpIndex = -1;
+
   function loadInGlobalPlayer(index, ti, btn) {
+    _gpIndex = index;
     const item = db[index];
     const track = item.tracks[ti];
     if (!track?.mp3Url) return;
@@ -1100,6 +1117,14 @@
   $("lightbox").addEventListener("click", () => $("lightbox").style.display = "none");
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") $("lightbox").style.display = "none";
+  });
+
+  $("gpLocator").addEventListener("click", () => {
+    if (_gpIndex < 0) return;
+    const row = list.querySelector(`.row[data-index="${_gpIndex}"]`);
+    if (!row) return;
+    fillRow(row);
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
   $("scrollTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
