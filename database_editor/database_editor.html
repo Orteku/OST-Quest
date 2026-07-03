@@ -73,48 +73,6 @@
       color: #fff;
       border-color: transparent;
     }
-    .video-col {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .video-col .watch-link {
-      display: block;
-      align-self: flex-start;
-    }
-    .video-facade {
-      position: relative;
-      cursor: pointer;
-    }
-    .yt-thumb {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .yt-play {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.72);
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 0 0 3px;
-      transition: background 0.15s, transform 0.15s;
-    }
-    .video-facade:hover .yt-play {
-      background: #c00;
-      transform: translate(-50%, -50%) scale(1.1);
-    }
     img.cover-preview { cursor: zoom-in; }
     .btn-group {
       display: flex;
@@ -171,53 +129,9 @@
       border-radius: 10px;
       box-shadow: 0 8px 48px rgba(0,0,0,0.8);
     }
-    .volume-ctrl {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      padding: 8px;
-    }
-    .volume-slider-wrap {
-      overflow: hidden;
-      max-height: 0;
-      transition: max-height 0.2s ease, opacity 0.2s ease;
-      opacity: 0;
-      display: flex;
-      justify-content: center;
-    }
-    .volume-ctrl:hover .volume-slider-wrap {
-      max-height: 110px;
-      opacity: 1;
-    }
-    #muteBtn {
-      font-size: 20px;
-      background: none;
-      border: none;
-      padding: 4px;
-      cursor: pointer;
-      line-height: 1;
-      border-radius: 6px;
-    }
-    #muteBtn:hover { background: var(--panel2); }
-    #volumeSlider {
-      writing-mode: vertical-lr;
-      direction: rtl;
-      appearance: slider-vertical;
-      -webkit-appearance: slider-vertical;
-      width: 6px;
-      height: 90px;
-      cursor: pointer;
-      accent-color: var(--accent);
-      margin: 4px 0;
-    }
     .scroll-btns {
       position: fixed;
-      bottom: 20px;
+      bottom: 78px;
       right: 20px;
       display: flex;
       flex-direction: column;
@@ -283,7 +197,7 @@
     }
     .row {
       display: grid;
-      grid-template-columns: 106px minmax(340px, 1.2fr) minmax(360px, 520px);
+      grid-template-columns: 140px 1fr;
       gap: 12px;
       background: var(--panel);
       border: 1px solid var(--line);
@@ -298,7 +212,7 @@
       gap: 6px;
     }
     .cover-preview {
-      width: 96px;
+      width: 130px;
       aspect-ratio: 3 / 4;
       object-fit: cover;
       background: #080a0d;
@@ -337,21 +251,9 @@
       font-variant-numeric: tabular-nums;
       font-size: 13px;
     }
-    .grid-fields {
+    .meta-fields {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 65px 52px 68px;
-      gap: 8px;
-      align-items: end;
-    }
-    .cover-field {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: end;
-    }
-    .game-row {
-      display: grid;
-      grid-template-columns: 1fr 68px 52px;
+      grid-template-columns: 1fr 1fr auto 68px 52px;
       gap: 8px;
       align-items: end;
     }
@@ -369,9 +271,6 @@
     .track-block--extra { position: relative; }
     .track-block--extra > button.danger { position: absolute; left: -34px; bottom: 0; }
     .track-title-input { width: 100%; min-width: 0; font-size: 13px; }
-    .video-wrap--audio { display: flex; align-items: center; background: var(--panel2); }
-    .video-wrap--audio audio { width: 100%; }
-    .video-wrap--embed { aspect-ratio: unset; height: 166px; max-height: none; }
     label {
       display: grid;
       gap: 4px;
@@ -384,7 +283,8 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     .game-input { width: 100%; }
-    .game-row input { width: 100%; min-width: 0; }
+    .meta-fields input { width: 100%; min-width: 0; }
+    .meta-fields > button { white-space: nowrap; }
     .actions {
       display: flex;
       gap: 8px;
@@ -395,39 +295,28 @@
       font-size: 12px;
       padding: 6px 8px;
     }
-    .watch-link, .cover-link {
+    .cover-link {
       color: var(--accent);
       text-decoration: none;
       font-size: 12px;
       align-self: center;
     }
-    .watch-link:hover, .cover-link:hover { text-decoration: underline; }
-    .video-wrap {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      max-height: 220px;
-      background: #050607;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid #2b303b;
+    .cover-link:hover { text-decoration: underline; }
+    .mp3-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      align-self: end;
+      padding-bottom: 8px;
     }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-    }
+    .mp3-link:hover { color: var(--accent); }
     .compact .row {
-      grid-template-columns: 72px minmax(360px, 1.4fr) 300px;
+      grid-template-columns: 96px 1fr;
       padding: 8px;
       gap: 8px;
     }
-    .compact .cover-preview { width: 64px; border-radius: 7px; }
-    .compact .video-wrap { max-height: 170px; }
-    .compact .grid-fields {
-      grid-template-columns: minmax(0, 1fr) 65px 52px 68px;
-      gap: 6px;
-    }
+    .compact .cover-preview { width: 86px; border-radius: 7px; }
+    .compact .meta-fields { gap: 6px; }
     .compact input { padding: 6px 8px; }
     .add-panel {
       margin: 16px 0;
@@ -458,7 +347,54 @@
     .add-row1 input { width: 100%; min-width: 0; }
     .add-row2 label { min-width: 0; }
     .add-row2 input { width: 100%; min-width: 0; }
-    .footer-space { height: 60px; }
+    .footer-space { height: 88px; }
+    .global-player {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 68px;
+      background: var(--panel);
+      border-top: 1px solid var(--line);
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 0 16px 0 12px;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+    }
+    .global-player.active { display: flex; }
+    .gp-cover {
+      width: 46px;
+      height: 46px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .gp-info {
+      min-width: 0;
+      flex: 0 0 200px;
+    }
+    .gp-game {
+      font-weight: 700;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .gp-track {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #gpAudio {
+      flex: 1;
+      min-width: 200px;
+      max-width: 700px;
+      accent-color: var(--accent);
+    }
     .notice {
       border-left: 4px solid var(--warn);
       background: #211d12;
@@ -482,27 +418,26 @@
     .sheets-status { font-size: 12px; color: var(--muted); }
     .sheets-status.ok    { color: #6bc832; }
     .sheets-status.error { color: var(--danger); }
-    @media (max-width: 1100px) {
-      .row, .compact .row {
-        grid-template-columns: 76px 1fr;
+    @media (max-width: 900px) {
+      .meta-fields {
+        grid-template-columns: 1fr 1fr 68px 52px;
       }
-      .video-wrap {
-        grid-column: 1 / -1;
-      }
-      .cover-preview { width: 68px; }
+      .meta-fields > button[data-action="reloadCover"] { display: none; }
     }
     @media (max-width: 720px) {
       .row, .compact .row {
         grid-template-columns: 1fr;
       }
       .cover-box {
-        grid-template-columns: 72px 1fr;
+        display: grid;
+        grid-template-columns: 90px 1fr;
         align-items: center;
+        gap: 10px;
       }
-      .grid-fields, .compact .grid-fields {
-        grid-template-columns: minmax(0, 1fr) 65px 52px 68px;
+      .meta-fields {
+        grid-template-columns: 1fr 68px 52px;
       }
-      .cover-field { grid-template-columns: 1fr; }
+      .meta-fields > label:nth-child(2) { grid-column: 1 / -1; }
       .add-row1 { grid-template-columns: 1fr 68px 52px; }
       .add-row2 { grid-template-columns: 1fr 65px; }
     }
@@ -621,16 +556,18 @@
   </div>
 </div>
 
-<div class="volume-ctrl">
-  <div class="volume-slider-wrap">
-    <input type="range" id="volumeSlider" min="0" max="100" value="25" />
-  </div>
-  <button id="muteBtn" title="Silenciar / Restaurar volumen">🔊</button>
-</div>
-
 <div class="scroll-btns">
   <button id="scrollTop" title="Ir arriba">↑</button>
   <button id="scrollBottom" title="Ir abajo">↓</button>
+</div>
+
+<div id="globalPlayer" class="global-player">
+  <img id="gpCover" class="gp-cover" alt="" />
+  <div class="gp-info">
+    <div id="gpGame" class="gp-game"></div>
+    <div id="gpTrack" class="gp-track"></div>
+  </div>
+  <audio id="gpAudio" controls></audio>
 </div>
 
 <script>
@@ -693,24 +630,12 @@
     return String(value || "").trim();
   }
 
-  function trackType(track) {
-    if (!track) return null;
-    if (track.mp3Url) return 'mp3';
-    return null;
-  }
-
   function trackSourceVal(track) {
     return track.mp3Url || '';
   }
 
   function normalizeAudioUrl(url) {
     return url.replace('archive.org/details/', 'archive.org/download/');
-  }
-
-  function watchLabel() { return 'abrir MP3'; }
-
-  function watchUrl(item) {
-    return item.tracks?.[0]?.mp3Url || '';
   }
 
   function tracksSectionHtml(tracks) {
@@ -720,10 +645,12 @@
       const titleVal = escapeHtml(track.title || "");
       const isFirst = ti === 0;
       const titleLabel = `<label><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>`;
+      const mp3Link = track.mp3Url ? `<a class="mp3-link" data-mp3link="${ti}" href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener" title="Abrir MP3">↗</a>` : `<span class="mp3-link" data-mp3link="${ti}"></span>`;
       const srcRow = `<div class="yt-row">
           <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" /></label>
           <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
-          <button class="small" data-action="loadTrack" data-track="${ti}">Cargar</button>
+          <button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>
+          ${mp3Link}
         </div>`;
       if (isFirst) {
         return `<div class="track-block">${titleLabel}${srcRow}</div>`;
@@ -840,7 +767,7 @@
     return `
       <div class="cover-box">
         <div class="cover-holder">${coverHtml(item)}</div>
-        ${item.cover ? `<a class="cover-link" target="_blank" rel="noopener" href="${escapeHtml(item.cover)}">abrir cover</a>` : `<span class="cover-link" style="color:var(--muted)">sin enlace</span>`}
+        ${item.cover ? `<a class="cover-link" target="_blank" rel="noopener" href="${escapeHtml(item.cover)}">abrir cover</a>` : `<span class="cover-link" style="color:var(--muted)">sin cover</span>`}
       </div>
       <div class="meta">
         <div class="titleline">
@@ -849,20 +776,14 @@
           <button class="small" data-action="duplicate">Duplicar</button>
           <button class="small danger" data-action="delete">Eliminar</button>
         </div>
-        <div class="game-row">
+        <div class="meta-fields">
           <label><span>Juego</span><input class="game-input" data-field="game" value="${escapeHtml(item.game)}" /></label>
-          <label><span>Año</span><input type="number" min="1970" max="2100" step="1" data-field="year" value="${escapeHtml(item.year)}" /></label>
-          <label><span>Pop (1–6)</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
-        </div>
-        <div class="cover-field">
           <label><span>Cover URL</span><input class="field-cover" data-field="cover" value="${escapeHtml(item.cover)}" placeholder="https://..." /></label>
-          <button class="small" data-action="reloadCover">Recargar cover</button>
+          <button class="small" data-action="reloadCover">↺ Cover</button>
+          <label><span>Año</span><input type="number" min="1970" max="2100" step="1" data-field="year" value="${escapeHtml(item.year)}" /></label>
+          <label><span>Pop</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
         </div>
         <div class="tracks-section">${tracksSectionHtml(item.tracks)}</div>
-      </div>
-      <div class="video-col">
-        ${initialVideoHtml(item)}
-        <a class="watch-link" target="_blank" rel="noopener" href="${escapeHtml(watchUrl(item))}">${watchLabel(item)}</a>
       </div>
     `;
   }
@@ -874,6 +795,10 @@
     row.dataset.filled = "1";
     row.innerHTML = buildRowContent(db[Number(row.dataset.index)]);
     if (_rowObserver) _rowObserver.unobserve(row);
+  }
+
+  function fillAllRows() {
+    list.querySelectorAll(".row:not([data-filled])").forEach(fillRow);
   }
 
   function render() {
@@ -908,19 +833,19 @@
         track.mp3Url = normalizeAudioUrl(value);
         input.value  = track.mp3Url;
         const loadBtn = row.querySelector(`button[data-action="loadTrack"][data-track="${trackIdx}"]`);
-        if (loadBtn) { loadBtn.textContent = "Cargar"; loadBtn.disabled = false; }
+        if (loadBtn) { loadBtn.textContent = "▶ Cargar"; loadBtn.disabled = false; }
+        const mp3LinkEl = row.querySelector(`[data-mp3link="${trackIdx}"]`);
+        if (mp3LinkEl) {
+          if (track.mp3Url) { mp3LinkEl.href = track.mp3Url; mp3LinkEl.textContent = "↗"; }
+          else mp3LinkEl.textContent = "";
+        }
       } else if (field === "startSeconds") {
         track.startSeconds = timeToSeconds(value);
         input.value = secondsToTime(track.startSeconds);
         const loadBtn = row.querySelector(`button[data-action="loadTrack"][data-track="${trackIdx}"]`);
-        if (loadBtn) { loadBtn.textContent = "Cargar"; loadBtn.disabled = false; }
+        if (loadBtn) { loadBtn.textContent = "▶ Cargar"; loadBtn.disabled = false; }
       } else if (field === "title") {
         track.title = value;
-      }
-      if (trackIdx === 0) {
-        reloadRowVideo(row);
-        const link = row.querySelector(".watch-link");
-        if (link) { link.href = watchUrl(db[index]); link.textContent = watchLabel(db[index]); }
       }
     } else {
       if (field === "cover") value = cleanUrl(value);
@@ -940,39 +865,40 @@
     updateStats();
   }
 
-  function currentVolume() { return Number($("volumeSlider").value); }
-
-  function applyVolume(vol) {
-    document.querySelectorAll('audio').forEach(el => el.volume = vol / 100);
-  }
-
   function stopAllMedia() {
-    document.querySelectorAll('audio').forEach(a => a.pause());
+    $("gpAudio").pause();
   }
 
-  function initialVideoHtml(item) {
-    const track = item.tracks?.[0];
-    if (track?.mp3Url) {
-      return `<div class="video-wrap video-wrap--audio"><audio controls src="${escapeHtml(track.mp3Url)}"></audio></div>`;
-    }
-    return `<div class="video-wrap"></div>`;
-  }
+  function loadInGlobalPlayer(index, ti, btn) {
+    const item = db[index];
+    const track = item.tracks[ti];
+    if (!track?.mp3Url) return;
 
-  function reloadRowVideo(row) {
-    const index = Number(row.dataset.index);
-    const track = db[index].tracks[0];
-    const wrap = row.querySelector(".video-wrap");
-    if (!wrap) return;
-    wrap.className = "video-wrap";
-    if (track?.mp3Url) {
-      wrap.classList.add("video-wrap--audio");
-      wrap.innerHTML = `<audio controls src="${escapeHtml(track.mp3Url)}"></audio>`;
-      const audioEl = wrap.querySelector('audio');
-      audioEl.volume = currentVolume() / 100;
-      if (track.startSeconds > 0) audioEl.addEventListener('loadedmetadata', () => { audioEl.currentTime = track.startSeconds; }, { once: true });
-    } else {
-      wrap.innerHTML = "";
-    }
+    stopAllMedia();
+    if (btn) { btn.textContent = "Cargando…"; btn.disabled = true; }
+
+    const audio = $("gpAudio");
+    const player = $("globalPlayer");
+
+    $("gpGame").textContent = item.game;
+    $("gpTrack").textContent = track.title || (item.tracks.length > 1 ? `Pista ${ti + 1}` : "");
+    const gpCover = $("gpCover");
+    if (item.cover) { gpCover.src = item.cover; gpCover.style.display = ""; }
+    else gpCover.style.display = "none";
+
+    audio.src = track.mp3Url;
+    player.classList.add("active");
+
+    const restoreBtn = () => { if (btn) { btn.textContent = "▶ Cargar"; btn.disabled = false; } };
+    audio.addEventListener('loadedmetadata', () => {
+      if (track.startSeconds > 0) audio.currentTime = track.startSeconds;
+    }, { once: true });
+    audio.addEventListener('canplay', () => {
+      restoreBtn();
+      audio.play().catch(() => {});
+    }, { once: true });
+    audio.addEventListener('error', restoreBtn, { once: true });
+    audio.load();
   }
 
   function reloadRowCover(row) {
@@ -1017,31 +943,7 @@
 
     if (action === "loadTrack") {
       const ti = Number(btn.dataset.track || 0);
-      const track = db[index].tracks[ti];
-      const wrap = row.querySelector(".video-wrap");
-      if (!wrap) return;
-
-      stopAllMedia();
-      const origText = btn.textContent;
-      btn.textContent = "Cargando…";
-      btn.disabled = true;
-      const restoreBtn = () => { btn.textContent = origText; btn.disabled = false; };
-
-      wrap.className = "video-wrap";
-      if (track?.mp3Url) {
-        wrap.classList.add("video-wrap--audio");
-        wrap.innerHTML = `<audio controls autoplay src="${escapeHtml(track.mp3Url)}"></audio>`;
-        const audioEl = wrap.querySelector('audio');
-        audioEl.volume = currentVolume() / 100;
-        audioEl.addEventListener('canplay', restoreBtn, { once: true });
-        if (track.startSeconds > 0) audioEl.addEventListener('loadedmetadata', () => { audioEl.currentTime = track.startSeconds; }, { once: true });
-      } else {
-        restoreBtn();
-      }
-      if (ti === 0) {
-        const link = row.querySelector(".watch-link");
-        if (link) { link.href = watchUrl(db[index]); link.textContent = watchLabel(db[index]); }
-      }
+      loadInGlobalPlayer(index, ti, btn);
     } else if (action === "reloadCover") {
       reloadRowCover(row);
     } else if (action === "addTrack") {
@@ -1061,11 +963,12 @@
       setDirty(true);
       render();
     } else if (action === "delete") {
-      if (confirm(`¿Eliminar "${db[index].game}"?`)) {
+      customConfirm(`¿Eliminar "${db[index].game}"?`, { ok: "Eliminar", okDanger: true }).then(ok => {
+        if (!ok) return;
         db.splice(index, 1);
         setDirty(true);
         render();
-      }
+      });
     }
   });
 
@@ -1128,8 +1031,11 @@
     $("addPanel").classList.remove("open");
     render();
     setTimeout(() => {
-      const lastRow = list.querySelector(".row:last-child");
-      if (lastRow) { fillRow(lastRow); lastRow.scrollIntoView({ behavior: "smooth", block: "end" }); }
+      fillAllRows();
+      requestAnimationFrame(() => {
+        const lastRow = list.querySelector(".row:last-child");
+        if (lastRow) lastRow.scrollIntoView({ behavior: "smooth", block: "end" });
+      });
     }, 50);
   });
 
@@ -1197,40 +1103,13 @@
   });
 
   $("scrollTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-  $("scrollBottom").addEventListener("click", () => window.scrollTo({ top: 999999999, behavior: "smooth" }));
+  $("scrollBottom").addEventListener("click", () => {
+    fillAllRows();
+    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+  });
 
   $("newYear").value = new Date().getFullYear();
 
-  const savedVol = localStorage.getItem("ostquest_volume");
-  if (savedVol !== null) $("volumeSlider").value = savedVol;
-
-  let _prevVol = currentVolume();
-  let _muted = false;
-
-  function updateMuteIcon() {
-    $("muteBtn").textContent = _muted || currentVolume() === 0 ? "🔇" : "🔊";
-  }
-
-  $("volumeSlider").addEventListener("input", () => {
-    _muted = false;
-    _prevVol = currentVolume();
-    localStorage.setItem("ostquest_volume", $("volumeSlider").value);
-    applyVolume(currentVolume());
-    updateMuteIcon();
-  });
-
-  $("muteBtn").addEventListener("click", () => {
-    if (_muted) {
-      $("volumeSlider").value = _prevVol || 80;
-      _muted = false;
-    } else {
-      _prevVol = currentVolume() || 80;
-      $("volumeSlider").value = 0;
-      _muted = true;
-    }
-    applyVolume(currentVolume());
-    updateMuteIcon();
-  });
 
   // ── Google Sheets import ────────────────────────────────────────────────────
 
