@@ -340,7 +340,7 @@
     }
     .add-row2 {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 65px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 65px auto;
       gap: 8px;
       align-items: end;
     }
@@ -407,6 +407,19 @@
       max-width: 700px;
       accent-color: var(--accent);
     }
+    #gpClose {
+      margin-left: auto;
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    #gpClose:hover { color: var(--text); background: var(--panel2); }
     .notice {
       border-left: 4px solid var(--warn);
       background: #211d12;
@@ -546,6 +559,7 @@
         <label><span>Canción</span><input id="newTitle" placeholder="Canción (opcional)" /></label>
         <label><input id="newMp3Url" class="field-youtube" placeholder="URL del MP3…" /></label>
         <label><span>Inicio (m:ss)</span><input id="newStart" class="field-youtube" placeholder="0:00" value="0:00" /></label>
+        <button id="newLoadTrack">▶ Cargar</button>
       </div>
     </div>
     <div class="actions" style="margin-top:10px;">
@@ -582,6 +596,7 @@
     </div>
   </div>
   <audio id="gpAudio" controls></audio>
+  <button id="gpClose" title="Cerrar reproductor">✕</button>
 </div>
 
 <script>
@@ -885,37 +900,35 @@
 
   let _gpIndex = -1;
 
-  function loadInGlobalPlayer(index, ti, btn) {
-    _gpIndex = index;
-    const item = db[index];
-    const track = item.tracks[ti];
+  function loadTrackInPlayer(track, gameName, coverUrl, btn) {
     if (!track?.mp3Url) return;
-
     stopAllMedia();
     if (btn) { btn.textContent = "Cargando…"; btn.disabled = true; }
 
     const audio = $("gpAudio");
-    const player = $("globalPlayer");
-
-    $("gpGame").textContent = item.game;
-    $("gpTrack").textContent = track.title || (item.tracks.length > 1 ? `Pista ${ti + 1}` : "");
+    $("gpGame").textContent = gameName;
+    $("gpTrack").textContent = track.title || "";
     const gpCover = $("gpCover");
-    if (item.cover) { gpCover.src = item.cover; gpCover.style.display = ""; }
+    if (coverUrl) { gpCover.src = coverUrl; gpCover.style.display = ""; }
     else gpCover.style.display = "none";
 
     audio.src = track.mp3Url;
-    player.classList.add("active");
+    $("globalPlayer").classList.add("active");
 
     const restoreBtn = () => { if (btn) { btn.textContent = "▶ Cargar"; btn.disabled = false; } };
     audio.addEventListener('loadedmetadata', () => {
       if (track.startSeconds > 0) audio.currentTime = track.startSeconds;
     }, { once: true });
-    audio.addEventListener('canplay', () => {
-      restoreBtn();
-      audio.play().catch(() => {});
-    }, { once: true });
+    audio.addEventListener('canplay', () => { restoreBtn(); audio.play().catch(() => {}); }, { once: true });
     audio.addEventListener('error', restoreBtn, { once: true });
     audio.load();
+  }
+
+  function loadInGlobalPlayer(index, ti, btn) {
+    _gpIndex = index;
+    const item = db[index];
+    const track = item.tracks[ti];
+    loadTrackInPlayer(track, item.game, item.cover, btn);
   }
 
   function reloadRowCover(row) {
@@ -1117,6 +1130,24 @@
   $("lightbox").addEventListener("click", () => $("lightbox").style.display = "none");
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") $("lightbox").style.display = "none";
+  });
+
+  $("gpClose").addEventListener("click", () => {
+    $("gpAudio").pause();
+    $("globalPlayer").classList.remove("active");
+    _gpIndex = -1;
+  });
+
+  $("newLoadTrack").addEventListener("click", function() {
+    const mp3Url = normalizeAudioUrl($("newMp3Url").value.trim());
+    if (!mp3Url) return;
+    _gpIndex = -1;
+    loadTrackInPlayer(
+      { mp3Url, startSeconds: timeToSeconds($("newStart").value), title: $("newTitle").value.trim() },
+      $("newGame").value.trim() || "(nueva entrada)",
+      $("newCover").value.trim(),
+      this
+    );
   });
 
   $("gpLocator").addEventListener("click", () => {
