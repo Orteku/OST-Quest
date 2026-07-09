@@ -154,8 +154,7 @@
     }
     input[type="file"] { max-width: 290px; }
     #search {
-      min-width: 240px;
-      flex: 1;
+      min-width: 0;
     }
     main {
       padding: 16px;
@@ -495,7 +494,17 @@
   </div>
   <div class="toolbar">
     <button id="toggleAdd" class="success">Añadir entrada</button>
-    <input id="search" type="search" placeholder="Buscar juego, ID, cover..." />
+    <div style="display:flex;gap:0;flex:1;min-width:200px">
+      <input id="search" type="search" placeholder="Buscar..." style="flex:1;border-radius:8px 0 0 8px;border-right:0" />
+      <select id="searchField" style="border-radius:0 8px 8px 0;padding:8px 6px;min-width:0;width:auto;font-size:13px">
+        <option value="all">Todo</option>
+        <option value="game">Título</option>
+        <option value="tracks">Canción</option>
+        <option value="tags">Tags</option>
+        <option value="year">Año</option>
+        <option value="url">URL</option>
+      </select>
+    </div>
     <span id="searchStats" class="search-stats"></span>
     <div style="flex:1"></div>
     <input id="fileInput" type="file" accept=".js,.txt,.json" />
@@ -856,6 +865,22 @@
     `;
   }
 
+  function rowSearchAttrs(item) {
+    return {
+      'data-search': `${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
+      'data-sg':   item.game.toLowerCase(),
+      'data-st':   item.tracks.map(t => t.title).join(" ").toLowerCase(),
+      'data-stag': (item.tags||[]).join(" ").toLowerCase(),
+      'data-sy':   String(item.year),
+      'data-su':   item.tracks.map(t => t.mp3Url).join(" ").toLowerCase(),
+    };
+  }
+
+  function updateRowSearch(row, index) {
+    const attrs = rowSearchAttrs(db[index]);
+    for (const [k, v] of Object.entries(attrs)) row.setAttribute(k, v);
+  }
+
   let _rowObserver = null;
 
   function fillRow(row) {
@@ -874,8 +899,8 @@
     if (_rowObserver) { _rowObserver.disconnect(); _rowObserver = null; }
 
     list.innerHTML = db.map((item, index) => {
-      const search = escapeHtml(`${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase());
-      return `<article class="row" data-index="${index}" data-search="${search}"></article>`;
+      const a = rowSearchAttrs(item);
+      return `<article class="row" data-index="${index}" data-search="${escapeHtml(a['data-search'])}" data-sg="${escapeHtml(a['data-sg'])}" data-st="${escapeHtml(a['data-st'])}" data-stag="${escapeHtml(a['data-stag'])}" data-sy="${escapeHtml(a['data-sy'])}" data-su="${escapeHtml(a['data-su'])}"></article>`;
     }).join("");
 
     _rowObserver = new IntersectionObserver((entries) => {
@@ -945,7 +970,7 @@
       }
     }
 
-    row.dataset.search = `${db[index].game} ${db[index].tracks.map(t => t.mp3Url).join(" ")} ${db[index].cover} ${db[index].year} ${db[index].pop} ${(db[index].tags||[]).join(" ")}`.toLowerCase();
+    updateRowSearch(row, index);
     setDirty(true);
     updateStats();
   }
@@ -1040,7 +1065,7 @@
           db[index].tags = tags;
           chip.classList.add('active');
         }
-        row.dataset.search = `${db[index].game} ${db[index].tracks.map(t => t.mp3Url).join(" ")} ${db[index].cover} ${db[index].year} ${db[index].pop} ${db[index].tags.join(" ")}`.toLowerCase();
+        updateRowSearch(row, index);
         setDirty(true);
       }
       return;
@@ -1083,6 +1108,8 @@
     }
   });
 
+  const SEARCH_ATTR = { all: 'data-search', game: 'data-sg', tracks: 'data-st', tags: 'data-stag', year: 'data-sy', url: 'data-su' };
+
   function applySearch() {
     const q = $("search").value.trim().toLowerCase();
     if (!q) {
@@ -1090,14 +1117,16 @@
       updateStats();
       return;
     }
+    const attr = SEARCH_ATTR[$("searchField").value] || 'data-search';
     list.classList.add("filtering");
     document.querySelectorAll(".row").forEach(row => {
-      row.classList.toggle("hidden", !row.dataset.search.includes(q));
+      row.classList.toggle("hidden", !(row.getAttribute(attr) || '').includes(q));
     });
     updateStats();
   }
 
   $("search").addEventListener("input", applySearch);
+  $("searchField").addEventListener("change", applySearch);
 
   $("fileInput").addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
