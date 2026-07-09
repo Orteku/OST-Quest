@@ -347,6 +347,16 @@
     .add-row1 input { width: 100%; min-width: 0; }
     .add-row2 label { min-width: 0; }
     .add-row2 input { width: 100%; min-width: 0; }
+    .track-header { display: flex; align-items: flex-end; gap: 8px; }
+    .track-header > label:first-child { flex: 1; min-width: 0; }
+    .lyrics-check { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; padding-bottom: 8px; font-weight: normal; }
+    .lyrics-check input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); margin: 0; width: auto; height: auto; padding: 0; border: none; border-radius: 0; background: none; }
+    .tags-row { display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
+    .tags-input { width: 100%; }
+    .tag-suggestions { display: flex; flex-wrap: wrap; gap: 4px; min-height: 4px; }
+    .tag-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); cursor: pointer; color: var(--muted); line-height: 1.6; user-select: none; }
+    .tag-chip.active { background: rgba(40,215,232,0.12); border-color: var(--accent); color: var(--accent); }
+    .tag-chip:hover { border-color: var(--muted); }
     .footer-space { height: 88px; }
     .global-player {
       position: fixed;
@@ -555,6 +565,10 @@
         <label><span>Año</span><input id="newYear" type="number" min="1970" max="2100" step="1" value="2026" /></label>
         <label><span>Pop (1–6)</span><input id="newPop" type="number" min="1" max="6" step="1" value="5" /></label>
       </div>
+      <div class="add-row-tags" style="display:flex;flex-direction:column;gap:5px">
+        <label style="display:grid;gap:4px;color:var(--muted);font-size:12px"><span>Tags</span><input id="newTags" class="field-youtube" placeholder="rpg, action..." /></label>
+        <div id="newTagSuggestions" class="tag-suggestions"></div>
+      </div>
       <div class="add-row2">
         <label><span>Canción</span><input id="newTitle" placeholder="Canción (opcional)" /></label>
         <label><input id="newMp3Url" class="field-youtube" placeholder="URL del MP3…" /></label>
@@ -673,7 +687,11 @@
       const stVal  = escapeHtml(secondsToTime(track.startSeconds));
       const titleVal = escapeHtml(track.title || "");
       const isFirst = ti === 0;
-      const titleLabel = `<label><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>`;
+      const hasLyrics = (track.tags || []).includes('lyrics');
+      const titleLabel = `<div class="track-header">
+          <label><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>
+          <label class="lyrics-check"><input type="checkbox" data-field="trackLyrics" data-track="${ti}"${hasLyrics ? ' checked' : ''} /> lyrics</label>
+        </div>`;
       const mp3Link = track.mp3Url ? `<a class="mp3-link" data-mp3link="${ti}" href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener">abrir MP3 ↗</a>` : `<span class="mp3-link" data-mp3link="${ti}"></span>`;
       const srcRow = `<div class="yt-row">
           <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" /></label>
@@ -744,6 +762,7 @@
       title:        String(t.title ?? "").trim(),
       mp3Url:       String(t.mp3Url ?? t.url ?? "").trim(),
       startSeconds: Math.max(0, Number(t.startSeconds) || 0),
+      tags:         Array.isArray(t.tags) ? t.tags.map(String).filter(Boolean) : [],
     });
     if (Array.isArray(x.tracks) && x.tracks.length > 0) return x.tracks.map(norm);
     return [norm(x)];
@@ -751,13 +770,29 @@
 
   function normalizeDb(arr) {
     return arr.map((x, idx) => ({
-      id: Number(x.id) || idx + 1,
-      game: String(x.game ?? "").trim(),
-      cover: cleanUrl(x.cover ?? ""),
+      id:     Number(x.id) || idx + 1,
+      game:   String(x.game ?? "").trim(),
+      cover:  cleanUrl(x.cover ?? ""),
       tracks: normalizeTracks(x),
-      pop: Number(x.pop) || 1,
-      year: Number(x.year) || 0
+      pop:    Number(x.pop) || 1,
+      year:   Number(x.year) || 0,
+      tags:   Array.isArray(x.tags) ? x.tags.map(String).filter(Boolean) : [],
     }));
+  }
+
+  function getAllTags() {
+    const set = new Set();
+    db.forEach(item => (item.tags || []).forEach(t => set.add(t)));
+    return [...set].sort();
+  }
+
+  function tagSuggestionsHtml(activeTags) {
+    const all = getAllTags();
+    if (!all.length) return '';
+    return all.map(tag => {
+      const active = activeTags.includes(tag);
+      return `<span class="tag-chip${active ? ' active' : ''}" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`;
+    }).join('');
   }
 
   function secondsToTime(s) {
@@ -812,6 +847,10 @@
           <label><span>Año</span><input type="number" min="1970" max="2100" step="1" data-field="year" value="${escapeHtml(item.year)}" /></label>
           <label><span>Pop</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
         </div>
+        <div class="tags-row">
+          <label><span>Tags</span><input class="tags-input field-youtube" data-field="tags" value="${escapeHtml((item.tags || []).join(', '))}" placeholder="rpg, action..." /></label>
+          <div class="tag-suggestions">${tagSuggestionsHtml(item.tags || [])}</div>
+        </div>
         <div class="tracks-section">${tracksSectionHtml(item.tracks)}</div>
       </div>
     `;
@@ -835,7 +874,7 @@
     if (_rowObserver) { _rowObserver.disconnect(); _rowObserver = null; }
 
     list.innerHTML = db.map((item, index) => {
-      const search = escapeHtml(`${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop}`.toLowerCase());
+      const search = escapeHtml(`${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase());
       return `<article class="row" data-index="${index}" data-search="${search}"></article>`;
     }).join("");
 
@@ -853,6 +892,17 @@
     const row = input.closest(".row");
     const index = Number(row.dataset.index);
     const field = input.dataset.field;
+
+    if (field === "trackLyrics") {
+      const ti = Number(input.dataset.track);
+      const track = db[index].tracks[ti];
+      if (!track.tags) track.tags = [];
+      if (input.checked) { if (!track.tags.includes('lyrics')) track.tags.push('lyrics'); }
+      else track.tags = track.tags.filter(t => t !== 'lyrics');
+      setDirty(true);
+      return;
+    }
+
     const trackIdx = input.dataset.track !== undefined ? Number(input.dataset.track) : null;
     let value = input.value;
 
@@ -877,19 +927,25 @@
         track.title = value;
       }
     } else {
-      if (field === "cover") value = cleanUrl(value);
-      if (["pop", "year"].includes(field)) value = Number(value) || 0;
-      if (field === "pop") value = Math.max(1, Math.min(6, value));
-      db[index][field] = value;
-      if (field === "cover") input.value = value;
-      if (field === "game") {
-        const title = row.querySelector(".game-title");
-        if (title) title.textContent = value || "(sin título)";
+      if (field === "tags") {
+        db[index].tags = value.split(',').map(t => t.trim()).filter(Boolean);
+        const suggestions = row.querySelector('.tag-suggestions');
+        if (suggestions) suggestions.innerHTML = tagSuggestionsHtml(db[index].tags);
+      } else {
+        if (field === "cover") value = cleanUrl(value);
+        if (["pop", "year"].includes(field)) value = Number(value) || 0;
+        if (field === "pop") value = Math.max(1, Math.min(6, value));
+        db[index][field] = value;
+        if (field === "cover") input.value = value;
+        if (field === "game") {
+          const title = row.querySelector(".game-title");
+          if (title) title.textContent = value || "(sin título)";
+        }
+        if (field === "cover") reloadRowCover(row);
       }
-      if (field === "cover") reloadRowCover(row);
     }
 
-    row.dataset.search = `${db[index].game} ${db[index].tracks.map(t => t.mp3Url).join(" ")} ${db[index].cover} ${db[index].year} ${db[index].pop}`.toLowerCase();
+    row.dataset.search = `${db[index].game} ${db[index].tracks.map(t => t.mp3Url).join(" ")} ${db[index].cover} ${db[index].year} ${db[index].pop} ${(db[index].tags||[]).join(" ")}`.toLowerCase();
     setDirty(true);
     updateStats();
   }
@@ -965,6 +1021,31 @@
       return;
     }
 
+    const chip = e.target.closest(".tag-chip");
+    if (chip) {
+      const row = chip.closest(".row");
+      const index = Number(row.dataset.index);
+      const tag = chip.dataset.tag;
+      const tagsInput = row.querySelector('input[data-field="tags"]');
+      if (tagsInput) {
+        const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+        if (tags.includes(tag)) {
+          const newTags = tags.filter(t => t !== tag);
+          tagsInput.value = newTags.join(', ');
+          db[index].tags = newTags;
+          chip.classList.remove('active');
+        } else {
+          tags.push(tag);
+          tagsInput.value = tags.join(', ');
+          db[index].tags = tags;
+          chip.classList.add('active');
+        }
+        row.dataset.search = `${db[index].game} ${db[index].tracks.map(t => t.mp3Url).join(" ")} ${db[index].cover} ${db[index].year} ${db[index].pop} ${db[index].tags.join(" ")}`.toLowerCase();
+        setDirty(true);
+      }
+      return;
+    }
+
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
     const row = btn.closest(".row");
@@ -1025,8 +1106,31 @@
     e.target.value = "";
   });
 
+  function refreshNewTagSuggestions() {
+    const active = $("newTags").value.split(',').map(t => t.trim()).filter(Boolean);
+    $("newTagSuggestions").innerHTML = tagSuggestionsHtml(active);
+  }
+
+  $("newTagSuggestions").addEventListener("click", (e) => {
+    const chip = e.target.closest(".tag-chip");
+    if (!chip) return;
+    const tag = chip.dataset.tag;
+    const tags = $("newTags").value.split(',').map(t => t.trim()).filter(Boolean);
+    if (tags.includes(tag)) {
+      $("newTags").value = tags.filter(t => t !== tag).join(', ');
+      chip.classList.remove('active');
+    } else {
+      tags.push(tag);
+      $("newTags").value = tags.join(', ');
+      chip.classList.add('active');
+    }
+  });
+
+  $("newTags").addEventListener("change", refreshNewTagSuggestions);
+
   $("toggleAdd").addEventListener("click", () => {
     $("addPanel").classList.toggle("open");
+    refreshNewTagSuggestions();
     $("newGame").focus();
   });
 
@@ -1036,6 +1140,7 @@
     $("newTitle").value = "";
     $("newMp3Url").value = "";
     $("newStart").value = "0:00";
+    $("newTags").value = "";
     $("newPop").value = 6;
     $("newYear").value = new Date().getFullYear();
   });
@@ -1052,10 +1157,11 @@
     if (!game) return alert("Falta el nombre del juego.");
     if (!sourceVal) return alert("Falta la URL del MP3.");
 
-    const track = { title, mp3Url: normalizeAudioUrl(sourceVal), startSeconds };
+    const tags = $("newTags").value.split(',').map(t => t.trim()).filter(Boolean);
+    const track = { title, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: [] };
 
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
-    db.push({ id: maxId + 1, game, cover, pop, year, tracks: [track] });
+    db.push({ id: maxId + 1, game, cover, pop, year, tags, tracks: [track] });
     setDirty(true);
     $("clearNew").click();
     $("addPanel").classList.remove("open");
@@ -1084,14 +1190,16 @@
   function toJs() {
     const lines = db.map(item => {
       const coverPart = item.cover ? ` cover: "${jsString(item.cover)}",` : "";
+      const tagsPart  = item.tags?.length ? ` tags: [${item.tags.map(t => `'${jsString(t)}'`).join(', ')}],` : "";
       const tracksPart = item.tracks.map(t => {
         const p = [];
         if (t.title)  p.push(`title: "${jsString(t.title)}"`);
         if (t.mp3Url) { p.push(`mp3Url: "${jsString(t.mp3Url)}"`); if (t.startSeconds > 0) p.push(`startSeconds: ${Number(t.startSeconds)}`); }
+        if (t.tags?.length) p.push(`tags: [${t.tags.map(tg => `'${jsString(tg)}'`).join(', ')}]`);
         if (p.length === 0) p.push(`mp3Url: ""`);
         return `{ ${p.join(", ")} }`;
       }).join(", ");
-      return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0}, tracks: [${tracksPart}] },`;
+      return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0},${tagsPart} tracks: [${tracksPart}] },`;
     });
     return `const GAME_DB = [\n${lines.join("\n")}\n];\n`;
   }
