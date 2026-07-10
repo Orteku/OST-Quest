@@ -267,8 +267,6 @@
     input[data-field="startSeconds"], #newStart { width: 65px; min-width: 0; }
     .track-block { display: flex; flex-direction: column; gap: 4px; }
     .track-block + .track-block { margin-top: 6px; }
-    .track-block--extra { position: relative; }
-    .track-block--extra > button.danger { position: absolute; left: -34px; bottom: 0; }
     .track-title-input { width: 100%; min-width: 0; font-size: 13px; }
     label {
       display: grid;
@@ -496,6 +494,7 @@
     <button id="toggleAdd" class="success">Añadir entrada</button>
     <div style="display:flex;gap:0;flex:1;min-width:200px">
       <input id="search" type="search" placeholder="Buscar..." style="flex:1;border-radius:8px 0 0 8px;border-right:0" />
+      <button id="searchClear" title="Limpiar búsqueda" style="display:none;border-radius:0;border-left:0;border-right:0;padding:8px 7px;color:var(--muted)">✕</button>
       <select id="searchField" style="border-radius:0 8px 8px 0;padding:8px 6px;min-width:0;width:auto;font-size:13px">
         <option value="all">Todo</option>
         <option value="game">Título</option>
@@ -578,7 +577,13 @@
         <div id="newTagSuggestions" class="tag-suggestions"></div>
       </div>
       <div class="add-row2">
-        <label><span>Canción</span><input id="newTitle" placeholder="Canción (opcional)" /></label>
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+          <label style="font-size:12px;color:var(--muted)">Canción</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="newTitle" placeholder="Canción (opcional)" style="flex:1;min-width:0" />
+            <label class="lyrics-check"><input type="checkbox" id="newLyrics" /> lyrics</label>
+          </div>
+        </div>
         <label><input id="newMp3Url" class="field-youtube" placeholder="URL del MP3…" /></label>
         <label><span>Inicio (m:ss)</span><input id="newStart" class="field-youtube" placeholder="0:00" value="0:00" /></label>
         <button id="newLoadTrack">▶ Cargar</button>
@@ -696,8 +701,10 @@
       const titleVal = escapeHtml(track.title || "");
       const isFirst = ti === 0;
       const hasLyrics = (track.tags || []).includes('lyrics');
+      const removeBtn = isFirst ? '' : `<button class="small danger" data-action="removeTrack" data-track="${ti}" style="flex-shrink:0;align-self:flex-end;margin-bottom:1px">✕</button>`;
       const titleLabel = `<div class="track-header">
-          <label><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>
+          ${removeBtn}
+          <label style="flex:1;min-width:0"><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>
           <label class="lyrics-check"><input type="checkbox" data-field="trackLyrics" data-track="${ti}"${hasLyrics ? ' checked' : ''} /> lyrics</label>
         </div>`;
       const mp3Link = track.mp3Url ? `<a class="mp3-link" data-mp3link="${ti}" href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener">abrir MP3 ↗</a>` : `<span class="mp3-link" data-mp3link="${ti}"></span>`;
@@ -707,13 +714,7 @@
           <button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>
           ${mp3Link}
         </div>`;
-      if (isFirst) {
-        return `<div class="track-block">${titleLabel}${srcRow}</div>`;
-      }
-      return `<div class="track-block track-block--extra">
-        <button class="small danger" data-action="removeTrack" data-track="${ti}">✕</button>
-        ${titleLabel}${srcRow}
-      </div>`;
+      return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${titleLabel}${srcRow}</div>`;
     }).join("");
     return rows + `<button class="small" data-action="addTrack" style="margin-top:6px">+</button>`;
   }
@@ -1088,9 +1089,17 @@
     } else if (action === "removeTrack") {
       const ti = Number(btn.dataset.track);
       if (db[index].tracks.length > 1) {
-        db[index].tracks.splice(ti, 1);
-        setDirty(true);
-        row.querySelector(".tracks-section").innerHTML = tracksSectionHtml(db[index].tracks);
+        const track = db[index].tracks[ti];
+        const doRemove = () => {
+          db[index].tracks.splice(ti, 1);
+          setDirty(true);
+          row.querySelector(".tracks-section").innerHTML = tracksSectionHtml(db[index].tracks);
+        };
+        if (track.mp3Url || track.title) {
+          customConfirm(`¿Eliminar la canción "${track.title || 'sin título'}"?`, { ok: "Eliminar", okDanger: true }).then(ok => { if (ok) doRemove(); });
+        } else {
+          doRemove();
+        }
       }
     } else if (action === "duplicate") {
       const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
@@ -1124,7 +1133,15 @@
     updateStats();
   }
 
-  $("search").addEventListener("input", applySearch);
+  $("search").addEventListener("input", () => {
+    $("searchClear").style.display = $("search").value ? "" : "none";
+    applySearch();
+  });
+  $("searchClear").addEventListener("click", () => {
+    $("search").value = "";
+    $("searchClear").style.display = "none";
+    applySearch();
+  });
   $("searchField").addEventListener("change", applySearch);
 
   $("fileInput").addEventListener("change", async (e) => {
@@ -1166,6 +1183,7 @@
     $("newGame").value = "";
     $("newCover").value = "";
     $("newTitle").value = "";
+    $("newLyrics").checked = false;
     $("newMp3Url").value = "";
     $("newStart").value = "0:00";
     $("newTags").value = "";
@@ -1186,7 +1204,7 @@
     if (!sourceVal) return alert("Falta la URL del MP3.");
 
     const tags = $("newTags").value.split(',').map(t => t.trim()).filter(Boolean);
-    const track = { title, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: [] };
+    const track = { title, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: $("newLyrics").checked ? ['lyrics'] : [] };
 
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
     db.push({ id: maxId + 1, game, cover, pop, year, tags, tracks: [track] });
