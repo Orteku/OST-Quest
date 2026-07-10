@@ -267,6 +267,8 @@
     input[data-field="startSeconds"], #newStart { width: 65px; min-width: 0; }
     .track-block { display: flex; flex-direction: column; gap: 4px; }
     .track-block + .track-block { margin-top: 6px; }
+    .track-block--extra { position: relative; }
+    .track-block--extra > button.danger { position: absolute; left: -34px; top: 0; }
     .track-title-input { width: 100%; min-width: 0; font-size: 13px; }
     label {
       display: grid;
@@ -701,20 +703,19 @@
       const titleVal = escapeHtml(track.title || "");
       const isFirst = ti === 0;
       const hasLyrics = (track.tags || []).includes('lyrics');
-      const removeBtn = isFirst ? '' : `<button class="small danger" data-action="removeTrack" data-track="${ti}" style="flex-shrink:0;align-self:flex-end;margin-bottom:1px">✕</button>`;
+      const removeBtn = isFirst ? '' : `<button class="small danger" data-action="removeTrack" data-track="${ti}">✕</button>`;
       const titleLabel = `<div class="track-header">
-          ${removeBtn}
           <label style="flex:1;min-width:0"><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>
           <label class="lyrics-check"><input type="checkbox" data-field="trackLyrics" data-track="${ti}"${hasLyrics ? ' checked' : ''} /> lyrics</label>
         </div>`;
-      const mp3Link = track.mp3Url ? `<a class="mp3-link" data-mp3link="${ti}" href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener">abrir MP3 ↗</a>` : `<span class="mp3-link" data-mp3link="${ti}"></span>`;
+      const mp3Link = `<a class="mp3-link" data-mp3link="${ti}"${track.mp3Url ? ` href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener"` : ''}>${track.mp3Url ? 'abrir MP3 ↗' : ''}</a>`;
       const srcRow = `<div class="yt-row">
           <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" /></label>
           <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
           <button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>
           ${mp3Link}
         </div>`;
-      return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${titleLabel}${srcRow}</div>`;
+      return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${removeBtn}${titleLabel}${srcRow}</div>`;
     }).join("");
     return rows + `<button class="small" data-action="addTrack" style="margin-top:6px">+</button>`;
   }
@@ -940,8 +941,16 @@
         if (loadBtn) { loadBtn.textContent = "▶ Cargar"; loadBtn.disabled = false; }
         const mp3LinkEl = row.querySelector(`[data-mp3link="${trackIdx}"]`);
         if (mp3LinkEl) {
-          if (track.mp3Url) { mp3LinkEl.href = track.mp3Url; mp3LinkEl.textContent = "abrir MP3 ↗"; }
-          else mp3LinkEl.textContent = "";
+          const newA = document.createElement('a');
+          newA.className = 'mp3-link';
+          newA.dataset.mp3link = String(trackIdx);
+          if (track.mp3Url) {
+            newA.href = track.mp3Url;
+            newA.target = '_blank';
+            newA.rel = 'noopener';
+            newA.textContent = 'abrir MP3 ↗';
+          }
+          mp3LinkEl.replaceWith(newA);
         }
       } else if (field === "startSeconds") {
         track.startSeconds = timeToSeconds(value);
