@@ -880,6 +880,28 @@
     if (gameInput && yearInput) validateGameYearInputs(gameInput, yearInput, item.game, item.year, index);
   }
 
+  function revalidateRenderedRows(fields) {
+    document.querySelectorAll('.row[data-filled]').forEach(row => {
+      const idx = Number(row.dataset.index);
+      const item = db[idx];
+      if (fields.includes('cover')) {
+        const inp = row.querySelector('input[data-field="cover"]');
+        if (inp) validateCoverInput(inp, item.cover, idx);
+      }
+      if (fields.includes('audio')) {
+        item.tracks.forEach((track, ti) => {
+          const inp = row.querySelector(`input[data-field="source"][data-track="${ti}"]`);
+          if (inp) validateAudioInput(inp, track.mp3Url, idx);
+        });
+      }
+      if (fields.includes('gameyear')) {
+        const gi = row.querySelector('input[data-field="game"]');
+        const yi = row.querySelector('input[data-field="year"]');
+        if (gi && yi) validateGameYearInputs(gi, yi, item.game, item.year, idx);
+      }
+    });
+  }
+
   function updateStats() {
     const total = db.length;
     const q = $("search").value.trim();
@@ -1013,7 +1035,7 @@
           }
           mp3LinkEl.replaceWith(newA);
         }
-        validateAudioInput(input, track.mp3Url, index);
+        revalidateRenderedRows(['audio']);
       } else if (field === "startSeconds") {
         track.startSeconds = timeToSeconds(value);
         input.value = secondsToTime(track.startSeconds);
@@ -1039,12 +1061,8 @@
           if (title) title.textContent = value || "(sin título)";
         }
         if (field === "cover") reloadRowCover(row);
-        if (field === "cover") validateCoverInput(input, db[index].cover, index);
-        if (field === "game" || field === "year") {
-          const gameInput = row.querySelector('input[data-field="game"]');
-          const yearInput = row.querySelector('input[data-field="year"]');
-          if (gameInput && yearInput) validateGameYearInputs(gameInput, yearInput, db[index].game, db[index].year, index);
-        }
+        if (field === "cover") revalidateRenderedRows(['cover']);
+        if (field === "game" || field === "year") revalidateRenderedRows(['gameyear']);
       }
     }
 
