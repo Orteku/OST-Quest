@@ -33,7 +33,20 @@ try {
 
 console.log(`📦 Base de datos cargada: ${GAME_DB.length} juegos`);
 
-// ── Algoritmo de generación (igual que daily.js) ──────────────────────────────
+// ── Cargar algoritmo compartido ───────────────────────────────────────────────
+
+const algoSrc     = fs.readFileSync(path.join(__dirname, 'js', 'algorithm.js'), 'utf8');
+const tmpAlgoPath = path.join(__dirname, '_tmp_algo.js');
+fs.writeFileSync(tmpAlgoPath, algoSrc + '\nmodule.exports = { WEIGHTS, getYearScore, getTagScore, weightedPickN };');
+let WEIGHTS, getYearScore, getTagScore, weightedPickN;
+try {
+  ({ WEIGHTS, getYearScore, getTagScore, weightedPickN } = require(tmpAlgoPath));
+} finally {
+  fs.unlinkSync(tmpAlgoPath);
+  delete require.cache[tmpAlgoPath];
+}
+
+// ── RNG y utilidades ──────────────────────────────────────────────────────────
 
 function seededRng(seed) {
   let s = seed;
@@ -63,12 +76,16 @@ function seededShuffle(arr, rng) {
   return a;
 }
 
+// ── Generación ────────────────────────────────────────────────────────────────
+
 function generateGameForDate(dateStr) {
   const seed = dateToSeed(dateStr);
   const rng  = seededRng(seed);
   const used = new Set();
   const groups = [];
   const shuffled = seededShuffle(GAME_DB, rng);
+
+  const strictGroupIndex = Math.floor(rng() * 3);
 
   for (let gi = 0; gi < 3; gi++) {
     let answer = null;
@@ -77,23 +94,20 @@ function generateGameForDate(dateStr) {
     }
     used.add(answer.id);
 
-    let distractors = seededShuffle(
-      GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1),
-      rng
-    ).slice(0, 3);
+    const weights    = gi === strictGroupIndex ? WEIGHTS.strict : WEIGHTS.normal;
+    const candidates = GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
+
+    let distractors = weightedPickN(candidates, answer, weights, rng, 3);
 
     if (distractors.length < 3) {
-      const fallback = seededShuffle(
-        GAME_DB.filter(g => !used.has(g.id) && !distractors.find(d => d.id === g.id)),
-        rng
-      );
-      distractors = [...distractors, ...fallback].slice(0, 3);
+      const distIds = new Set(distractors.map(d => d.id));
+      const fallback = GAME_DB.filter(g => !used.has(g.id) && !distIds.has(g.id));
+      const extra    = weightedPickN(fallback, answer, WEIGHTS.normal, rng, 3 - distractors.length);
+      distractors    = [...distractors, ...extra];
     }
 
     distractors.forEach(d => used.add(d.id));
-
     const trackIndex = Math.floor(rng() * answer.tracks.length);
-    // Guardar solo los IDs (el cliente reconstruye los detalles desde database.js)
     groups.push({
       answerId: answer.id,
       coverIds: seededShuffle([answer, ...distractors], rng).map(g => g.id),

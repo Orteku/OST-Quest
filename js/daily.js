@@ -69,13 +69,15 @@ function seededShuffle(arr, rng) {
   return a;
 }
 
-// Genera el juego con semilla (fallback)
+// Genera el juego con semilla (fallback si no hay games.json)
 function generateFromSeed(dateStr) {
   const seed = dateToSeed(dateStr);
   const rng  = seededRng(seed);
   const used = new Set();
   const groups = [];
   const shuffled = seededShuffle(GAME_DB, rng);
+
+  const strictGroupIndex = Math.floor(rng() * 3);
 
   for (let gi = 0; gi < 3; gi++) {
     let answer = null;
@@ -84,17 +86,16 @@ function generateFromSeed(dateStr) {
     }
     used.add(answer.id);
 
-    let distractors = seededShuffle(
-      GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1),
-      rng
-    ).slice(0, 3);
+    const weights    = gi === strictGroupIndex ? WEIGHTS.strict : WEIGHTS.normal;
+    const candidates = GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
+
+    let distractors = weightedPickN(candidates, answer, weights, rng, 3);
 
     if (distractors.length < 3) {
-      const fallback = seededShuffle(
-        GAME_DB.filter(g => !used.has(g.id) && !distractors.find(d => d.id === g.id)),
-        rng
-      );
-      distractors = [...distractors, ...fallback].slice(0, 3);
+      const distIds = new Set(distractors.map(d => d.id));
+      const fallback = GAME_DB.filter(g => !used.has(g.id) && !distIds.has(g.id));
+      const extra    = weightedPickN(fallback, answer, WEIGHTS.normal, rng, 3 - distractors.length);
+      distractors    = [...distractors, ...extra];
     }
 
     distractors.forEach(d => used.add(d.id));

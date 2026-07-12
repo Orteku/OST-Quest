@@ -1089,14 +1089,11 @@ function openGmPanel() {
       for (let di = 0; di < 3; di++) {
         let decoyId = parseInt(document.getElementById(`gm-decoy-${gi}-${di}`).value);
         if (isNaN(decoyId) || decoyId === -1) {
-          const similar = GAME_DB.filter(g =>
-            !usedIds.has(g.id) && Math.abs(g.pop - answer.pop) <= 1
-          );
-          const pool = similar.length
-            ? similar
-            : GAME_DB.filter(g => !usedIds.has(g.id));
+          const similar = GAME_DB.filter(g => !usedIds.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
+          const pool = similar.length ? similar : GAME_DB.filter(g => !usedIds.has(g.id));
           if (!pool.length) { errorEl.textContent = 'No hay suficientes juegos para los señuelos.'; return; }
-          decoyId = pool[Math.floor(Math.random() * pool.length)].id;
+          const [picked] = weightedPickN(pool, answer, WEIGHTS.normal, Math.random, 1);
+          decoyId = picked.id;
         } else if (usedIds.has(decoyId)) {
           errorEl.textContent = `"${byId[decoyId]?.game}" ya está en uso.`;
           return;
