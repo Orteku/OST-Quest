@@ -1082,7 +1082,8 @@ function openGmPanel() {
         }
       }
       usedIds.add(answerId);
-      const answer = byId[answerId];
+      const answer        = byId[answerId];
+      const answerEffTags = effectiveTags(answer, answer.tracks[trackIdx]);
 
       // Resolver señuelos
       const resolvedDecoys = [];
@@ -1092,7 +1093,7 @@ function openGmPanel() {
           const similar = GAME_DB.filter(g => !usedIds.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
           const pool = similar.length ? similar : GAME_DB.filter(g => !usedIds.has(g.id));
           if (!pool.length) { errorEl.textContent = 'No hay suficientes juegos para los señuelos.'; return; }
-          const [picked] = weightedPickN(pool, answer, WEIGHTS.normal, Math.random, 1);
+          const [picked] = weightedPickN(pool, answer, answerEffTags, WEIGHTS.normal, Math.random, 1);
           decoyId = picked.id;
         } else if (usedIds.has(decoyId)) {
           errorEl.textContent = `"${byId[decoyId]?.game}" ya está en uso.`;

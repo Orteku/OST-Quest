@@ -86,20 +86,22 @@ function generateFromSeed(dateStr) {
     }
     used.add(answer.id);
 
+    const trackIndex    = Math.floor(rng() * answer.tracks.length);
+    const answerEffTags = effectiveTags(answer, answer.tracks[trackIndex]);
+
     const weights    = gi === strictGroupIndex ? WEIGHTS.strict : WEIGHTS.normal;
     const candidates = GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
 
-    let distractors = weightedPickN(candidates, answer, weights, rng, 3);
+    let distractors = weightedPickN(candidates, answer, answerEffTags, weights, rng, 3);
 
     if (distractors.length < 3) {
       const distIds = new Set(distractors.map(d => d.id));
       const fallback = GAME_DB.filter(g => !used.has(g.id) && !distIds.has(g.id));
-      const extra    = weightedPickN(fallback, answer, WEIGHTS.normal, rng, 3 - distractors.length);
+      const extra    = weightedPickN(fallback, answer, answerEffTags, WEIGHTS.normal, rng, 3 - distractors.length);
       distractors    = [...distractors, ...extra];
     }
 
     distractors.forEach(d => used.add(d.id));
-    const trackIndex = Math.floor(rng() * answer.tracks.length);
     groups.push({ answer, covers: seededShuffle([answer, ...distractors], rng), trackIndex });
   }
 

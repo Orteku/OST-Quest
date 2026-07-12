@@ -10,24 +10,35 @@ function getYearScore(a, b) {
   return Math.max(0, 1 - diff / 7);
 }
 
-function getTagScore(a, b) {
-  const tagsA = a.tags || [], tagsB = b.tags || [];
+function getTagScore(tagsA, tagsB) {
   if (!tagsA.length || !tagsB.length) return 0;
-  const setA = new Set(tagsA);
+  const setA   = new Set(tagsA);
   const shared = tagsB.filter(t => setA.has(t)).length;
   const union  = new Set([...tagsA, ...tagsB]).size;
   return shared / union;
 }
 
+// track: the specific track being played (answer); null for candidates (any-lyrics heuristic)
+function effectiveTags(game, track = null) {
+  const base = [...(game.tags || [])];
+  if (track) {
+    if (track.tags?.includes('lyrics')) base.push('lyrics');
+  } else {
+    if (game.tracks?.some(t => t.tags?.includes('lyrics'))) base.push('lyrics');
+  }
+  return base;
+}
+
 // Weighted random sample without replacement.
+// answerEffTags: precomputed effective tags for the answer (game.tags + 'lyrics' if applicable)
 // rng: function returning a float in [0, 1) — seededRng() or Math.random
-function weightedPickN(candidates, answer, weights, rng, count) {
+function weightedPickN(candidates, answer, answerEffTags, weights, rng, count) {
   const scored = candidates.map(c => ({
     c,
     w: Math.max(
-      getYearScore(answer, c) * weights.year +
-      getTagScore(answer, c)  * weights.tags +
-      rng()                   * weights.random,
+      getYearScore(answer, c)                      * weights.year  +
+      getTagScore(answerEffTags, effectiveTags(c))  * weights.tags  +
+      rng()                                         * weights.random,
       0.001
     )
   }));
