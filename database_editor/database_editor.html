@@ -309,6 +309,8 @@
       padding-bottom: 8px;
     }
     .mp3-link:hover { color: var(--accent); }
+    input.field-error { border-color: var(--danger) !important; }
+    input.field-warn  { border-color: var(--warn) !important; }
     .compact .row {
       grid-template-columns: 96px 1fr;
       padding: 8px;
@@ -821,6 +823,63 @@
     return Math.max(0, Number(s) || 0);
   }
 
+  const IMAGE_EXT_RE = /\.(jpe?g|png|webp|gif|svg|avif|bmp|tiff?)(\?|#|$)/i;
+  const AUDIO_EXT_RE = /\.(mp3|m4a|ogg|flac|wav|aac|opus|wma|mp4)(\?|#|$)/i;
+
+  function isValidUrl(url)      { return /^https?:\/\//i.test(url); }
+  function isValidImageUrl(url) { return !url || (isValidUrl(url) && IMAGE_EXT_RE.test(url)); }
+  function isValidAudioUrl(url) { return !url || (isValidUrl(url) && AUDIO_EXT_RE.test(url)); }
+
+  function isCoverDuplicate(url, excludeIdx) {
+    if (!url) return false;
+    return db.some((item, i) => i !== excludeIdx && item.cover === url);
+  }
+  function isAudioDuplicate(url, excludeIdx) {
+    if (!url) return false;
+    return db.some((item, i) => i !== excludeIdx && item.tracks.some(t => t.mp3Url === url));
+  }
+  function isGameYearDuplicate(game, year, excludeIdx) {
+    if (!game || !year) return false;
+    return db.some((item, i) => i !== excludeIdx && item.game.toLowerCase() === game.toLowerCase() && Number(item.year) === Number(year));
+  }
+
+  function validateCoverInput(input, url, excludeIdx) {
+    const invalid = Boolean(url) && !isValidImageUrl(url);
+    input.classList.toggle('field-error', invalid);
+    input.classList.toggle('field-warn', !invalid && isCoverDuplicate(url, excludeIdx));
+    return !invalid;
+  }
+  function validateAudioInput(input, url, excludeIdx, warnEmpty = true) {
+    const invalid = Boolean(url) && !isValidAudioUrl(url);
+    input.classList.toggle('field-error', invalid);
+    input.classList.toggle('field-warn', !invalid && ((warnEmpty && !url) || isAudioDuplicate(url, excludeIdx)));
+    return !invalid;
+  }
+  function validateGameYearInputs(gameInput, yearInput, game, year, excludeIdx, checkEmpty = true) {
+    const emptyGame = checkEmpty && !String(game).trim();
+    const emptyYear = checkEmpty && !Number(year);
+    const dupl = !emptyGame && isGameYearDuplicate(game, year, excludeIdx);
+    gameInput.classList.toggle('field-error', emptyGame);
+    gameInput.classList.toggle('field-warn', !emptyGame && dupl);
+    yearInput.classList.toggle('field-warn', emptyYear || dupl);
+  }
+
+  function validateRow(row, item, index) {
+    const coverInput = row.querySelector('input[data-field="cover"]');
+    if (coverInput) validateCoverInput(coverInput, item.cover, index);
+    item.tracks.forEach((track, ti) => {
+      const srcInput = row.querySelector(`input[data-field="source"][data-track="${ti}"]`);
+      if (srcInput) validateAudioInput(srcInput, track.mp3Url, index);
+      if (ti > 0) {
+        const titleInput = row.querySelector(`input[data-field="title"][data-track="${ti}"]`);
+        if (titleInput) titleInput.classList.toggle('field-warn', !track.title.trim());
+      }
+    });
+    const gameInput = row.querySelector('input[data-field="game"]');
+    const yearInput = row.querySelector('input[data-field="year"]');
+    if (gameInput && yearInput) validateGameYearInputs(gameInput, yearInput, item.game, item.year, index);
+  }
+
   function updateStats() {
     const total = db.length;
     const q = $("search").value.trim();
@@ -887,7 +946,9 @@
   function fillRow(row) {
     if (row.dataset.filled) return;
     row.dataset.filled = "1";
-    row.innerHTML = buildRowContent(db[Number(row.dataset.index)]);
+    const index = Number(row.dataset.index);
+    row.innerHTML = buildRowContent(db[index]);
+    validateRow(row, db[index], index);
     if (_rowObserver) _rowObserver.unobserve(row);
   }
 
@@ -952,6 +1013,7 @@
           }
           mp3LinkEl.replaceWith(newA);
         }
+        validateAudioInput(input, track.mp3Url, index);
       } else if (field === "startSeconds") {
         track.startSeconds = timeToSeconds(value);
         input.value = secondsToTime(track.startSeconds);
@@ -959,6 +1021,7 @@
         if (loadBtn) { loadBtn.textContent = "▶ Cargar"; loadBtn.disabled = false; }
       } else if (field === "title") {
         track.title = value;
+        if (trackIdx > 0) input.classList.toggle('field-warn', !value.trim());
       }
     } else {
       if (field === "tags") {
@@ -976,6 +1039,12 @@
           if (title) title.textContent = value || "(sin título)";
         }
         if (field === "cover") reloadRowCover(row);
+        if (field === "cover") validateCoverInput(input, db[index].cover, index);
+        if (field === "game" || field === "year") {
+          const gameInput = row.querySelector('input[data-field="game"]');
+          const yearInput = row.querySelector('input[data-field="year"]');
+          if (gameInput && yearInput) validateGameYearInputs(gameInput, yearInput, db[index].game, db[index].year, index);
+        }
       }
     }
 
@@ -1182,6 +1251,13 @@
 
   $("newTags").addEventListener("change", refreshNewTagSuggestions);
 
+  function validateNewForm() {
+    validateCoverInput($("newCover"), $("newCover").value.trim(), -1);
+    validateAudioInput($("newMp3Url"), $("newMp3Url").value.trim(), -1, false);
+    validateGameYearInputs($("newGame"), $("newYear"), $("newGame").value.trim(), Number($("newYear").value) || 0, -1, false);
+  }
+  ["newCover", "newMp3Url", "newGame", "newYear"].forEach(id => $(id).addEventListener("change", validateNewForm));
+
   $("toggleAdd").addEventListener("click", () => {
     $("addPanel").classList.toggle("open");
     refreshNewTagSuggestions();
@@ -1198,6 +1274,9 @@
     $("newTags").value = "";
     $("newPop").value = 6;
     $("newYear").value = new Date().getFullYear();
+    ["newCover", "newMp3Url", "newGame", "newYear"].forEach(id =>
+      $(id).classList.remove('field-error', 'field-warn')
+    );
   });
 
   $("addEntry").addEventListener("click", () => {
@@ -1211,6 +1290,11 @@
 
     if (!game) return alert("Falta el nombre del juego.");
     if (!sourceVal) return alert("Falta la URL del MP3.");
+
+    const coverOk = validateCoverInput($("newCover"), cover, -1);
+    const mp3Ok   = validateAudioInput($("newMp3Url"), normalizeAudioUrl(sourceVal), -1);
+    if (!coverOk) { $("newCover").focus(); return; }
+    if (!mp3Ok)   { $("newMp3Url").focus(); return; }
 
     const tags = $("newTags").value.split(',').map(t => t.trim()).filter(Boolean);
     const track = { title, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: $("newLyrics").checked ? ['lyrics'] : [] };
