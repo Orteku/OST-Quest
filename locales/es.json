@@ -43,8 +43,9 @@
     "EZ",
     "¡Crack! ¡Fiera! ¡Mastodonte!"
   ],
-  "footer_music": "Música provista por Archive.org y KHInsider.",
-  "footer_credit": "Oesti Quest desarrollado por Orteku en colaboración con Vyrka · Contacto: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
+  "tagline": "Adivina la OST",
+  "footer_desc": "Juego diario de adivinar bandas sonoras de videojuegos. Escucha un fragmento y elige entre cuatro portadas a cuál pertenece. Nueva quest cada día.",
+  "footer_credit": "Música provista por <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> y <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Desarrollado por Orteku en colaboración con Vyrka · Contacto: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
   "tutorial_title": "¿Cómo se juega?",
   "tutorial_listen_h": "Escucha",
   "tutorial_listen_b": "Pulsa ▶ para reproducir un fragmento de la banda sonora e intenta reconocerla.",

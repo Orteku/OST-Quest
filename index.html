@@ -31,12 +31,20 @@
 </head>
 <body>
 <script>if(localStorage.getItem('ostquest_theme')==='light')document.body.classList.add('theme--light');</script>
+<noscript>
+  <div style="max-width:600px;margin:3rem auto;padding:1.5rem;font-family:system-ui,sans-serif;text-align:center;color:#ddd9cf">
+    <h1 style="margin-bottom:1rem">Oesti Quest — Tu misión diaria de música de videojuegos</h1>
+    <p style="margin-bottom:.75rem">Escucha fragmentos de bandas sonoras de videojuegos y adivina a cuál pertenece cada canción entre cuatro portadas. Tres rondas por día, una nueva quest cada 24 horas.</p>
+    <p style="color:#888">Para jugar necesitas activar JavaScript en tu navegador.</p>
+  </div>
+</noscript>
 
 <div class="app-wrapper">
 
   <header class="site-header">
     <div class="site-header__left">
       <img src="img/banner.png" alt="Oesti Quest" class="site-banner">
+      <span class="site-tagline" data-i18n="tagline">Adivina la OST</span>
     </div>
     <div class="site-header__right">
       <div class="archive-banner" id="archive-banner"></div>
@@ -120,9 +128,10 @@
   </div>
 
   <footer class="site-footer">
-    <p data-i18n="footer_music"></p>
+    <p class="site-footer__desc" data-i18n="footer_desc">Juego diario de adivinar bandas sonoras de videojuegos. Escucha un fragmento y elige entre cuatro portadas a cuál pertenece. Nueva quest cada día.</p>
     <p data-i18n-html="footer_credit"></p>
   </footer>
+
 
 </div>
 
