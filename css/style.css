@@ -132,6 +132,7 @@ body.theme--light .site-tagline { color: #9898a8; }
   text-align: center;
   pointer-events: none;
 }
+.archive-banner--gm { pointer-events: auto; cursor: pointer; }
 
 /* ─── Score bar ─────────────────────────────────────────────────────────────── */
 .score-bar { display: none; margin-bottom: 0; }
@@ -892,7 +893,7 @@ body.theme--light .site-footer__desc { color: #9898a8; }
   position: fixed;
   bottom: 20px;
   left: 20px;
-  z-index: 40;
+  z-index: 210;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1254,6 +1255,12 @@ body.theme--light .modal-player { background: rgba(0,0,0,0.06); }
 body.theme--light .modal-player__bar { background: rgba(0,0,0,0.12); }
 body.theme--light .modal-player__fill { background: #4a6c10; }
 body.theme--light .modal-player__time { color: #787888; }
+
+/* Lang dropdown disabled while modal is open — volume stays accessible */
+body:has(#modal.modal--open) .lang-dropdown {
+  pointer-events: none;
+  opacity: 0.3;
+}
 
 /* End modal */
 body.theme--light .modal__end-label { color: #1e1d28; }

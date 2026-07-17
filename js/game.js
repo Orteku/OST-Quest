@@ -19,6 +19,7 @@ async function initGame(dateStr, archiveMode) {
   isArchiveMode  = archiveMode;
   gameFinished   = false;
   stopAudio();
+  document.getElementById('gm-panel').style.display = 'none';
 
   showLoadingScreen(true);
   currentGroups = await generateDailyGame(dateStr);
@@ -92,7 +93,7 @@ function renderColumn(gi, wrapper) {
   const hintText = isLoading
     ? t('audio_loading')
     : st.solved
-      ? `<strong>${g.answer.game}</strong>`
+      ? `<strong>${localizeGame(g.answer).game}</strong>`
       : st.locked
         ? t('col_locked')
         : playingCol === gi
@@ -137,13 +138,14 @@ function renderColumn(gi, wrapper) {
       }
     }
 
-    const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(cv.game)}`;
-    const nameLen  = cv.game.length;
+    const lcv      = localizeGame(cv);
+    const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(lcv.game)}`;
+    const nameLen  = lcv.game.length;
     const labelFs  = nameLen > 24 ? '11px' : '13px';
     item.innerHTML = `
-      <img src="${asset.cover || fallback}" alt="${cv.game}" loading="lazy"
+      <img src="${lcv.cover || fallback}" alt="${lcv.game}" loading="lazy"
            onerror="this.onerror=null;this.src='${fallback}'">
-      <span class="cover-item__label" style="font-size:${labelFs}">${cv.game}</span>`;
+      <span class="cover-item__label" style="font-size:${labelFs}">${lcv.game}</span>`;
 
     if (!st.locked) {
       if (!st.solved) {
@@ -373,7 +375,7 @@ function _initModalAudioPlayer(startSeconds = 0) {
     _clearSlowToast();
     hideToast();
     btn.innerHTML = _PLAY_SM;
-    btn.setAttribute('aria-label', 'Reproducir');
+    btn.setAttribute('aria-label', t('aria_play'));
     showToast(t('audio_error'), 'error', true);
   });
   audio.addEventListener('timeupdate', () => {
@@ -387,15 +389,16 @@ function _initModalAudioPlayer(startSeconds = 0) {
 
 function openGuessModal(gi, cv, ci) {
   const asset    = currentGroups[gi].assets[ci];
-  const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(cv.game)}`;
+  const lcv      = localizeGame(cv);
+  const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(lcv.game)}`;
 
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__cover-wrap">
-      <img src="${asset.cover || fallback}" alt="${cv.game}"
+      <img src="${lcv.cover || fallback}" alt="${lcv.game}"
            onerror="this.onerror=null;this.src='${fallback}'">
     </div>
     <div class="modal__body">
-      <h2 class="modal__game-name">${cv.game}${cv.year ? `<span class="modal__game-year">${cv.year}</span>` : ''}</h2>
+      <h2 class="modal__game-name">${lcv.game}${cv.year ? `<span class="modal__game-year">${cv.year}</span>` : ''}</h2>
       <button class="btn btn--guess" id="confirm-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
           <polyline points="20 6 9 17 4 12"/>
@@ -498,13 +501,13 @@ function _attachSyncedPlayer(fillId, timeId, btnId, audioEl, startSecs) {
       cancelAnimationFrame(rafId);
       audioEl.play().catch(() => {});
       playBtn.innerHTML = _PAUSE_SM;
-      playBtn.setAttribute('aria-label', 'Pausar');
+      playBtn.setAttribute('aria-label', t('aria_pause'));
       tick();
     } else {
       cancelAnimationFrame(rafId);
       audioEl.pause();
       playBtn.innerHTML = _PLAY_SM;
-      playBtn.setAttribute('aria-label', 'Reproducir');
+      playBtn.setAttribute('aria-label', t('aria_play'));
     }
   });
 
@@ -512,7 +515,7 @@ function _attachSyncedPlayer(fillId, timeId, btnId, audioEl, startSecs) {
     if (!playBtn.isConnected) { audioEl.removeEventListener('pause', onAudioPause); return; }
     cancelAnimationFrame(rafId);
     playBtn.innerHTML = _PLAY_SM;
-    playBtn.setAttribute('aria-label', 'Reproducir');
+    playBtn.setAttribute('aria-label', t('aria_play'));
   }
   audioEl.addEventListener('pause', onAudioPause);
 }
@@ -523,7 +526,7 @@ function _buildMediaWidget(asset) {
   return `${titleHtml}
     <div class="modal-player">
       <audio class="modal-player__audio" src="${asset.audioUrl}" preload="metadata"></audio>
-      <button class="modal-player__btn" aria-label="Reproducir">${_PLAY_SM}</button>
+      <button class="modal-player__btn" aria-label="${t('aria_play')}">${_PLAY_SM}</button>
       <div class="modal-player__track">
         <div class="modal-player__bar"><div class="modal-player__fill"></div></div>
         <span class="modal-player__time">0:00</span>
@@ -533,7 +536,8 @@ function _buildMediaWidget(asset) {
 
 // Info modal para portadas de columnas ya resueltas
 function openInfoModal(cv, asset, gi) {
-  const fallback  = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(cv.game)}`;
+  const lcv       = localizeGame(cv);
+  const fallback  = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(lcv.game)}`;
   const audioEl   = getDirectAudioEl();
   const startSecs = asset.startSeconds || 0;
   const isSynced  = playingCol === gi
@@ -545,7 +549,7 @@ function openInfoModal(cv, asset, gi) {
   const playerHtml = isSynced ? `
     ${asset.title ? `<p class="modal__track-title">${asset.title}</p>` : ''}
     <div class="modal-player">
-      <button class="modal-player__btn" id="info-player-btn" aria-label="Pausar">${_PAUSE_SM}</button>
+      <button class="modal-player__btn" id="info-player-btn" aria-label="${t('aria_pause')}">${_PAUSE_SM}</button>
       <div class="modal-player__track">
         <div class="modal-player__bar"><div class="modal-player__fill" id="info-player-fill"></div></div>
         <span class="modal-player__time" id="info-player-time">${_fmtTime(0)} / ${_fmtTime(MODAL_PREVIEW_SECS)}</span>
@@ -555,11 +559,11 @@ function openInfoModal(cv, asset, gi) {
   document.getElementById('modal-inner').innerHTML = `
     <button class="modal__close-x" id="info-close">&times;</button>
     <div class="modal__cover-wrap">
-      <img src="${asset.cover || fallback}" alt="${cv.game}"
+      <img src="${lcv.cover || fallback}" alt="${lcv.game}"
            onerror="this.onerror=null;this.src='${fallback}'">
     </div>
     <div class="modal__body">
-      <h2 class="modal__game-name">${cv.game}${cv.year ? `<span class="modal__game-year">${cv.year}</span>` : ''}</h2>
+      <h2 class="modal__game-name">${lcv.game}${cv.year ? `<span class="modal__game-year">${cv.year}</span>` : ''}</h2>
       ${playerHtml}
     </div>`;
 
@@ -578,7 +582,8 @@ function openResultModal(gi, pickedCv, isCorrect) {
   const g        = currentGroups[gi];
   const ansIdx   = g.covers.indexOf(g.answer);
   const ansAsset = g.assets[ansIdx];
-  const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(g.answer.game)}`;
+  const ans      = localizeGame(g.answer);
+  const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(ans.game)}`;
 
   const btnClass = isCorrect ? 'btn--result-ok' : 'btn--result-fail';
   const btnText  = isCorrect ? t('result_correct') : t('result_wrong');
@@ -594,7 +599,7 @@ function openResultModal(gi, pickedCv, isCorrect) {
   const syncedPlayer = isPlaying ? `
     ${titleHtml}
     <div class="modal-player">
-      <button class="modal-player__btn" id="result-player-btn" aria-label="Pausar">${_PAUSE_SM}</button>
+      <button class="modal-player__btn" id="result-player-btn" aria-label="${t('aria_pause')}">${_PAUSE_SM}</button>
       <div class="modal-player__track">
         <div class="modal-player__bar"><div class="modal-player__fill" id="result-player-fill"></div></div>
         <span class="modal-player__time" id="result-player-time">${_fmtTime(0)} / ${_fmtTime(MODAL_PREVIEW_SECS)}</span>
@@ -604,11 +609,11 @@ function openResultModal(gi, pickedCv, isCorrect) {
   document.getElementById('modal-inner').innerHTML = `
     <button class="modal__close-x" id="result-close">&times;</button>
     <div class="modal__cover-wrap">
-      <img src="${ansAsset.cover || fallback}" alt="${g.answer.game}"
+      <img src="${ans.cover || fallback}" alt="${ans.game}"
            onerror="this.onerror=null;this.src='${fallback}'">
     </div>
     <div class="modal__body">
-      <h2 class="modal__game-name">${g.answer.game}${g.answer.year ? `<span class="modal__game-year">${g.answer.year}</span>` : ''}</h2>
+      <h2 class="modal__game-name">${ans.game}${g.answer.year ? `<span class="modal__game-year">${g.answer.year}</span>` : ''}</h2>
       <button class="btn ${btnClass}" disabled>${btnText}</button>
       <p class="modal__result-text">${msg}</p>
       <div class="modal__result-info">
@@ -957,20 +962,21 @@ function hideToast() {
 
 function openGmPanel() {
   document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('game-area').style.display = 'none';
   const panel = document.getElementById('gm-panel');
   panel.style.display = 'block';
 
-  const sorted  = [...GAME_DB].sort((a, b) => a.game.localeCompare(b.game));
+  const sorted  = [...GAME_DB].sort((a, b) => localizeGame(a).game.localeCompare(localizeGame(b).game));
   const opts     = sorted.map(g =>
-    `<option value="${g.id}">${g.game}${g.year ? ' (' + g.year + ')' : ''}</option>`
+    `<option value="${g.id}">${localizeGame(g).game}${g.year ? ' (' + g.year + ')' : ''}</option>`
   ).join('');
-  const randOpt  = `<option value="-1" selected>Aleatorio</option>`;
+  const randOpt  = `<option value="-1" selected>${t('gm_random')}</option>`;
 
   const colsHtml = [0, 1, 2].map(gi => `
     <div class="gm-col">
-      <h3 class="gm-col__title">Columna ${gi + 1}</h3>
+      <h3 class="gm-col__title">${t('gm_column')} ${gi + 1}</h3>
       <div class="gm-row-label">
-        <span class="gm-label">Respuesta</span>
+        <span class="gm-label">${t('gm_answer_label')}</span>
         <select class="gm-select gm-select--pos gm-select--random" id="gm-pos-${gi}">
           <option value="-1" selected>?</option>
           <option value="0">1</option>
@@ -985,11 +991,11 @@ function openGmPanel() {
       <div id="gm-track-wrap-${gi}" style="display:none">
         <label class="gm-track-label">
           <input type="checkbox" id="gm-track-cb-${gi}" class="gm-track-cb">
-          <span>Pista concreta</span>
+          <span>${t('gm_specific_track')}</span>
         </label>
         <select class="gm-select" id="gm-track-${gi}" style="display:none"></select>
       </div>
-      <span class="gm-label gm-decoy-label">Señuelos</span>
+      <span class="gm-label gm-decoy-label">${t('gm_decoys_label')}</span>
       ${[0, 1, 2].map(di => `
         <select class="gm-select gm-select--random" id="gm-decoy-${gi}-${di}">
           ${randOpt}${opts}
@@ -1000,12 +1006,12 @@ function openGmPanel() {
     <div class="gm-panel__inner">
       <div class="gm-panel__header">
         <h2 class="gm-panel__title">Game Master</h2>
-        <p class="gm-panel__sub">Configura las tres columnas para testear el juego</p>
+        <p class="gm-panel__sub">${t('gm_subtitle')}</p>
       </div>
       <div class="gm-cols">${colsHtml}</div>
       <div class="gm-panel__footer">
         <p class="gm-error" id="gm-error"></p>
-        <button class="btn btn--guess" id="gm-start">Empezar juego</button>
+        <button class="btn btn--guess" id="gm-start">${t('gm_start')}</button>
       </div>
     </div>`;
 
@@ -1033,7 +1039,7 @@ function openGmPanel() {
       const game = byId[parseInt(ansEl.value)];
       if (game && game.tracks.length > 1) {
         trackEl.innerHTML = game.tracks.map((tr, i) =>
-          `<option value="${i}">${i + 1}. ${tr.title || 'Pista ' + (i + 1)}</option>`
+          `<option value="${i}">${i + 1}. ${tr.title || t('gm_track') + ' ' + (i + 1)}</option>`
         ).join('');
         trackCbEl.checked = false;
         trackEl.style.display = 'none';
@@ -1064,13 +1070,13 @@ function openGmPanel() {
       let trackIdx = 0;
       if (isNaN(answerId) || answerId === -1) {
         const avail = GAME_DB.filter(g => !usedIds.has(g.id));
-        if (!avail.length) { errorEl.textContent = 'No hay suficientes juegos disponibles.'; return; }
+        if (!avail.length) { errorEl.textContent = t('gm_error_no_games'); return; }
         const picked = avail[Math.floor(Math.random() * avail.length)];
         answerId = picked.id;
         trackIdx = Math.floor(Math.random() * picked.tracks.length);
       } else {
         if (usedIds.has(answerId)) {
-          errorEl.textContent = `"${byId[answerId].game}" ya está en uso.`;
+          errorEl.textContent = t('gm_error_in_use').replace('{name}', localizeGame(byId[answerId]).game);
           return;
         }
         const cb = document.getElementById(`gm-track-cb-${gi}`);
@@ -1092,7 +1098,7 @@ function openGmPanel() {
         if (isNaN(decoyId) || decoyId === -1) {
           const similar = GAME_DB.filter(g => !usedIds.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
           const pool = similar.length ? similar : GAME_DB.filter(g => !usedIds.has(g.id));
-          if (!pool.length) { errorEl.textContent = 'No hay suficientes juegos para los señuelos.'; return; }
+          if (!pool.length) { errorEl.textContent = t('gm_error_no_decoys'); return; }
           const [picked] = weightedPickN(pool, answer, answerEffTags, WEIGHTS.normal, Math.random, 1);
           decoyId = picked.id;
         } else if (usedIds.has(decoyId)) {
@@ -1148,7 +1154,20 @@ async function initGmGame(gmGroups) {
   showLoadingScreen(false);
 
   const banner = document.getElementById('archive-banner');
-  if (banner) { banner.textContent = 'Game Master'; banner.style.display = 'block'; }
+  if (banner) {
+    banner.textContent = 'Game Master';
+    banner.classList.add('archive-banner--gm');
+    banner.style.display = 'block';
+    banner.addEventListener('click', function _gmBack() {
+      banner.removeEventListener('click', _gmBack);
+      banner.classList.remove('archive-banner--gm');
+      closeModal();
+      stopAudio();
+      banner.style.display = 'none';
+      document.body.classList.remove('is-archive');
+      openGmPanel();
+    });
+  }
   document.body.classList.add('is-archive');
 
   renderAll();
@@ -1248,6 +1267,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
+
+  // Re-render dynamic content on language change
+  document.addEventListener('langchange', () => {
+    const gmPanel = document.getElementById('gm-panel');
+    if (gmPanel && gmPanel.style.display !== 'none') {
+      const saved = [0, 1, 2].map(gi => ({
+        answer:  document.getElementById(`gm-answer-${gi}`)?.value  ?? '-1',
+        pos:     document.getElementById(`gm-pos-${gi}`)?.value     ?? '-1',
+        trackCb: document.getElementById(`gm-track-cb-${gi}`)?.checked ?? false,
+        track:   document.getElementById(`gm-track-${gi}`)?.value   ?? '0',
+        decoys:  [0, 1, 2].map(di => document.getElementById(`gm-decoy-${gi}-${di}`)?.value ?? '-1'),
+      }));
+
+      openGmPanel();
+
+      saved.forEach((s, gi) => {
+        const ansEl = document.getElementById(`gm-answer-${gi}`);
+        if (ansEl) { ansEl.value = s.answer; ansEl.dispatchEvent(new Event('change')); }
+
+        const posEl = document.getElementById(`gm-pos-${gi}`);
+        if (posEl) { posEl.value = s.pos; posEl.dispatchEvent(new Event('change')); }
+
+        if (s.trackCb) {
+          const cbEl = document.getElementById(`gm-track-cb-${gi}`);
+          if (cbEl) { cbEl.checked = true; cbEl.dispatchEvent(new Event('change')); }
+          const trackEl = document.getElementById(`gm-track-${gi}`);
+          if (trackEl) trackEl.value = s.track;
+        }
+
+        s.decoys.forEach((dv, di) => {
+          const el = document.getElementById(`gm-decoy-${gi}-${di}`);
+          if (el) { el.value = dv; el.dispatchEvent(new Event('change')); }
+        });
+      });
+    } else if (currentGroups.length && document.getElementById('game-area').style.display !== 'none') {
+      renderAll();
+    }
+  });
 
   // Theme toggle
   const btnTheme  = document.getElementById('btn-theme');

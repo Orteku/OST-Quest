@@ -44,6 +44,7 @@
     "You're a legend!"
   ],
   "tagline": "Guess the OST",
+  "games": {},
   "footer_desc": "Daily video game soundtrack guessing game. Listen to a clip and pick which of four covers it belongs to. New quest every day.",
   "footer_credit": "Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Developed by Orteku in collaboration with Vyrka · Contact: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
   "tutorial_title": "How to play",
@@ -64,5 +65,18 @@
     "Parry this!",
     "Touch grass",
     "Skill issue"
-  ]
+  ],
+  "gm_subtitle": "Configure the three columns to test the game",
+  "gm_start": "Start game",
+  "gm_random": "Random",
+  "gm_column": "Column",
+  "gm_answer_label": "Answer",
+  "gm_decoys_label": "Decoys",
+  "gm_specific_track": "Specific track",
+  "gm_track": "Track",
+  "gm_error_no_games": "Not enough games available.",
+  "gm_error_in_use": "\"{name}\" is already in use.",
+  "gm_error_no_decoys": "Not enough games for decoys.",
+  "aria_play": "Play",
+  "aria_pause": "Pause"
 }

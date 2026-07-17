@@ -41,6 +41,7 @@ function _applyDOM() {
   });
   document.documentElement.lang = _lang;
   if (_t.page_title) document.title = _t.page_title;
+  document.dispatchEvent(new Event('langchange'));
 }
 
 async function setLang(lang) {
@@ -55,6 +56,11 @@ async function setLang(lang) {
   } catch {
     if (lang !== 'es') await setLang('es');
   }
+}
+
+function localizeGame(game) {
+  const override = _t.games?.[game.id];
+  return override ? { ...game, ...override } : game;
 }
 
 async function initI18n() {

@@ -64,5 +64,32 @@
     "Parry it!",
     "Nadie nace sabiendo",
     "Mejor invierte en felicidad"
-  ]
+  ],
+  "gm_subtitle": "Configura las tres columnas para testear el juego",
+  "gm_start": "Empezar juego",
+  "gm_random": "Aleatorio",
+  "gm_column": "Columna",
+  "gm_answer_label": "Respuesta",
+  "gm_decoys_label": "Señuelos",
+  "gm_specific_track": "Pista concreta",
+  "gm_track": "Pista",
+  "gm_error_no_games": "No hay suficientes juegos disponibles.",
+  "gm_error_in_use": "\"{name}\" ya está en uso.",
+  "gm_error_no_decoys": "No hay suficientes juegos para los señuelos.",
+  "aria_play": "Reproducir",
+  "aria_pause": "Pausar"
+
+    "games": {
+    "40": { "game": "Pokémon Rojo/Azul" }
+    "591": { "game": "Pokémon Oro/Plata" }
+    "592": { "game": "Pokémon Esmeralda" }
+    "593": { "game": "Pokémon Platino" }
+    "594": { "game": "Pokémon Negro/Blanco" }
+    "596": { "game": "Pokémon Sol/Luna" }
+    "597": { "game": "Pokémon Espada/Escudo" }
+    "598": { "game": "Leyendas Pokémon: Arceus" }
+    "599": { "game": "Pokémon Escarlata/Violeta" }
+    "600": { "game": "Leyendas Pokémon: Z-A" }
+    "601": { "game": "Pokémon Mundo misterioso: exploradores del cielo" }
+  },
 }
