@@ -91,6 +91,24 @@
     "600": { "game": "Leyendas Pokémon: Z-A" },
     "601": { "game": "Pokémon Mundo misterioso: exploradores del cielo" },
     "611": { "game": "LEGO Harry Potter: Años 1-4" },
-    "612": { "game": "LEGO Harry Potter: Años 5-7" }
+    "612": { "game": "LEGO Harry Potter: Años 5-7" },
+    "92": {"game": "El profesor Layton y la villa misteriosa" },
+    "111": {"game": "Los Sims 4" },
+    "198": {"game": "Star Wars: Caballeros de la Antigua República" },
+    "208": {"game": "Prince of Persia: Las dos coronas" },
+    "211": {"game": "Prince of Persia: Las Arenas del Tiempo" },
+    "217": {"game": "Mafia: El viejo continente" },
+    "228": {"game": "La Tierra Media: Sombras de Mordor" },
+    "235": {"game": "Ratchet & Clank: Una dimensión aparte" },
+    "281": {"game": "Uncharted 4: el desenlace del ladrón" },
+    "282": {"game": "Uncharted: El tesoro de Drake" },
+    "312": {"game": "Star Wars Jedi: La orden caída" },
+    "313": {"game": "Star Wars: El Poder de la Fuerza" },
+    "344": {"game": "Jak and Daxter: El legado de los Precursores" },
+    "382": {"game": "Guardianes de la Galaxia" },
+    "383": {"game": "Indiana Jones y el Gran Círculo" },
+    "400": {"game": "Dragon Quest XI: Ecos de un pasado perdido" },
+    "401": {"game": "Dragon Quest III: Las semillas de la salvación" },
+    "403": {"game": "Dragon Quest IV: Capítulos de los Elegidos" }
   }
 }
