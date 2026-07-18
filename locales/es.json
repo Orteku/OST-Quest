@@ -77,19 +77,18 @@
   "gm_error_in_use": "\"{name}\" ya está en uso.",
   "gm_error_no_decoys": "No hay suficientes juegos para los señuelos.",
   "aria_play": "Reproducir",
-  "aria_pause": "Pausar"
-
-    "games": {
-    "40": { "game": "Pokémon Rojo/Azul" }
-    "591": { "game": "Pokémon Oro/Plata" }
-    "592": { "game": "Pokémon Esmeralda" }
-    "593": { "game": "Pokémon Platino" }
-    "594": { "game": "Pokémon Negro/Blanco" }
-    "596": { "game": "Pokémon Sol/Luna" }
-    "597": { "game": "Pokémon Espada/Escudo" }
-    "598": { "game": "Leyendas Pokémon: Arceus" }
-    "599": { "game": "Pokémon Escarlata/Violeta" }
-    "600": { "game": "Leyendas Pokémon: Z-A" }
+  "aria_pause": "Pausar",
+  "games": {
+    "40":  { "game": "Pokémon Rojo/Azul" },
+    "591": { "game": "Pokémon Oro/Plata" },
+    "592": { "game": "Pokémon Esmeralda" },
+    "593": { "game": "Pokémon Platino" },
+    "594": { "game": "Pokémon Negro/Blanco" },
+    "596": { "game": "Pokémon Sol/Luna" },
+    "597": { "game": "Pokémon Espada/Escudo" },
+    "598": { "game": "Leyendas Pokémon: Arceus" },
+    "599": { "game": "Pokémon Escarlata/Violeta" },
+    "600": { "game": "Leyendas Pokémon: Z-A" },
     "601": { "game": "Pokémon Mundo misterioso: exploradores del cielo" }
-  },
+  }
 }
