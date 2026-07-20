@@ -299,6 +299,7 @@
       text-decoration: none;
       font-size: 12px;
       align-self: center;
+      justify-self: start;
     }
     .cover-link:hover { text-decoration: underline; }
     .mp3-link {
@@ -306,6 +307,7 @@
       text-decoration: none;
       font-size: 13px;
       align-self: end;
+      justify-self: start;
       padding-bottom: 8px;
     }
     .mp3-link:hover { color: var(--accent); }
@@ -830,17 +832,39 @@
   function isValidImageUrl(url) { return !url || (isValidUrl(url) && IMAGE_EXT_RE.test(url)); }
   function isValidAudioUrl(url) { return !url || (isValidUrl(url) && AUDIO_EXT_RE.test(url)); }
 
+  // Índices para duplicate-check O(1) en lugar de O(n)
+  let _coverIdx = new Map();   // url → Set<dbIndex>
+  let _audioIdx = new Map();   // url → Set<dbIndex>
+  let _gyIdx    = new Map();   // "game\0year" → Set<dbIndex>
+
+  function _addToIdx(map, key, i)   { if (!key) return; if (!map.has(key)) map.set(key, new Set()); map.get(key).add(i); }
+  function _delFromIdx(map, key, i) { const s = map.get(key); if (!s) return; s.delete(i); if (!s.size) map.delete(key); }
+  function _gyKey(g, y)             { return g && y ? `${String(g).toLowerCase()}\0${Number(y)}` : ''; }
+
+  function rebuildIndexes() {
+    _coverIdx.clear(); _audioIdx.clear(); _gyIdx.clear();
+    db.forEach((item, i) => {
+      _addToIdx(_coverIdx, item.cover, i);
+      item.tracks.forEach(t => _addToIdx(_audioIdx, t.mp3Url, i));
+      _addToIdx(_gyIdx, _gyKey(item.game, item.year), i);
+    });
+  }
+
   function isCoverDuplicate(url, excludeIdx) {
     if (!url) return false;
-    return db.some((item, i) => i !== excludeIdx && item.cover === url);
+    const s = _coverIdx.get(url);
+    return !!s && (s.size > 1 || !s.has(excludeIdx));
   }
   function isAudioDuplicate(url, excludeIdx) {
     if (!url) return false;
-    return db.some((item, i) => i !== excludeIdx && item.tracks.some(t => t.mp3Url === url));
+    const s = _audioIdx.get(url);
+    return !!s && (s.size > 1 || !s.has(excludeIdx));
   }
   function isGameYearDuplicate(game, year, excludeIdx) {
-    if (!game || !year) return false;
-    return db.some((item, i) => i !== excludeIdx && item.game.toLowerCase() === game.toLowerCase() && Number(item.year) === Number(year));
+    const key = _gyKey(game, year);
+    if (!key) return false;
+    const s = _gyIdx.get(key);
+    return !!s && (s.size > 1 || !s.has(excludeIdx));
   }
 
   function validateCoverInput(input, url, excludeIdx) {
@@ -880,21 +904,21 @@
     if (gameInput && yearInput) validateGameYearInputs(gameInput, yearInput, item.game, item.year, index);
   }
 
-  function revalidateRenderedRows(fields) {
-    document.querySelectorAll('.row[data-filled]').forEach(row => {
-      const idx = Number(row.dataset.index);
+  // Revalida solo los rows con índices afectados — O(k) en vez de O(n)
+  function revalidateByIndices(indices, field) {
+    indices.forEach(idx => {
+      const row = list.querySelector(`.row[data-index="${idx}"][data-filled]`);
+      if (!row) return;
       const item = db[idx];
-      if (fields.includes('cover')) {
+      if (field === 'cover') {
         const inp = row.querySelector('input[data-field="cover"]');
         if (inp) validateCoverInput(inp, item.cover, idx);
-      }
-      if (fields.includes('audio')) {
+      } else if (field === 'audio') {
         item.tracks.forEach((track, ti) => {
           const inp = row.querySelector(`input[data-field="source"][data-track="${ti}"]`);
           if (inp) validateAudioInput(inp, track.mp3Url, idx);
         });
-      }
-      if (fields.includes('gameyear')) {
+      } else if (field === 'gameyear') {
         const gi = row.querySelector('input[data-field="game"]');
         const yi = row.querySelector('input[data-field="year"]');
         if (gi && yi) validateGameYearInputs(gi, yi, item.game, item.year, idx);
@@ -993,6 +1017,7 @@
 
     list.querySelectorAll(".row").forEach(row => _rowObserver.observe(row));
 
+    rebuildIndexes();
     applySearch();
     updateStats();
   }
@@ -1018,6 +1043,8 @@
     if (trackIdx !== null) {
       const track = db[index].tracks[trackIdx];
       if (field === "source") {
+        const oldAudioUrl = track.mp3Url;
+        const oldAudioRows = new Set(_audioIdx.get(oldAudioUrl) || []);
         track.mp3Url = normalizeAudioUrl(value);
         input.value  = track.mp3Url;
         const loadBtn = row.querySelector(`button[data-action="loadTrack"][data-track="${trackIdx}"]`);
@@ -1035,7 +1062,9 @@
           }
           mp3LinkEl.replaceWith(newA);
         }
-        revalidateRenderedRows(['audio']);
+        _delFromIdx(_audioIdx, oldAudioUrl, index);
+        _addToIdx(_audioIdx, track.mp3Url, index);
+        revalidateByIndices(new Set([...oldAudioRows, ...(_audioIdx.get(track.mp3Url) || []), index]), 'audio');
       } else if (field === "startSeconds") {
         track.startSeconds = timeToSeconds(value);
         input.value = secondsToTime(track.startSeconds);
@@ -1050,19 +1079,32 @@
         db[index].tags = value.split(',').map(t => t.trim()).filter(Boolean);
         const suggestions = row.querySelector('.tag-suggestions');
         if (suggestions) suggestions.innerHTML = tagSuggestionsHtml(db[index].tags);
+      } else if (field === "cover") {
+        const oldCoverUrl = db[index].cover;
+        const oldCoverRows = new Set(_coverIdx.get(oldCoverUrl) || []);
+        const newCoverUrl = cleanUrl(value);
+        db[index].cover = newCoverUrl;
+        input.value = newCoverUrl;
+        reloadRowCover(row);
+        _delFromIdx(_coverIdx, oldCoverUrl, index);
+        _addToIdx(_coverIdx, newCoverUrl, index);
+        revalidateByIndices(new Set([...oldCoverRows, ...(_coverIdx.get(newCoverUrl) || []), index]), 'cover');
       } else {
-        if (field === "cover") value = cleanUrl(value);
         if (["pop", "year"].includes(field)) value = Number(value) || 0;
         if (field === "pop") value = Math.max(1, Math.min(6, value));
+        const oldGyKey  = (field === "game" || field === "year") ? _gyKey(db[index].game, db[index].year) : null;
+        const oldGyRows = oldGyKey ? new Set(_gyIdx.get(oldGyKey) || []) : null;
         db[index][field] = value;
-        if (field === "cover") input.value = value;
         if (field === "game") {
           const title = row.querySelector(".game-title");
           if (title) title.textContent = value || "(sin título)";
         }
-        if (field === "cover") reloadRowCover(row);
-        if (field === "cover") revalidateRenderedRows(['cover']);
-        if (field === "game" || field === "year") revalidateRenderedRows(['gameyear']);
+        if (oldGyKey !== null) {
+          const newKey = _gyKey(db[index].game, db[index].year);
+          _delFromIdx(_gyIdx, oldGyKey, index);
+          _addToIdx(_gyIdx, newKey, index);
+          revalidateByIndices(new Set([...oldGyRows, ...(_gyIdx.get(newKey) || []), index]), 'gameyear');
+        }
       }
     }
 
@@ -1187,9 +1229,11 @@
       if (db[index].tracks.length > 1) {
         const track = db[index].tracks[ti];
         const doRemove = () => {
+          _delFromIdx(_audioIdx, track.mp3Url, index);
           db[index].tracks.splice(ti, 1);
           setDirty(true);
           row.querySelector(".tracks-section").innerHTML = tracksSectionHtml(db[index].tracks);
+          validateRow(row, db[index], index);
         };
         if (track.mp3Url || track.title) {
           customConfirm(`¿Eliminar la canción "${track.title || 'sin título'}"?`, { ok: "Eliminar", okDanger: true }).then(ok => { if (ok) doRemove(); });
@@ -1402,6 +1446,13 @@
     $("globalPlayer").classList.remove("active");
     _gpIndex = -1;
   });
+
+  (function() {
+    const audio = $("gpAudio");
+    const saved = parseFloat(localStorage.getItem('gpVolume'));
+    if (!isNaN(saved)) audio.volume = Math.max(0, Math.min(1, saved));
+    audio.addEventListener('volumechange', () => localStorage.setItem('gpVolume', audio.volume));
+  })();
 
   $("newLoadTrack").addEventListener("click", function() {
     const mp3Url = normalizeAudioUrl($("newMp3Url").value.trim());
