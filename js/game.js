@@ -15,6 +15,7 @@ let _toastTimer        = null;
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function initGame(dateStr, archiveMode) {
+  if (window.SOUNDTRACKS_PAGE) return;
   currentDateStr = dateStr;
   isArchiveMode  = archiveMode;
   gameFinished   = false;
@@ -812,6 +813,7 @@ function openArchive() {
   document.querySelectorAll('.archive__item').forEach(li => {
     li.addEventListener('click', () => {
       const ds = li.dataset.date;
+      if (window.SOUNDTRACKS_PAGE) { location.href = 'index.html?date=' + ds; return; }
       closeModal();
       stopAudio();
       const [ay,am,ad] = ds.split('-');
@@ -1132,6 +1134,7 @@ function openGmPanel() {
 }
 
 async function initGmGame(gmGroups) {
+  if (window.SOUNDTRACKS_PAGE) return;
   currentDateStr = '__gm__';
   isArchiveMode  = true;
   gameFinished   = false;
@@ -1202,14 +1205,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('modal').addEventListener('click', e => {
     if (e.target.id !== 'modal') return;
     closeModal();
-    renderAll();
-    checkFinished();
+    if (!window.SOUNDTRACKS_PAGE) { renderAll(); checkFinished(); }
   });
 
   document.getElementById('btn-stats').addEventListener('click', openStatsModal);
   document.getElementById('btn-archive').addEventListener('click', openArchive);
   document.getElementById('btn-help').addEventListener('click', openTutorialModal);
   document.getElementById('btn-today').addEventListener('click', () => {
+    if (window.SOUNDTRACKS_PAGE) { location.href = 'index.html'; return; }
     stopAudio();
     const banner = document.getElementById('archive-banner');
     if (banner) banner.style.display = 'none';
@@ -1217,11 +1220,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     initGame(today, false);
   });
 
-  if (new URLSearchParams(location.search).has('gm')) {
+  const _params = new URLSearchParams(location.search);
+  if (window.SOUNDTRACKS_PAGE) {
+    startCountdownTicker();
+  } else if (_params.has('gm')) {
     openGmPanel();
   } else {
-    if (!localStorage.getItem('ostquest_tutorial')) openTutorialModal();
-    initGame(today, false);
+    const _open = _params.get('open');
+    const _date = _params.get('date');
+    if (!localStorage.getItem('ostquest_tutorial') && !_open && !_date) openTutorialModal();
+    if (_date) {
+      await initGame(_date, true);
+      const [ay, am, ad] = _date.split('-');
+      const banner = document.getElementById('archive-banner');
+      if (banner) {
+        banner.innerHTML = `Quest #${getQuestNumber(_date)}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+        banner.style.display = 'block';
+      }
+      document.body.classList.add('is-archive');
+    } else {
+      await initGame(today, false);
+      if (_open === 'archive') openArchive();
+      else if (_open === 'stats') openStatsModal();
+    }
   }
 
   // Volume control

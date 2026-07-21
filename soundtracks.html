@@ -3,39 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Escucha fragmentos de bandas sonoras y adivina el videojuego. Una quest nueva cada día, ¿cuántas acertarás?">
-<meta name="author" content="Orteku">
-
-  <!-- Open Graph -->
-  <meta property="og:type"        content="website">
-  <meta property="og:url"         content="https://oestiquest.com">
-  <meta property="og:title"       content="Oesti Quest — Tu misión diaria de música de videojuegos">
-  <meta property="og:description" content="Escucha fragmentos de bandas sonoras y adivina el videojuego. Una quest nueva cada día, ¿cuántas acertarás?">
-  <meta property="og:locale"      content="es_ES">
-  <meta property="og:image"       content="https://oestiquest.com/img/banner.png">
-
-  <!-- Twitter/X -->
-  <meta name="twitter:card"        content="summary_large_image">
-  <meta name="twitter:title"       content="Oesti Quest — Tu misión diaria de música de videojuegos">
-  <meta name="twitter:description" content="Escucha fragmentos de bandas sonoras y adivina el videojuego. Una quest nueva cada día, ¿cuántas acertarás?">
-  <meta name="twitter:image"       content="https://oestiquest.com/img/banner.png">
-
-  <title>Oesti Quest — Tu misión diaria de música de videojuegos</title>
+  <meta name="description" content="Todas las canciones y compositores que aparecen en Oesti Quest, el juego diario de adivinar bandas sonoras de videojuegos.">
+  <title>Lista de canciones — Oesti Quest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://archive.org">
-  <link rel="dns-prefetch" href="https://archive.org">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/png" sizes="48x48" href="img/logo.png">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7677038770205132" crossorigin="anonymous"></script>
+  <style>
+    .score-bar { display: none !important; }
+
+    .st-intro { margin: 20px 0 24px; }
+    .st-heading {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: #b8e030; margin-bottom: 6px;
+    }
+    .st-desc { font-size: 13px; color: #7a7a88; line-height: 1.5; }
+
+    .st-list {
+      columns: 2;
+      column-gap: 24px;
+    }
+    .st-entry { break-inside: avoid; margin-bottom: 14px; }
+    @media (max-width: 480px) { .st-list { columns: 1; } }
+
+    .st-game {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 700; letter-spacing: 0.3px;
+      color: #ddd9cf; margin-bottom: 3px; line-height: 1.2;
+    }
+    .st-year { font-weight: 400; color: #555960; margin-left: 5px; font-size: 13px; }
+    .st-tracks { display: flex; flex-direction: column; gap: 1px; }
+    .st-track {
+      font-size: 12px; color: #7a7a88;
+      display: flex; align-items: baseline; gap: 5px; line-height: 1.4;
+    }
+    .st-track::before { content: "·"; color: #3a3a44; flex-shrink: 0; }
+    .st-track__title { color: #9898a8; }
+    .st-track__artist { color: #555960; font-size: 11px; }
+    .st-track__artist::before { content: "— "; }
+
+    body.theme--light .st-heading   { color: #4a6c10; }
+    body.theme--light .st-desc      { color: #9898a8; }
+    body.theme--light .st-game      { color: #1e1d28; }
+    body.theme--light .st-year      { color: #9898a8; }
+    body.theme--light .st-track::before  { color: #c8c4bc; }
+    body.theme--light .st-track__title   { color: #3a3a4a; }
+    body.theme--light .st-track__artist  { color: #9898a8; }
+
+    .st-play-banner {
+      background: #14141e;
+      border: 1px solid #2e2e3e;
+      border-radius: 10px;
+      padding: 18px 22px;
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .st-play-banner__text {
+      font-size: 32px; color: #ddd9cf; margin-bottom: 12px; line-height: 1.2;
+    }
+    .st-play-banner__btn {
+      display: inline-block; background: #b8e030; color: #0e0e14;
+      font-weight: 700; font-size: 15px; padding: 8px 18px;
+      border-radius: 6px; text-decoration: none; letter-spacing: 0.3px;
+    }
+    .st-play-banner__btn:hover { background: #c8f040; }
+
+    body.theme--light .st-play-banner        { background: #f4f4ec; border-color: #d0ccc4; }
+    body.theme--light .st-play-banner__text  { color: #1e1d28; }
+    body.theme--light .st-play-banner__btn   { background: #4a6c10; color: #fff; }
+    body.theme--light .st-play-banner__btn:hover { background: #3a5c00; }
+  </style>
 </head>
 <body>
 <script>if(localStorage.getItem('ostquest_theme')==='light')document.body.classList.add('theme--light');</script>
+<script>window.SOUNDTRACKS_PAGE = true;</script>
+
 <noscript>
-  <div style="max-width:600px;margin:3rem auto;padding:1.5rem;font-family:system-ui,sans-serif;text-align:center;color:#ddd9cf">
-    <h1 style="margin-bottom:1rem">Oesti Quest — Tu misión diaria de música de videojuegos</h1>
-    <p style="margin-bottom:.75rem">Escucha fragmentos de bandas sonoras de videojuegos y adivina a cuál pertenece cada canción entre cuatro portadas. Tres rondas por día, una nueva quest cada 24 horas.</p>
-    <p style="color:#888">Para jugar necesitas activar JavaScript en tu navegador.</p>
+  <div style="max-width:760px;margin:3rem auto;padding:1.5rem;font-family:system-ui,sans-serif;color:#ddd9cf;text-align:center">
+    <h1>Bandas sonoras — Oesti Quest</h1>
+    <p style="margin-top:.75rem;color:#888">Activa JavaScript para ver la lista completa de canciones.</p>
   </div>
 </noscript>
 
@@ -43,7 +90,7 @@
 
   <header class="site-header">
     <div class="site-header__left">
-      <img src="img/banner.png" alt="Oesti Quest" class="site-banner">
+      <a href="index.html"><img src="img/banner.png" alt="Oesti Quest" class="site-banner"></a>
       <span class="site-tagline" data-i18n="tagline">Adivina la OST</span>
     </div>
     <div class="site-header__right">
@@ -81,14 +128,6 @@
     </svg>
   </button>
 
-
-  <!-- Score bar hidden, values kept for JS -->
-  <div class="score-bar">
-    <div><span data-i18n="score_hits">Hits:</span> <span class="score-bar__hits" id="score-hits">0</span></div>
-    <div><span data-i18n="score_miss">Miss:</span> <span class="score-bar__miss" id="score-miss">0</span></div>
-  </div>
-
-  <!-- Settings panel bottom-left: volume + language -->
   <div class="settings-panel">
     <div class="vol-control" id="vol-control">
       <button class="vol-btn" id="btn-vol" aria-label="Volumen">
@@ -105,9 +144,7 @@
       <button class="lang-dropdown__btn" id="lang-dropdown-btn" aria-haspopup="true" aria-expanded="false">
         <span id="lang-dropdown-flag"><svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg></span>
         <span id="lang-dropdown-label">Español</span>
-        <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="lang-dropdown__chevron">
-          <path d="M1 1l4 4 4-4"/>
-        </svg>
+        <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="lang-dropdown__chevron"><path d="M1 1l4 4 4-4"/></svg>
       </button>
       <div class="lang-dropdown__menu" id="lang-dropdown-menu">
         <button class="lang-dropdown__option" data-lang="es"><svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg> Español</button>
@@ -116,23 +153,29 @@
     </div>
   </div>
 
-  <div id="loading-screen">
-    <div class="loading-spinner"></div>
-    <p class="loading-text" data-i18n="loading">Cargando bandas sonoras…</p>
+  <!-- Required by game.js for modals and score display -->
+  <div class="score-bar">
+    <div><span id="score-hits">0</span></div>
+    <div><span id="score-miss">0</span></div>
   </div>
-
   <div id="gm-panel" style="display:none"></div>
+  <div id="loading-screen" style="display:none"></div>
+  <div id="game-area" style="display:none"><div class="columns-wrapper" id="columns-wrapper"></div></div>
 
-  <div id="game-area" style="display:none">
-    <div class="columns-wrapper" id="columns-wrapper"></div>
+  <div id="st-play-banner" class="st-play-banner" style="display:none">
+    <p class="st-play-banner__text" data-i18n="soundtracks_cta_text">¿Podrías adivinar la OST de tu juego favorito?</p>
+    <a href="index.html" class="st-play-banner__btn" data-i18n="soundtracks_cta_btn">Resuelve la quest de hoy →</a>
   </div>
 
-  <footer class="site-footer">
-    <p class="site-footer__desc" data-i18n="footer_desc">Juego diario de adivinar bandas sonoras de videojuegos. Escucha un fragmento y elige entre cuatro portadas a cuál pertenece. Nueva quest cada día.</p>
-    <p data-i18n-html="footer_soundtracks_line" style="margin-bottom:6px"></p>
+  <div class="st-intro">
+    <h1 class="st-heading" data-i18n="soundtracks_heading">Lista de canciones</h1>
+  </div>
+
+  <div id="soundtracks-list" class="st-list"></div>
+
+  <footer class="site-footer" style="margin-top:32px">
     <p data-i18n-html="footer_credit"></p>
   </footer>
-
 
 </div>
 
@@ -141,7 +184,6 @@
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 
-
 <script src="js/database.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/daily.js"></script>
@@ -149,6 +191,6 @@
 <script src="js/assets.js"></script>
 <script src="js/player.js"></script>
 <script src="js/game.js"></script>
-
+<script src="js/soundtracks.js"></script>
 </body>
 </html>

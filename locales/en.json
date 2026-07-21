@@ -46,7 +46,7 @@
   "tagline": "Guess the OST",
   "games": {},
   "footer_desc": "Daily video game soundtrack guessing game. Listen to a clip and pick which of four covers it belongs to. New quest every day.",
-  "footer_credit": "Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Developed by Orteku in collaboration with Vyrka · Contact: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
+  "footer_credit": "Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Developed by Orteku in collaboration with Vyrka",
   "tutorial_title": "How to play",
   "tutorial_listen_h": "Listen",
   "tutorial_listen_b": "Press ▶ to play a soundtrack clip and try to recognize it.",
@@ -78,5 +78,11 @@
   "gm_error_in_use": "\"{name}\" is already in use.",
   "gm_error_no_decoys": "Not enough games for decoys.",
   "aria_play": "Play",
-  "aria_pause": "Pause"
+  "aria_pause": "Pause",
+  "soundtracks_page_title": "Song List — Oesti Quest",
+  "soundtracks_heading": "Song List",
+  "soundtracks_cta_text": "Could you guess the OST of your favorite game?",
+  "soundtracks_cta_btn": "Play today's quest →",
+  "soundtracks_play": "Play",
+  "footer_soundtracks_line": "Have a suggestion? Browse the <a href=\"soundtracks.html\">song list</a> · Contact: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
 }
