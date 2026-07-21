@@ -13979,5 +13979,37 @@
       ],
       "trackIndex": 0
     }
+  ],
+  "2027-07-21": [
+    {
+      "answerId": 39,
+      "coverIds": [
+        39,
+        111,
+        72,
+        48
+      ],
+      "trackIndex": 3
+    },
+    {
+      "answerId": 584,
+      "coverIds": [
+        491,
+        119,
+        413,
+        584
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 479,
+      "coverIds": [
+        145,
+        479,
+        240,
+        282
+      ],
+      "trackIndex": 0
+    }
   ]
 }

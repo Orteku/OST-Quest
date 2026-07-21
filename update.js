@@ -181,4 +181,52 @@ console.log(`   📌 Preservados (hasta hoy):      ${preserved} días`);
 console.log(`   🔄 Regenerados (desde mañana):   ${generated} días`);
 console.log(`   📅 Total:                         ${Object.keys(result).length} días`);
 console.log(`   📆 Hasta:                         ${addDays(tomorrow, 364)}`);
-console.log(`\n👉 Haz commit de games.json y database.js para publicar los cambios.\n`);
+
+// ── Generar HTML estático en soundtracks.html ─────────────────────────────────
+
+const esJson  = JSON.parse(fs.readFileSync(path.join(__dirname, 'locales', 'es.json'), 'utf8'));
+const esGames = esJson.games || {};
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function localizeEs(game) {
+  const ov = esGames[String(game.id)];
+  return ov ? { ...game, ...ov } : game;
+}
+
+const stSorted = [...GAME_DB].sort((a, b) =>
+  localizeEs(a).game.localeCompare(localizeEs(b).game, 'es')
+);
+
+const stEntries = stSorted.map(game => {
+  const lg    = localizeEs(game);
+  const year  = game.year ? `<span class="st-year">${game.year}</span>` : '';
+  const tracks = game.tracks.map(tr => {
+    const artist = tr.artist ? `<span class="st-track__artist">${escHtml(tr.artist)}</span>` : '';
+    return `<li class="st-track"><span class="st-track__title">${escHtml(tr.title || '—')}</span>${artist}</li>`;
+  }).join('');
+  return `<div class="st-entry"><h2 class="st-game">${escHtml(lg.game)}${year}</h2><ul class="st-tracks">${tracks}</ul></div>`;
+}).join('\n');
+
+const stPath    = path.join(__dirname, 'soundtracks.html');
+let   stHtml    = fs.readFileSync(stPath, 'utf8');
+const ST_START  = '<!-- SOUNDTRACKS_START -->';
+const ST_END    = '<!-- SOUNDTRACKS_END -->';
+const si        = stHtml.indexOf(ST_START);
+const ei        = stHtml.indexOf(ST_END);
+
+if (si === -1 || ei === -1) {
+  console.warn('⚠️  Marcadores SOUNDTRACKS_START/END no encontrados en soundtracks.html');
+} else {
+  stHtml = stHtml.slice(0, si + ST_START.length) + '\n' + stEntries + '\n' + stHtml.slice(ei);
+  fs.writeFileSync(stPath, stHtml, 'utf8');
+  console.log(`🎵 soundtracks.html generado (${GAME_DB.length} juegos)`);
+}
+
+console.log(`\n👉 Haz commit de games.json, database.js y soundtracks.html para publicar los cambios.\n`);
