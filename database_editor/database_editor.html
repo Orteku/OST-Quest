@@ -341,15 +341,14 @@
       gap: 8px;
       align-items: end;
     }
-    .add-row2 {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 65px auto;
-      gap: 8px;
-      align-items: end;
-    }
+    .add-row2 { display: flex; flex-direction: column; gap: 6px; }
+    .add-track-row1 { display: flex; align-items: flex-end; gap: 8px; }
+    .add-track-row1 > label:not(.lyrics-check) { flex: 1; min-width: 0; }
+    .add-track-row1 input:not([type="checkbox"]) { width: 100%; }
+    .add-track-row2 { display: grid; grid-template-columns: minmax(0,1fr) 65px auto; gap: 8px; align-items: end; }
+    .add-track-row2 label { min-width: 0; }
+    .add-track-row2 input { width: 100%; min-width: 0; }
     .add-row1 input { width: 100%; min-width: 0; }
-    .add-row2 label { min-width: 0; }
-    .add-row2 input { width: 100%; min-width: 0; }
     .track-header { display: flex; align-items: flex-end; gap: 8px; }
     .track-header > label:first-child { flex: 1; min-width: 0; }
     .lyrics-check { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; padding-bottom: 8px; font-weight: normal; }
@@ -477,7 +476,8 @@
       }
       .meta-fields > label:nth-child(2) { grid-column: 1 / -1; }
       .add-row1 { grid-template-columns: 1fr 68px 52px; }
-      .add-row2 { grid-template-columns: 1fr 65px; }
+      .add-track-row1 { flex-wrap: wrap; }
+      .add-track-row2 { grid-template-columns: 1fr 65px; }
     }
   </style>
 </head>
@@ -583,16 +583,16 @@
         <div id="newTagSuggestions" class="tag-suggestions"></div>
       </div>
       <div class="add-row2">
-        <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-          <label style="font-size:12px;color:var(--muted)">Canción</label>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input id="newTitle" placeholder="Canción (opcional)" style="flex:1;min-width:0" />
-            <label class="lyrics-check"><input type="checkbox" id="newLyrics" /> lyrics</label>
-          </div>
+        <div class="add-track-row1">
+          <label><span>Canción</span><input id="newTitle" placeholder="Canción (opcional)" /></label>
+          <label><span>Artista</span><input id="newArtist" placeholder="Artista (opcional)" /></label>
+          <label class="lyrics-check"><input type="checkbox" id="newLyrics" /> lyrics</label>
         </div>
-        <label><input id="newMp3Url" class="field-youtube" placeholder="URL del MP3…" /></label>
-        <label><span>Inicio (m:ss)</span><input id="newStart" class="field-youtube" placeholder="0:00" value="0:00" /></label>
-        <button id="newLoadTrack">▶ Cargar</button>
+        <div class="add-track-row2">
+          <label><input id="newMp3Url" class="field-youtube" placeholder="URL del MP3…" /></label>
+          <label><span>Inicio (m:ss)</span><input id="newStart" class="field-youtube" placeholder="0:00" value="0:00" /></label>
+          <button id="newLoadTrack">▶ Cargar</button>
+        </div>
       </div>
     </div>
     <div class="actions" style="margin-top:10px;">
@@ -702,14 +702,16 @@
 
   function tracksSectionHtml(tracks) {
     const rows = tracks.map((track, ti) => {
-      const srcVal = escapeHtml(trackSourceVal(track));
-      const stVal  = escapeHtml(secondsToTime(track.startSeconds));
-      const titleVal = escapeHtml(track.title || "");
+      const srcVal   = escapeHtml(trackSourceVal(track));
+      const stVal    = escapeHtml(secondsToTime(track.startSeconds));
+      const titleVal  = escapeHtml(track.title || "");
+      const artistVal = escapeHtml(track.artist || "");
       const isFirst = ti === 0;
       const hasLyrics = (track.tags || []).includes('lyrics');
       const removeBtn = isFirst ? '' : `<button class="small danger" data-action="removeTrack" data-track="${ti}">✕</button>`;
       const titleLabel = `<div class="track-header">
           <label style="flex:1;min-width:0"><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>
+          <label style="flex:1;min-width:0"><span>Artista</span><input data-field="artist" data-track="${ti}" placeholder="Artista (opcional)" value="${artistVal}" /></label>
           <label class="lyrics-check"><input type="checkbox" data-field="trackLyrics" data-track="${ti}"${hasLyrics ? ' checked' : ''} /> lyrics</label>
         </div>`;
       const mp3Link = `<a class="mp3-link" data-mp3link="${ti}"${track.mp3Url ? ` href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener"` : ''}>${track.mp3Url ? 'abrir MP3 ↗' : ''}</a>`;
@@ -774,6 +776,7 @@
   function normalizeTracks(x) {
     const norm = t => ({
       title:        String(t.title ?? "").trim(),
+      artist:       String(t.artist ?? "").trim(),
       mp3Url:       String(t.mp3Url ?? t.url ?? "").trim(),
       startSeconds: Math.max(0, Number(t.startSeconds) || 0),
       tags:         Array.isArray(t.tags) ? t.tags.map(String).filter(Boolean) : [],
@@ -973,9 +976,9 @@
 
   function rowSearchAttrs(item) {
     return {
-      'data-search': `${item.game} ${item.tracks.map(t => t.mp3Url).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
+      'data-search': `${item.game} ${item.tracks.map(t => `${t.mp3Url} ${t.artist}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
       'data-sg':   item.game.toLowerCase(),
-      'data-st':   item.tracks.map(t => t.title).join(" ").toLowerCase(),
+      'data-st':   item.tracks.map(t => `${t.title} ${t.artist}`).join(" ").toLowerCase(),
       'data-stag': (item.tags||[]).join(" ").toLowerCase(),
       'data-sy':   String(item.year),
       'data-su':   item.tracks.map(t => t.mp3Url).join(" ").toLowerCase(),
@@ -1073,6 +1076,8 @@
       } else if (field === "title") {
         track.title = value;
         if (trackIdx > 0) input.classList.toggle('field-warn', !value.trim());
+      } else if (field === "artist") {
+        track.artist = value;
       }
     } else {
       if (field === "tags") {
@@ -1330,6 +1335,7 @@
     $("newGame").value = "";
     $("newCover").value = "";
     $("newTitle").value = "";
+    $("newArtist").value = "";
     $("newLyrics").checked = false;
     $("newMp3Url").value = "";
     $("newStart").value = "0:00";
@@ -1344,7 +1350,8 @@
   $("addEntry").addEventListener("click", () => {
     const game = $("newGame").value.trim();
     const cover = cleanUrl($("newCover").value);
-    const title = $("newTitle").value.trim();
+    const title  = $("newTitle").value.trim();
+    const artist = $("newArtist").value.trim();
     const sourceVal = $("newMp3Url").value.trim();
     const startSeconds = timeToSeconds($("newStart").value);
     const pop = Math.max(1, Math.min(10, Number($("newPop").value) || 6));
@@ -1359,7 +1366,7 @@
     if (!mp3Ok)   { $("newMp3Url").focus(); return; }
 
     const tags = $("newTags").value.split(',').map(t => t.trim()).filter(Boolean);
-    const track = { title, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: $("newLyrics").checked ? ['lyrics'] : [] };
+    const track = { title, artist, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: $("newLyrics").checked ? ['lyrics'] : [] };
 
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
     db.push({ id: maxId + 1, game, cover, pop, year, tags, tracks: [track] });
@@ -1395,6 +1402,7 @@
       const tracksPart = item.tracks.map(t => {
         const p = [];
         if (t.title)  p.push(`title: "${jsString(t.title)}"`);
+        if (t.artist) p.push(`artist: "${jsString(t.artist)}"`);
         if (t.mp3Url) { p.push(`mp3Url: "${jsString(t.mp3Url)}"`); if (t.startSeconds > 0) p.push(`startSeconds: ${Number(t.startSeconds)}`); }
         if (t.tags?.length) p.push(`tags: [${t.tags.map(tg => `'${jsString(tg)}'`).join(', ')}]`);
         if (p.length === 0) p.push(`mp3Url: ""`);
@@ -1459,7 +1467,7 @@
     if (!mp3Url) return;
     _gpIndex = -1;
     loadTrackInPlayer(
-      { mp3Url, startSeconds: timeToSeconds($("newStart").value), title: $("newTitle").value.trim() },
+      { mp3Url, startSeconds: timeToSeconds($("newStart").value), title: $("newTitle").value.trim(), artist: $("newArtist").value.trim() },
       $("newGame").value.trim() || "(nueva entrada)",
       $("newCover").value.trim(),
       this
