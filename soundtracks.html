@@ -36,12 +36,12 @@
     .st-tracks { display: flex; flex-direction: column; gap: 1px; }
     .st-track {
       font-size: 12px; color: #7a7a88;
-      display: flex; align-items: baseline; gap: 5px; line-height: 1.4;
+      line-height: 1.5; padding-left: 9px; text-indent: -9px;
     }
-    .st-track::before { content: "·"; color: #3a3a44; flex-shrink: 0; }
+    .st-track::before { content: "· "; color: #3a3a44; }
     .st-track__title { color: #9898a8; }
     .st-track__artist { color: #555960; font-size: 11px; }
-    .st-track__artist::before { content: "— "; }
+    .st-track__artist::before { content: " — "; }
 
     body.theme--light .st-heading   { color: #4a6c10; }
     body.theme--light .st-desc      { color: #9898a8; }
