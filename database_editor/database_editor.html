@@ -976,7 +976,7 @@
 
   function rowSearchAttrs(item) {
     return {
-      'data-search': `${item.game} ${item.tracks.map(t => `${t.mp3Url} ${t.artist}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
+      'data-search': `${item.game} ${item.tracks.map(t => `${t.title} ${t.mp3Url} ${t.artist}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
       'data-sg':   item.game.toLowerCase(),
       'data-st':   item.tracks.map(t => `${t.title} ${t.artist}`).join(" ").toLowerCase(),
       'data-stag': (item.tags||[]).join(" ").toLowerCase(),
@@ -1273,7 +1273,8 @@
     const attr = SEARCH_ATTR[$("searchField").value] || 'data-search';
     list.classList.add("filtering");
     document.querySelectorAll(".row").forEach(row => {
-      row.classList.toggle("hidden", !(row.getAttribute(attr) || '').includes(q));
+      const hay = (row.getAttribute(attr) || '');
+      row.classList.toggle("hidden", !q.split(/\s+/).every(w => hay.includes(w)));
     });
     updateStats();
   }
