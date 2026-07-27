@@ -158,9 +158,9 @@ const PLAYED_KEY = 'ostquest_played';
 function loadStats() {
   try {
     return JSON.parse(localStorage.getItem(STATS_KEY)) || {
-      played: 0, wins: 0, totalHits: 0, streak: 0, maxStreak: 0, lastPlayedDay: null
+      played: 0, wins: 0, totalHits: 0, streak: 0, maxStreak: 0, perfectQuests: 0, lastPlayedDay: null
     };
-  } catch { return { played: 0, wins: 0, totalHits: 0, streak: 0, maxStreak: 0, lastPlayedDay: null }; }
+  } catch { return { played: 0, wins: 0, totalHits: 0, streak: 0, maxStreak: 0, perfectQuests: 0, lastPlayedDay: null }; }
 }
 
 function saveStats(stats) {
@@ -206,6 +206,7 @@ function recordDailyResult(dateStr, score, total) {
       stats.streak = 1;
     }
     stats.maxStreak     = Math.max(stats.maxStreak, stats.streak);
+    if (score === total) stats.perfectQuests = (stats.perfectQuests || 0) + 1;
     stats.lastPlayedDay = today;
     saveStats(stats);
   }
