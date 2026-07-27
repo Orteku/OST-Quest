@@ -505,6 +505,7 @@
         <option value="all">Todo</option>
         <option value="game">Título</option>
         <option value="tracks">Canción</option>
+        <option value="artist">Artista</option>
         <option value="tags">Tags</option>
         <option value="year">Año</option>
         <option value="url">URL</option>
@@ -982,6 +983,7 @@
       'data-stag': (item.tags||[]).join(" ").toLowerCase(),
       'data-sy':   String(item.year),
       'data-su':   item.tracks.map(t => t.mp3Url).join(" ").toLowerCase(),
+      'data-sar':  item.tracks.map(t => t.artist || "").join(" ").toLowerCase(),
     };
   }
 
@@ -1011,7 +1013,7 @@
 
     list.innerHTML = db.map((item, index) => {
       const a = rowSearchAttrs(item);
-      return `<article class="row" data-index="${index}" data-search="${escapeHtml(a['data-search'])}" data-sg="${escapeHtml(a['data-sg'])}" data-st="${escapeHtml(a['data-st'])}" data-stag="${escapeHtml(a['data-stag'])}" data-sy="${escapeHtml(a['data-sy'])}" data-su="${escapeHtml(a['data-su'])}"></article>`;
+      return `<article class="row" data-index="${index}" data-search="${escapeHtml(a['data-search'])}" data-sg="${escapeHtml(a['data-sg'])}" data-st="${escapeHtml(a['data-st'])}" data-stag="${escapeHtml(a['data-stag'])}" data-sy="${escapeHtml(a['data-sy'])}" data-su="${escapeHtml(a['data-su'])}" data-sar="${escapeHtml(a['data-sar'])}"></article>`;
     }).join("");
 
     _rowObserver = new IntersectionObserver((entries) => {
@@ -1261,7 +1263,7 @@
     }
   });
 
-  const SEARCH_ATTR = { all: 'data-search', game: 'data-sg', tracks: 'data-st', tags: 'data-stag', year: 'data-sy', url: 'data-su' };
+  const SEARCH_ATTR = { all: 'data-search', game: 'data-sg', tracks: 'data-st', artist: 'data-sar', tags: 'data-stag', year: 'data-sy', url: 'data-su' };
 
   function applySearch() {
     const q = $("search").value.trim().toLowerCase();
@@ -1271,10 +1273,12 @@
       return;
     }
     const attr = SEARCH_ATTR[$("searchField").value] || 'data-search';
+    const emptyMode = q === '<empty>';
     list.classList.add("filtering");
     document.querySelectorAll(".row").forEach(row => {
-      const hay = (row.getAttribute(attr) || '');
-      row.classList.toggle("hidden", !q.split(/\s+/).every(w => hay.includes(w)));
+      const hay = (row.getAttribute(attr) || '').trim();
+      const hidden = emptyMode ? hay !== '' : !q.split(/\s+/).every(w => hay.includes(w));
+      row.classList.toggle("hidden", hidden);
     });
     updateStats();
   }
