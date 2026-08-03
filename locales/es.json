@@ -114,6 +114,9 @@
   "ranking_streak": "Cadena",
   "register_cta_text": "¿Quieres guardar tus estadísticas y ver tu puesto en el ranking?",
   "register_cta_link": "Regístrate",
+  "ranking_page_title": "Ranking — Oesti Quest",
+  "ranking_view_full": "Ver ranking completo",
+  "ranking_no_score": "Aún no tienes puntuación esta semana",
   "games": {
     "40":  { "game": "Pokémon Rojo/Azul" },
     "591": { "game": "Pokémon Oro/Plata" },

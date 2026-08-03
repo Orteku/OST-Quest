@@ -1496,9 +1496,12 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
   border-bottom: 1px solid #2c2c34;
 }
 .rank-table td { padding: 7px 8px; border-bottom: 1px solid #222228; }
-.rank-pos { color: #555560; width: 30px; text-align: center; }
+.rank-th--pos    { text-align: center !important; }
+.rank-th--pts    { text-align: right !important; }
+.rank-th--streak { text-align: right !important; }
+.rank-pos { width: 1%; white-space: nowrap; color: #555560; text-align: center; }
 .rank-name { color: #ddd9cf; }
-.rank-pts { text-align: right; color: #b8e030; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rank-pts { width: 1%; white-space: nowrap; text-align: right; color: #b8e030; font-weight: 600; font-variant-numeric: tabular-nums; }
 .rank-row--me td { background: rgba(184,224,48,0.07); }
 .rank-row--me .rank-name { color: #b8e030; }
 
@@ -1528,8 +1531,16 @@ body.theme--light .rank-row--me .rank-name { color: #3a5810; }
 body.theme--light .rank-empty { color: #9898a8; }
 
 /* Stats modal — sección ranking */
-.stats-rank-section { margin-top: 18px; width: 100%; }
-.stats-rank-list { max-height: 220px; overflow-y: auto; }
+.stats-rank-section { margin-top: 18px; width: 100%; text-align: center; }
+.stats-rank-info { margin-bottom: 8px; min-height: 36px; }
+.stats-rank-pos { font-size: 22px; font-weight: 700; color: #ddd9cf; margin: 0; }
+.stats-rank-pts { font-size: 15px; color: #b8e030; font-weight: 600; margin-left: 4px; }
+.stats-rank-link { display: inline-block; color: #7878a8; font-size: 13px; text-decoration: none; padding: 4px 0; }
+.stats-rank-link:hover { color: #b8e030; text-decoration: underline; }
+body.theme--light .stats-rank-pos { color: #1e1d28; }
+body.theme--light .stats-rank-pts { color: #4a6c10; }
+body.theme--light .stats-rank-link { color: #9898a8; }
+body.theme--light .stats-rank-link:hover { color: #3a5810; }
 
 /* Medallas top 3 */
 .rank-gold .rank-pos   { color: #f0c040; font-weight: 700; }
@@ -1565,6 +1576,6 @@ body.theme--light .modal__register-link { color: #4a6c10; }
 body.theme--light .modal__register-link:hover { color: #3a5810; }
 
 /* Columna racha en tabla ranking */
-.rank-streak { text-align: right; color: #888898; font-variant-numeric: tabular-nums; }
+.rank-streak { width: 1%; white-space: nowrap; text-align: right; color: #888898; font-variant-numeric: tabular-nums; }
 body.theme--light .rank-streak { color: #9898a8; }
 

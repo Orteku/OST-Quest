@@ -6,12 +6,12 @@ let _profile = null;
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function authInit() {
-  document.getElementById('btn-auth').addEventListener('click', e => {
+  document.getElementById('btn-auth')?.addEventListener('click', e => {
     e.stopPropagation();
     _session && _profile ? _openDrop() : openAuthModal();
   });
 
-  document.getElementById('auth-modal').addEventListener('click', e => {
+  document.getElementById('auth-modal')?.addEventListener('click', e => {
     if (e.target.id === 'auth-modal') closeAuthModal();
   });
 
@@ -40,7 +40,7 @@ async function authInit() {
 
     _renderAuthBtn();
     const modal = document.getElementById('auth-modal');
-    if (modal.style.display !== 'none' && _profile) closeAuthModal();
+    if (modal?.style.display !== 'none' && _profile) closeAuthModal();
   });
 }
 
@@ -257,10 +257,10 @@ async function loadRankingInto(containerId, tab) {
   const me = _profile?.username;
   el.innerHTML = `<table class="rank-table">
     <thead><tr>
-      <th>${t('ranking_pos')}</th>
-      <th>${t('ranking_player')}</th>
-      <th>${t('ranking_streak')}</th>
-      <th>${t('ranking_pts')}</th>
+      <th class="rank-th--pos"></th>
+      <th class="rank-th--name">${t('ranking_player')}</th>
+      <th class="rank-th--pts">${t('ranking_pts')}</th>
+      <th class="rank-th--streak">${t('ranking_streak')}</th>
     </tr></thead>
     <tbody>${data.map((r, i) => {
       const medal  = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : '';
@@ -268,8 +268,8 @@ async function loadRankingInto(containerId, tab) {
       return `<tr class="${[medal, isMe ? 'rank-row--me' : ''].filter(Boolean).join(' ')}">
         <td class="rank-pos">${i + 1}</td>
         <td class="rank-name">${_esc(r.username)}${isMe ? ' ★' : ''}</td>
-        <td class="rank-streak">${r.streak || 0}</td>
         <td class="rank-pts">${r.pts}</td>
+        <td class="rank-streak">${r.streak || 0}</td>
       </tr>`;
     }).join('')}</tbody>
   </table>`;
@@ -361,6 +361,15 @@ async function _migrateIfNeeded() {
     await _supabase.from('profiles').update({ streak: localStats.streak }).eq('id', _session.user.id);
   }
   localStorage.setItem(_SYNC_KEY, '1');
+}
+
+async function getUserWeeklyPosition() {
+  if (!_profile) return null;
+  const { data } = await _supabase
+    .from('ranking_weekly').select('username, pts').order('pts', { ascending: false });
+  if (!data) return null;
+  const idx = data.findIndex(r => r.username === _profile.username);
+  return idx !== -1 ? { rank: idx + 1, pts: data[idx].pts } : null;
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────

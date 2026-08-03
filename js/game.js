@@ -727,12 +727,9 @@ function tickEndCountdown() {
   setTimeout(tickEndCountdown, 1000);
 }
 
-let _statsRankTab = 'weekly';
-
 function openStatsModal() {
   const stats = loadStats();
   const pct   = stats.played > 0 ? Math.round(((stats.totalHits || 0) / (stats.played * 3)) * 100) : 0;
-  _statsRankTab = 'weekly';
 
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__end">
@@ -744,30 +741,38 @@ function openStatsModal() {
         <div class="stat-box"><span class="stat-box__val">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
       </div>
       <div class="stats-rank-section">
-        <div class="rank-tabs">
-          <button class="rank-tab rank-tab--active" id="srtab-weekly">${t('ranking_weekly')}</button>
-          <button class="rank-tab" id="srtab-global">${t('ranking_global')}</button>
+        <div id="stats-rank-info" class="stats-rank-info">
+          <p class="rank-empty">${t('ranking_loading')}</p>
         </div>
-        <div id="stats-rank-content" class="rank-content stats-rank-list"></div>
+        <a href="ranking.html" class="stats-rank-link">${t('ranking_view_full')} →</a>
       </div>
       <button class="btn btn--new" id="close-stats-btn">${t('btn_close')}</button>
     </div>`;
 
   document.getElementById('close-stats-btn').addEventListener('click', closeModal);
-  document.getElementById('srtab-weekly').addEventListener('click', () => {
-    _statsRankTab = 'weekly';
-    document.getElementById('srtab-weekly').classList.add('rank-tab--active');
-    document.getElementById('srtab-global').classList.remove('rank-tab--active');
-    loadRankingInto('stats-rank-content', 'weekly');
-  });
-  document.getElementById('srtab-global').addEventListener('click', () => {
-    _statsRankTab = 'global';
-    document.getElementById('srtab-global').classList.add('rank-tab--active');
-    document.getElementById('srtab-weekly').classList.remove('rank-tab--active');
-    loadRankingInto('stats-rank-content', 'global');
-  });
-  loadRankingInto('stats-rank-content', 'weekly');
+  _loadStatsRankInfo();
   openModal();
+}
+
+async function _loadStatsRankInfo() {
+  const el = document.getElementById('stats-rank-info');
+  if (!el) return;
+
+  if (!authGetSession() || !authGetProfile()) {
+    el.innerHTML = `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="stats-register-btn">${t('register_cta_link')}</button></p>`;
+    document.getElementById('stats-register-btn')?.addEventListener('click', () => {
+      closeModal();
+      openAuthModal('register');
+    });
+    return;
+  }
+
+  const pos = await getUserWeeklyPosition();
+  if (!pos) {
+    el.innerHTML = `<p class="rank-empty">${t('ranking_no_score')}</p>`;
+  } else {
+    el.innerHTML = `<p class="stats-rank-pos">#${pos.rank} <span class="stats-rank-pts">${pos.pts} ${t('ranking_pts')}</span></p>`;
+  }
 }
 
 function openArchive() {

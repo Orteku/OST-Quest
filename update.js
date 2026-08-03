@@ -229,4 +229,22 @@ if (si === -1 || ei === -1) {
   console.log(`🎵 soundtracks.html generado (${GAME_DB.length} juegos)`);
 }
 
-console.log(`\n👉 Haz commit de games.json, database.js y soundtracks.html para publicar los cambios.\n`);
+// ── Generar placeholder en ranking.html ───────────────────────────────────────
+
+const rkPath   = path.join(__dirname, 'ranking.html');
+let   rkHtml   = fs.readFileSync(rkPath, 'utf8');
+const RK_START = '<!-- RANKING_START -->';
+const RK_END   = '<!-- RANKING_END -->';
+const rsi      = rkHtml.indexOf(RK_START);
+const rei      = rkHtml.indexOf(RK_END);
+
+if (rsi === -1 || rei === -1) {
+  console.warn('⚠️  Marcadores RANKING_START/END no encontrados en ranking.html');
+} else {
+  const rkContent = '\n<p class="rank-empty">Cargando ranking...</p>\n';
+  rkHtml = rkHtml.slice(0, rsi + RK_START.length) + rkContent + rkHtml.slice(rei);
+  fs.writeFileSync(rkPath, rkHtml, 'utf8');
+  console.log('🏆 ranking.html actualizado');
+}
+
+console.log(`\n👉 Haz commit de games.json, database.js, soundtracks.html y ranking.html para publicar los cambios.\n`);

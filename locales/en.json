@@ -115,5 +115,8 @@
   "ranking_streak": "Chain",
   "register_cta_text": "Want to save your stats and see your ranking?",
   "register_cta_link": "Sign up",
+  "ranking_page_title": "Ranking — Oesti Quest",
+  "ranking_view_full": "View full ranking",
+  "ranking_no_score": "You haven't scored this week yet",
   "games": {}
 }
