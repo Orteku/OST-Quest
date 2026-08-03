@@ -209,6 +209,7 @@ function recordDailyResult(dateStr, score, total) {
     if (score === total) stats.perfectQuests = (stats.perfectQuests || 0) + 1;
     stats.lastPlayedDay = today;
     saveStats(stats);
+    if (typeof submitScoreToSupabase === 'function') submitScoreToSupabase(dateStr, score, stats);
   }
 
   savePlayedDay(dateStr, { score, total, ts: Date.now() });
