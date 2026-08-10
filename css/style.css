@@ -1449,6 +1449,7 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
 }
 .auth-input:focus { border-color: #b8e030; }
 .auth-hint { font-size: 11px; color: #555560; line-height: 1.4; }
+.auth-username-ranking-note { font-size: 13px; color: #7878a8; margin: -4px 0 14px; text-align: center; }
 .auth-err { font-size: 12px; color: #e06060; margin-top: 2px; }
 .auth-submit-btn {
   margin-top: 4px;

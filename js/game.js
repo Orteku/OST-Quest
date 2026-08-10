@@ -664,7 +664,13 @@ function openEndModal(score) {
           <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
           <div class="stat-box"><span class="stat-box__val">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
         </div>
-        ${!authGetSession() ? `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="end-register-btn">${t('register_cta_link')}</button></p>` : ''}
+        ${!authGetSession()
+          ? `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="end-register-btn">${t('register_cta_link')}</button></p>`
+          : `<div class="stats-rank-section">
+              <div id="end-rank-info" class="stats-rank-info"><p class="rank-empty">${t('ranking_loading')}</p></div>
+              <a href="ranking.html" class="stats-rank-link">${t('ranking_view_full')} →</a>
+            </div>`
+        }
       ` : ''}
       ${!isArchiveMode && currentDateStr !== '__gm__' ? `<button class="btn btn--share" id="share-btn">${t('btn_share')}</button>` : ''}
       ${!isArchiveMode ? `<div class="modal__countdown">${t('next_quest_in')} &nbsp; <strong id="end-countdown">--:--:--</strong></div>` : ''}
@@ -679,6 +685,7 @@ function openEndModal(score) {
     closeModal();
     openAuthModal('register');
   });
+  if (!isArchiveMode && authGetSession()) _loadEndRankInfo();
   const gmReconfigBtn = document.getElementById('gm-reconfig-btn');
   if (gmReconfigBtn) gmReconfigBtn.addEventListener('click', () => { closeModal(); openGmPanel(); });
 
@@ -752,6 +759,15 @@ function openStatsModal() {
   document.getElementById('close-stats-btn').addEventListener('click', closeModal);
   _loadStatsRankInfo();
   openModal();
+}
+
+async function _loadEndRankInfo() {
+  const el = document.getElementById('end-rank-info');
+  if (!el) return;
+  const pos = await getUserWeeklyPosition();
+  el.innerHTML = pos
+    ? `<p class="stats-rank-pos">#${pos.rank} <span class="stats-rank-pts">${pos.pts} ${t('ranking_pts')}</span></p>`
+    : `<p class="rank-empty">${t('ranking_no_score')}</p>`;
 }
 
 async function _loadStatsRankInfo() {

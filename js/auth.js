@@ -113,8 +113,6 @@ function _renderAuthModal() {
     <div class="auth-form">
       <input class="auth-input" type="email" id="auth-email" placeholder="${t('auth_email')}" autocomplete="email">
       <input class="auth-input" type="password" id="auth-pwd" placeholder="${t('auth_password')}" autocomplete="${reg ? 'new-password' : 'current-password'}">
-      ${reg ? `<input class="auth-input" type="text" id="auth-uname" placeholder="${t('auth_username')}" maxlength="20">
-      <p class="auth-hint">${t('auth_username_hint')}</p>` : ''}
       <p class="auth-err" id="auth-err" style="display:none"></p>
       <button class="btn auth-submit-btn" id="auth-submit">${t(reg ? 'auth_register_btn' : 'auth_sign_in_btn')}</button>
     </div>
@@ -169,17 +167,9 @@ async function _submitEmail() {
   _hideErr();
 
   if (_authMode === 'register') {
-    const uname = document.getElementById('auth-uname')?.value.trim();
-    if (!_validUname(uname)) { _showErr(t('auth_username_invalid')); return; }
-    const { data: taken } = await _supabase.from('profiles').select('id').eq('username', uname).maybeSingle();
-    if (taken) { _showErr(t('auth_username_taken')); return; }
-
-    const { data, error } = await _supabase.auth.signUp({ email, password: pwd });
+    const { error } = await _supabase.auth.signUp({ email, password: pwd });
     if (error) { _showErr(t('auth_error_generic')); return; }
-    if (data?.user) {
-      await _supabase.from('profiles').insert({ id: data.user.id, username: uname });
-      _profile = { username: uname };
-    }
+    // onAuthStateChange detecta la nueva sesión y abre openUsernameModal
   } else {
     const { error } = await _supabase.auth.signInWithPassword({ email, password: pwd });
     if (error) { _showErr(t('auth_error_invalid_credentials')); return; }
@@ -200,6 +190,7 @@ function _hideErr() {
 function openUsernameModal() {
   document.getElementById('auth-modal-inner').innerHTML = `
     <h2 class="auth-title">${t('auth_choose_username')}</h2>
+    <p class="auth-username-ranking-note">${t('auth_username_ranking')}</p>
     <div class="auth-form">
       <input class="auth-input" type="text" id="uname-input" placeholder="${t('auth_username')}" maxlength="20" autofocus>
       <p class="auth-hint">${t('auth_username_hint')}</p>
@@ -354,6 +345,7 @@ async function _migrateIfNeeded() {
 
   if (rows.length) {
     await _supabase.from('scores').upsert(rows, { onConflict: 'user_id,game_date' });
+    if (typeof showToast === 'function') showToast(t('auth_migration_done'));
   }
   // Actualizar racha actual en el perfil
   const localStats = loadStats();
