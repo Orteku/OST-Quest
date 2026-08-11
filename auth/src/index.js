@@ -49,6 +49,28 @@ export default {
       if (path === '/scores'         && method === 'POST') return handleSubmitScore(request, env, db);
       if (path === '/scores/migrate' && method === 'POST') return handleMigrateScores(request, env, db);
 
+      // ── Debug (temporal) ────────────────────────────────────────────────
+      if (path === '/debug/schema') {
+        const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/`, {
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          }
+        });
+        const body = await resp.text();
+        return new Response(body, { status: resp.status, headers: { 'Content-Type': 'application/json', ...corsHeaders(request) } });
+      }
+      if (path === '/debug/test-table') {
+        const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/player_accounts?limit=1`, {
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          }
+        });
+        const body = await resp.text();
+        return new Response(body, { status: resp.status, headers: { 'Content-Type': 'application/json', ...corsHeaders(request) } });
+      }
+
       return json({ error: 'not_found' }, 404, request);
     } catch (e) {
       console.error('Worker error:', e);
