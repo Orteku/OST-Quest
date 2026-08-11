@@ -3,10 +3,12 @@
 export function createDb(env) {
   const base = env.SUPABASE_URL + '/rest/v1';
   const headers = {
-    'apikey':        env.SUPABASE_SERVICE_KEY,
-    'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-    'Content-Type':  'application/json',
-    'Prefer':        'return=representation',
+    'apikey':           env.SUPABASE_SERVICE_KEY,
+    'Authorization':    `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+    'Content-Type':     'application/json',
+    'Accept-Profile':   'public',
+    'Content-Profile':  'public',
+    'Prefer':           'return=representation',
   };
 
   async function q(path, method = 'GET', body = null, extra = {}) {
