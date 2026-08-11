@@ -10,14 +10,21 @@ export function createDb(env) {
   };
 
   async function q(path, method = 'GET', body = null, extra = {}) {
-    const res = await fetch(base + path, {
-      method,
-      headers: { ...headers, ...extra },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const url = base + path;
+    let res;
+    try {
+      res = await fetch(url, {
+        method,
+        headers: { ...headers, ...extra },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch (fetchErr) {
+      console.error(`DB fetch network error on ${method} ${url}:`, fetchErr.message);
+      throw fetchErr;
+    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      console.error(`DB error ${res.status} on ${method} ${path}:`, JSON.stringify(err));
+      console.error(`DB HTTP ${res.status} on ${method} ${path}:`, JSON.stringify(err));
       const e = new Error(err.message || 'DB error');
       e.status = res.status;
       e.details = err;
