@@ -42,10 +42,6 @@ export async function handleMigrateScores(request, env, db) {
   const { played } = body;
   if (!played || typeof played !== 'object') return json({ error: 'invalid_played' }, 400, request);
 
-  // Obtener puntuaciones ya existentes para no duplicar
-  const existing = await db.getUserScores(payload.sub);
-  const done = new Set((existing || []).map(r => r.game_date));
-
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const dates = Object.keys(played).filter(d => DATE_RE.test(d)).sort();
   let last = null, streak = 0;
@@ -58,17 +54,15 @@ export async function handleMigrateScores(request, env, db) {
       ? (() => { const d = new Date(last + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); })()
       : null;
     streak = (prevNext === date) ? streak + 1 : 1;
-    if (!done.has(date)) {
-      const pts   = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
-      const bonus = streak >= 2 ? 10 : 0;
-      rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: bonus, total_points: pts + bonus });
-    }
+    const pts   = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
+    const bonus = streak >= 2 ? 10 : 0;
+    rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: bonus, total_points: pts + bonus });
     last = date;
   }
 
   if (rows.length) {
+    // Upsert sobreescribe filas existentes con datos recalculados correctamente
     await db.upsertScores(rows);
-    // Actualizar el streak del usuario al valor calculado con el historial completo
     await db.updateUser(payload.sub, { streak });
   }
 
