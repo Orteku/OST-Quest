@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Crea un cliente Supabase con la service role key (bypassa RLS)
+// Mapa provider → columna en player_accounts
+const PROVIDER_COL = { google: 'google_id', discord: 'discord_id', twitch: 'twitch_id', steam: 'steam_id' };
+
 export function createDb(env) {
   const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -23,6 +25,11 @@ export function createDb(env) {
       return check(await supabase.from('player_accounts').select('*').eq('id', id).maybeSingle());
     },
     async getUserByProvider(provider, providerId) {
+      const col = PROVIDER_COL[provider];
+      if (col) {
+        return check(await supabase.from('player_accounts').select('*').eq(col, String(providerId)).maybeSingle());
+      }
+      // fallback legacy
       return check(await supabase.from('player_accounts').select('*').eq('provider', provider).eq('provider_id', String(providerId)).maybeSingle());
     },
     async getUserByUsername(username) {
@@ -33,6 +40,21 @@ export function createDb(env) {
     },
     async updateUser(id, data) {
       return check(await supabase.from('player_accounts').update(data).eq('id', id));
+    },
+    async linkProvider(userId, provider, providerId) {
+      const col = PROVIDER_COL[provider];
+      if (!col) throw new Error(`Unknown provider: ${provider}`);
+      return check(await supabase.from('player_accounts').update({ [col]: String(providerId) }).eq('id', userId));
+    },
+    async unlinkProvider(userId, provider) {
+      const col = PROVIDER_COL[provider];
+      if (!col) throw new Error(`Unknown provider: ${provider}`);
+      return check(await supabase.from('player_accounts').update({ [col]: null }).eq('id', userId));
+    },
+    async deleteUser(userId) {
+      await check(await supabase.from('scores').delete().eq('user_id', userId));
+      await check(await supabase.from('password_reset_tokens').delete().eq('user_id', userId));
+      return check(await supabase.from('player_accounts').delete().eq('id', userId));
     },
 
     // ── Scores ───────────────────────────────────────────────────────────────

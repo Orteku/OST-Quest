@@ -16,11 +16,12 @@
       const params = new URLSearchParams(hash);
       const token  = params.get('token');
       const error  = params.get('error');
+      const linked = params.get('linked') === '1';
 
       if (window.opener && !window.opener.closed) {
         // Popup: manda el resultado a la ventana principal y cierra
         window.opener.postMessage(
-          { type: 'oauth-callback', token, error },
+          { type: 'oauth-callback', token, error, linked },
           'https://oestiquest.com'
         );
         window.close();

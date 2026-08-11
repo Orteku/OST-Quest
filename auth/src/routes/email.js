@@ -75,6 +75,37 @@ export async function handleForgotPassword(request, env, db) {
   return json({ ok: true }, 200, request);
 }
 
+// POST /auth/change-password  { currentPassword, newPassword }
+export async function handleChangePassword(request, env, db) {
+  const auth  = request.headers.get('Authorization') || '';
+  const jwt   = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!jwt) return json({ error: 'unauthorized' }, 401, request);
+
+  const { verifyJwt } = await import('../lib/jwt.js');
+  const payload = await verifyJwt(jwt, env.JWT_SECRET);
+  if (!payload) return json({ error: 'invalid_token' }, 401, request);
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
+
+  const { currentPassword, newPassword } = body;
+  if (!newPassword || newPassword.length < 6) return json({ error: 'password_too_short' }, 400, request);
+
+  const user = await db.getUserById(payload.sub);
+  if (!user) return json({ error: 'user_not_found' }, 404, request);
+
+  // Si ya tiene contraseña, verificar la actual
+  if (user.password_hash) {
+    if (!currentPassword) return json({ error: 'current_password_required' }, 400, request);
+    const valid = await verifyPassword(currentPassword, user.password_hash);
+    if (!valid) return json({ error: 'invalid_current_password' }, 401, request);
+  }
+
+  const password_hash = await hashPassword(newPassword);
+  await db.updateUser(payload.sub, { password_hash, provider: user.provider === 'email' ? 'email' : user.provider });
+  return json({ ok: true }, 200, request);
+}
+
 // POST /auth/reset-password  { token, password }
 export async function handleResetPassword(request, env, db) {
   let body;
