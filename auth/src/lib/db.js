@@ -1,5 +1,5 @@
-// Wrapper sobre la REST API de Supabase
-// Usa la service role key → bypassa RLS, nunca exponer al cliente
+﻿// Wrapper sobre la REST API de Supabase
+// Usa la service role key â†’ bypassa RLS, nunca exponer al cliente
 export function createDb(env) {
   const base = env.SUPABASE_URL + '/rest/v1';
   const headers = {
@@ -34,34 +34,34 @@ export function createDb(env) {
   }
 
   return {
-    // ── Usuarios ────────────────────────────────────────────────────────────
+    // â”€â”€ Usuarios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async getUserByEmail(email) {
-      const rows = await q(`/users?email=eq.${encodeURIComponent(email)}&limit=1`);
+      const rows = await q(`/player_accounts?email=eq.${encodeURIComponent(email)}&limit=1`);
       return rows?.[0] ?? null;
     },
     async getUserById(id) {
-      const rows = await q(`/users?id=eq.${id}&limit=1`);
+      const rows = await q(`/player_accounts?id=eq.${id}&limit=1`);
       return rows?.[0] ?? null;
     },
     async getUserByProvider(provider, providerId) {
       const rows = await q(
-        `/users?provider=eq.${provider}&provider_id=eq.${encodeURIComponent(providerId)}&limit=1`
+        `/player_accounts?provider=eq.${provider}&provider_id=eq.${encodeURIComponent(providerId)}&limit=1`
       );
       return rows?.[0] ?? null;
     },
     async getUserByUsername(username) {
-      const rows = await q(`/users?username=eq.${encodeURIComponent(username)}&limit=1`);
+      const rows = await q(`/player_accounts?username=eq.${encodeURIComponent(username)}&limit=1`);
       return rows?.[0] ?? null;
     },
     async createUser(data) {
-      const rows = await q('/users', 'POST', data);
+      const rows = await q('/player_accounts', 'POST', data);
       return rows?.[0] ?? null;
     },
     async updateUser(id, data) {
-      return q(`/users?id=eq.${id}`, 'PATCH', data, { Prefer: 'return=minimal' });
+      return q(`/player_accounts?id=eq.${id}`, 'PATCH', data, { Prefer: 'return=minimal' });
     },
 
-    // ── Scores ───────────────────────────────────────────────────────────────
+    // â”€â”€ Scores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async upsertScore(data) {
       return q('/scores', 'POST', data, { Prefer: 'resolution=merge-duplicates,return=minimal' });
     },
@@ -72,7 +72,7 @@ export function createDb(env) {
       return q(`/scores?user_id=eq.${userId}&select=game_date`);
     },
 
-    // ── Tokens de reset de contraseña ────────────────────────────────────────
+    // â”€â”€ Tokens de reset de contraseÃ±a â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async createResetToken(userId, token, expiresAt) {
       return q('/password_reset_tokens', 'POST', { user_id: userId, token, expires_at: expiresAt });
     },
@@ -85,3 +85,5 @@ export function createDb(env) {
     },
   };
 }
+
+
