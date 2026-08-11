@@ -100,6 +100,7 @@
   "auth_save_username": "Guardar",
   "auth_username_taken": "Ese nombre ya está en uso",
   "auth_username_invalid": "Solo letras, números y _ (3-20 caracteres)",
+  "auth_error_email_taken": "Ese correo ya está registrado",
   "auth_error_generic": "Error al iniciar sesión. Inténtalo de nuevo.",
   "auth_error_invalid_credentials": "Email o contraseña incorrectos",
   "auth_migration_done": "Historial guardado en tu cuenta",

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Iniciando sesión…</title>
+  <style>
+    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #1a1a2e; color: #ddd9cf; }
+    p { font-size: 16px; opacity: .7; }
+  </style>
+</head>
+<body>
+  <p>Iniciando sesión…</p>
+  <script>
+    (function () {
+      const hash   = window.location.hash.slice(1);
+      const params = new URLSearchParams(hash);
+      const token  = params.get('token');
+      const error  = params.get('error');
+
+      if (window.opener && !window.opener.closed) {
+        // Popup: manda el resultado a la ventana principal y cierra
+        window.opener.postMessage(
+          { type: 'oauth-callback', token, error },
+          'https://oestiquest.com'
+        );
+        window.close();
+      } else {
+        // Sin popup (raro) → guarda token y vuelve al juego
+        if (token) {
+          sessionStorage.setItem('oauth_pending_token', token);
+          window.location.href = '/';
+        } else {
+          window.location.href = '/?auth_error=' + encodeURIComponent(error || 'unknown');
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

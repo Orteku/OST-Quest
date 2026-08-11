@@ -1,53 +1,105 @@
+// ─── Config ───────────────────────────────────────────────────────────────────
+
+const AUTH_URL  = 'https://auth.oestiquest.com';
+const _JWT_KEY  = 'ostquest_jwt';
+const _USER_KEY = 'ostquest_user';
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
-let _session = null;
-let _profile = null;
+let _token   = null;   // JWT string
+let _profile = null;   // { id, username, email, provider }
+
+// ─── API helper ───────────────────────────────────────────────────────────────
+
+async function _apiFetch(path, method = 'GET', body = null, overrideToken = null) {
+  const headers = { 'Content-Type': 'application/json' };
+  const tok = overrideToken ?? _token;
+  if (tok) headers['Authorization'] = `Bearer ${tok}`;
+  try {
+    const res = await fetch(AUTH_URL + path, {
+      method, headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return res.json();
+  } catch { return {}; }
+}
+
+// ─── Persistencia de sesión ───────────────────────────────────────────────────
+
+function _saveSession(token, user) {
+  _token   = token;
+  _profile = user;
+  localStorage.setItem(_JWT_KEY,  token);
+  localStorage.setItem(_USER_KEY, JSON.stringify(user));
+}
+
+function _clearSession() {
+  _token   = null;
+  _profile = null;
+  localStorage.removeItem(_JWT_KEY);
+  localStorage.removeItem(_USER_KEY);
+}
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function authInit() {
   document.getElementById('btn-auth')?.addEventListener('click', e => {
     e.stopPropagation();
-    _session && _profile ? _openDrop() : openAuthModal();
+    _token && _profile?.username ? _openDrop() : openAuthModal();
   });
-
   document.getElementById('auth-modal')?.addEventListener('click', e => {
     if (e.target.id === 'auth-modal') closeAuthModal();
   });
 
-  const { data } = await _supabase.auth.getSession();
-  _session = data.session;
-  if (_session) {
-    _profile = await _fetchProfile(_session.user.id);
-    if (_profile) _migrateIfNeeded();
+  // Escuchar el callback del popup OAuth
+  window.addEventListener('message', _handleOAuthMessage);
+
+  // Token pendiente si el popup fue bloqueado (fallback redirect)
+  const pending = sessionStorage.getItem('oauth_pending_token');
+  if (pending) {
+    sessionStorage.removeItem('oauth_pending_token');
+    await _handleNewToken(pending);
+    return;
   }
-  _renderAuthBtn();
 
-  _supabase.auth.onAuthStateChange(async (event, session) => {
-    const prevId = _session?.user?.id;
-    _session = session;
+  // Restaurar sesión desde localStorage
+  _token = localStorage.getItem(_JWT_KEY);
+  try { _profile = JSON.parse(localStorage.getItem(_USER_KEY)); } catch { _profile = null; }
 
-    if (session) {
-      _profile = await _fetchProfile(session.user.id);
-      if (!_profile) {
-        openUsernameModal();
-        return;
-      }
-      if (session.user.id !== prevId) _migrateIfNeeded();
+  if (_token) {
+    // Verificar que el token sigue siendo válido
+    const data = await _apiFetch('/auth/me');
+    if (data?.id) {
+      _profile = data;
+      localStorage.setItem(_USER_KEY, JSON.stringify(data));
+      if (!data.username) { openUsernameModal(); return; }
+      _migrateIfNeeded();
     } else {
-      _profile = null;
+      _clearSession();
     }
+  }
 
-    _renderAuthBtn();
-    const modal = document.getElementById('auth-modal');
-    if (modal?.style.display !== 'none' && _profile) closeAuthModal();
-  });
+  _renderAuthBtn();
 }
 
-async function _fetchProfile(userId) {
-  const { data } = await _supabase
-    .from('profiles').select('username').eq('id', userId).maybeSingle();
-  return data || null;
+// Procesa un token nuevo (tras login, registro o OAuth)
+async function _handleNewToken(token) {
+  const data = await _apiFetch('/auth/me', 'GET', null, token);
+  if (!data?.id) { _showErr(t('auth_error_generic')); return; }
+  _saveSession(token, data);
+  if (!data.username) { openUsernameModal(); return; }
+  _renderAuthBtn();
+  closeAuthModal();
+  _migrateIfNeeded();
+}
+
+// Recibe el JWT desde el popup OAuth vía postMessage
+async function _handleOAuthMessage(event) {
+  if (event.origin !== location.origin && event.origin !== 'https://oestiquest.com') return;
+  if (event.data?.type !== 'oauth-callback') return;
+  const { token, error } = event.data;
+  if (error) { _showErr(t('auth_error_generic')); return; }
+  if (token) await _handleNewToken(token);
 }
 
 // ─── Auth button ──────────────────────────────────────────────────────────────
@@ -56,7 +108,7 @@ function _renderAuthBtn() {
   const btn = document.getElementById('btn-auth');
   if (!btn) return;
   btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>`;
-  btn.classList.toggle('auth-btn--in', !!(  _session && _profile));
+  btn.classList.toggle('auth-btn--in', !!(  _token && _profile?.username));
 }
 
 // ─── Dropdown (usuario logado) ────────────────────────────────────────────────
@@ -136,6 +188,11 @@ function _renderAuthModal() {
           <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/>
         </svg>
       </button>
+      <button class="auth-social__btn auth-social__btn--steam" data-provider="steam" title="Steam">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="#c7d5e0" aria-hidden="true">
+          <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.497 1.009 2.455-.397.957-1.497 1.41-2.455 1.012zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.662 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/>
+        </svg>
+      </button>
     </div>
     <p class="auth-switch"><button class="auth-switch__btn" id="auth-sw">${t(reg ? 'auth_have_account' : 'auth_no_account')}</button></p>
   `;
@@ -152,12 +209,18 @@ function _renderAuthModal() {
   });
 }
 
-async function _signInOAuth(provider) {
-  const { error } = await _supabase.auth.signInWithOAuth({
-    provider,
-    options: { redirectTo: location.origin + location.pathname }
-  });
-  if (error) _showErr(error.message);
+// Abre un popup hacia el Worker para iniciar OAuth
+function _signInOAuth(provider) {
+  const w = 520, h = 620;
+  const left = Math.max(0, (screen.width  - w) / 2);
+  const top  = Math.max(0, (screen.height - h) / 2);
+  const popup = window.open(
+    `${AUTH_URL}/auth/${provider}`,
+    'oauth-popup',
+    `width=${w},height=${h},left=${left},top=${top},scrollbars=yes`
+  );
+  // Si el popup fue bloqueado, redirigir directamente
+  if (!popup || popup.closed) window.location.href = `${AUTH_URL}/auth/${provider}`;
 }
 
 async function _submitEmail() {
@@ -166,14 +229,18 @@ async function _submitEmail() {
   if (!email || !pwd) return;
   _hideErr();
 
-  if (_authMode === 'register') {
-    const { error } = await _supabase.auth.signUp({ email, password: pwd });
-    if (error) { _showErr(t('auth_error_generic')); return; }
-    // onAuthStateChange detecta la nueva sesión y abre openUsernameModal
-  } else {
-    const { error } = await _supabase.auth.signInWithPassword({ email, password: pwd });
-    if (error) { _showErr(t('auth_error_invalid_credentials')); return; }
+  const path = _authMode === 'register' ? '/auth/register' : '/auth/login';
+  const data = await _apiFetch(path, 'POST', { email, password: pwd });
+
+  if (data?.error) {
+    const msg = data.error === 'invalid_credentials'     ? t('auth_error_invalid_credentials')
+              : data.error === 'email_already_registered' ? t('auth_error_email_taken')
+              : t('auth_error_generic');
+    _showErr(msg);
+    return;
   }
+
+  if (data?.token) await _handleNewToken(data.token);
 }
 
 function _showErr(msg) {
@@ -185,7 +252,7 @@ function _hideErr() {
   if (el) el.style.display = 'none';
 }
 
-// ─── Username modal (primeros usuarios OAuth) ─────────────────────────────────
+// ─── Username modal ───────────────────────────────────────────────────────────
 
 function openUsernameModal() {
   document.getElementById('auth-modal-inner').innerHTML = `
@@ -209,13 +276,13 @@ async function _saveUsername() {
   const setErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
 
   if (!_validUname(uname)) { setErr(t('auth_username_invalid')); return; }
-  const { data: taken } = await _supabase.from('profiles').select('id').eq('username', uname).maybeSingle();
-  if (taken) { setErr(t('auth_username_taken')); return; }
 
-  const { error } = await _supabase.from('profiles').insert({ id: _session.user.id, username: uname });
-  if (error) { setErr(t('auth_error_generic')); return; }
+  const data = await _apiFetch('/auth/set-username', 'POST', { username: uname });
+  if (data?.error === 'username_taken') { setErr(t('auth_username_taken')); return; }
+  if (data?.error) { setErr(t('auth_error_generic')); return; }
 
-  _profile = { username: uname };
+  _profile = { ..._profile, username: uname };
+  localStorage.setItem(_USER_KEY, JSON.stringify(_profile));
   _renderAuthBtn();
   closeAuthModal();
   _migrateIfNeeded();
@@ -223,11 +290,13 @@ async function _saveUsername() {
 
 // ─── Sign out ─────────────────────────────────────────────────────────────────
 
-async function _signOut() {
-  await _supabase.auth.signOut();
+function _signOut() {
+  _clearSession();
+  localStorage.removeItem(_SYNC_KEY);
+  _renderAuthBtn();
 }
 
-// ─── Ranking (función compartida por stats modal y modal standalone) ──────────
+// ─── Ranking ──────────────────────────────────────────────────────────────────
 
 let _rankTab = 'weekly';
 
@@ -254,8 +323,8 @@ async function loadRankingInto(containerId, tab) {
       <th class="rank-th--streak">${t('ranking_streak')}</th>
     </tr></thead>
     <tbody>${data.map((r, i) => {
-      const medal  = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : '';
-      const isMe   = r.username === me;
+      const medal = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : '';
+      const isMe  = r.username === me;
       return `<tr class="${[medal, isMe ? 'rank-row--me' : ''].filter(Boolean).join(' ')}">
         <td class="rank-pos">${i + 1}</td>
         <td class="rank-name">${_esc(r.username)}${isMe ? ' ★' : ''}</td>
@@ -266,7 +335,6 @@ async function loadRankingInto(containerId, tab) {
   </table>`;
 }
 
-// Modal standalone de ranking (accesible desde estadísticas si fuera necesario)
 async function openRankingModal() {
   _rankTab = 'weekly';
   document.getElementById('auth-modal-inner').innerHTML = `
@@ -298,16 +366,8 @@ async function openRankingModal() {
 // ─── Score sync ───────────────────────────────────────────────────────────────
 
 async function submitScoreToSupabase(dateStr, score, stats) {
-  if (!_session) return;
-  const pts   = score === 3 ? 100 : score === 2 ? 66 : score === 1 ? 33 : 0;
-  const bonus = stats.streak >= 2 ? 10 : 0;
-  await Promise.all([
-    _supabase.from('scores').upsert(
-      { user_id: _session.user.id, game_date: dateStr, score, points: pts, streak_bonus: bonus, total_points: pts + bonus },
-      { onConflict: 'user_id,game_date' }
-    ),
-    _supabase.from('profiles').update({ streak: stats.streak }).eq('id', _session.user.id)
-  ]);
+  if (!_token) return;
+  await _apiFetch('/scores', 'POST', { gameDate: dateStr, score, stats });
 }
 
 // ─── Migración de localStorage ────────────────────────────────────────────────
@@ -315,48 +375,21 @@ async function submitScoreToSupabase(dateStr, score, stats) {
 const _SYNC_KEY = 'ostquest_synced';
 
 async function _migrateIfNeeded() {
-  if (!_session || localStorage.getItem(_SYNC_KEY)) return;
+  if (!_token || localStorage.getItem(_SYNC_KEY)) return;
 
   const played = loadPlayedDays();
-  const dates  = Object.keys(played).sort();
+  const dates  = Object.keys(played);
   if (!dates.length) { localStorage.setItem(_SYNC_KEY, '1'); return; }
 
-  const { data: existing } = await _supabase
-    .from('scores').select('game_date').eq('user_id', _session.user.id);
-  const done = new Set((existing || []).map(r => r.game_date));
-
-  let last = null, streak = 0;
-  const rows = [];
-
-  for (const date of dates) {
-    const res = played[date];
-    if (res?.score === undefined) continue;
-    const prevNext = last
-      ? (() => { const d = new Date(last + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); })()
-      : null;
-    streak = (prevNext === date) ? streak + 1 : 1;
-    if (!done.has(date)) {
-      const pts   = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
-      const bonus = streak >= 2 ? 10 : 0;
-      rows.push({ user_id: _session.user.id, game_date: date, score: res.score, points: pts, streak_bonus: bonus, total_points: pts + bonus });
-    }
-    last = date;
-  }
-
-  if (rows.length) {
-    await _supabase.from('scores').upsert(rows, { onConflict: 'user_id,game_date' });
-    if (typeof showToast === 'function') showToast(t('auth_migration_done'));
-  }
-  // Actualizar racha actual en el perfil
-  const localStats = loadStats();
-  if (localStats.streak > 0) {
-    await _supabase.from('profiles').update({ streak: localStats.streak }).eq('id', _session.user.id);
+  const data = await _apiFetch('/scores/migrate', 'POST', { played });
+  if ((data?.migrated ?? 0) > 0 && typeof showToast === 'function') {
+    showToast(t('auth_migration_done'));
   }
   localStorage.setItem(_SYNC_KEY, '1');
 }
 
 async function getUserWeeklyPosition() {
-  if (!_profile) return null;
+  if (!_profile?.username) return null;
   const { data } = await _supabase
     .from('ranking_weekly').select('username, pts').order('pts', { ascending: false });
   if (!data) return null;
@@ -368,5 +401,5 @@ async function getUserWeeklyPosition() {
 
 function _validUname(s) { return s && /^[a-zA-Z0-9_]{3,20}$/.test(s); }
 function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function authGetSession() { return _session; }
+function authGetSession() { return _token; }
 function authGetProfile() { return _profile; }

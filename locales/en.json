@@ -101,6 +101,7 @@
   "auth_save_username": "Save",
   "auth_username_taken": "That username is already taken",
   "auth_username_invalid": "Letters, numbers and _ only (3-20 chars)",
+  "auth_error_email_taken": "That email is already registered",
   "auth_error_generic": "Sign in failed. Please try again.",
   "auth_error_invalid_credentials": "Incorrect email or password",
   "auth_migration_done": "History saved to your account",
