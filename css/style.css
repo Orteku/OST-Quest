@@ -1492,10 +1492,11 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
   gap: 8px;
   align-items: stretch;
 }
-.profile-uname-row .auth-input { flex: 1; margin: 0; }
+.profile-uname-row .auth-input { flex: 1; min-width: 0; width: auto; margin: 0; }
 .profile-save-btn {
   flex-shrink: 0;
-  padding: 0 14px;
+  width: auto;
+  padding: 0 16px;
   height: 40px;
   background: #2a3a10;
   border: 1px solid #4a6020;

@@ -105,7 +105,7 @@
   "auth_error_generic": "Sign in failed. Please try again.",
   "auth_error_invalid_credentials": "Incorrect email or password",
   "auth_migration_done": "History saved to your account",
-  "auth_profile": "Profile",
+  "auth_profile": "Settings",
   "auth_connected_accounts": "Connected accounts",
   "auth_connect": "Connect",
   "auth_disconnect": "Disconnect",

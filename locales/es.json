@@ -104,7 +104,7 @@
   "auth_error_generic": "Error al iniciar sesión. Inténtalo de nuevo.",
   "auth_error_invalid_credentials": "Email o contraseña incorrectos",
   "auth_migration_done": "Historial guardado en tu cuenta",
-  "auth_profile": "Perfil",
+  "auth_profile": "Configuración",
   "auth_connected_accounts": "Cuentas vinculadas",
   "auth_connect": "Conectar",
   "auth_disconnect": "Desconectar",
