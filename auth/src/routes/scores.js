@@ -46,7 +46,8 @@ export async function handleMigrateScores(request, env, db) {
   const existing = await db.getUserScores(payload.sub);
   const done = new Set((existing || []).map(r => r.game_date));
 
-  const dates = Object.keys(played).sort();
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const dates = Object.keys(played).filter(d => DATE_RE.test(d)).sort();
   let last = null, streak = 0;
   const rows = [];
 
