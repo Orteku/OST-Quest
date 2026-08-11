@@ -51,6 +51,7 @@ export default {
 
       // ── Debug (temporal) ────────────────────────────────────────────────
       if (path === '/debug/schema') {
+        console.log('SUPABASE_URL value:', env.SUPABASE_URL);
         const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/`, {
           headers: {
             'apikey': env.SUPABASE_SERVICE_KEY,
