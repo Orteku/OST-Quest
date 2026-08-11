@@ -291,8 +291,10 @@ async function _saveUsername() {
 // ─── Sign out ─────────────────────────────────────────────────────────────────
 
 function _signOut() {
+  // Borrar clave de sync per-user antes de limpiar _profile
+  if (_profile?.id) localStorage.removeItem(`ostquest_synced_${_profile.id}`);
+  localStorage.removeItem(_SYNC_KEY); // legacy
   _clearSession();
-  localStorage.removeItem(_SYNC_KEY);
   _renderAuthBtn();
 }
 
@@ -388,6 +390,7 @@ async function _migrateIfNeeded() {
   if (!dates.length) { localStorage.setItem(_syncKey(), '1'); return; }
 
   const data = await _apiFetch('/scores/migrate', 'POST', { played });
+  if (data?.error) return; // no marcar como hecho si el servidor falló
   if ((data?.migrated ?? 0) > 0 && typeof showToast === 'function') {
     showToast(t('auth_migration_done'));
   }
