@@ -372,20 +372,26 @@ async function submitScoreToSupabase(dateStr, score, stats) {
 
 // ─── Migración de localStorage ────────────────────────────────────────────────
 
-const _SYNC_KEY = 'ostquest_synced';
+// Clave por usuario para que cada cuenta tenga su propio estado de migración
+const _SYNC_KEY = 'ostquest_synced'; // legacy, se mantiene para _signOut
+
+function _syncKey() {
+  return _profile?.id ? `ostquest_synced_${_profile.id}` : _SYNC_KEY;
+}
 
 async function _migrateIfNeeded() {
-  if (!_token || localStorage.getItem(_SYNC_KEY)) return;
+  if (!_token || !_profile?.id) return;
+  if (localStorage.getItem(_syncKey())) return;
 
   const played = loadPlayedDays();
   const dates  = Object.keys(played);
-  if (!dates.length) { localStorage.setItem(_SYNC_KEY, '1'); return; }
+  if (!dates.length) { localStorage.setItem(_syncKey(), '1'); return; }
 
   const data = await _apiFetch('/scores/migrate', 'POST', { played });
   if ((data?.migrated ?? 0) > 0 && typeof showToast === 'function') {
     showToast(t('auth_migration_done'));
   }
-  localStorage.setItem(_SYNC_KEY, '1');
+  localStorage.setItem(_syncKey(), '1');
 }
 
 async function getUserWeeklyPosition() {

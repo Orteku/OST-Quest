@@ -65,7 +65,11 @@ export async function handleMigrateScores(request, env, db) {
     last = date;
   }
 
-  if (rows.length) await db.upsertScores(rows);
+  if (rows.length) {
+    await db.upsertScores(rows);
+    // Actualizar el streak del usuario al valor calculado con el historial completo
+    await db.updateUser(payload.sub, { streak });
+  }
 
   return json({ ok: true, migrated: rows.length }, 200, request);
 }
