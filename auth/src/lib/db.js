@@ -17,6 +17,7 @@ export function createDb(env) {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
+      console.error(`DB error ${res.status} on ${method} ${path}:`, JSON.stringify(err));
       const e = new Error(err.message || 'DB error');
       e.status = res.status;
       e.details = err;
