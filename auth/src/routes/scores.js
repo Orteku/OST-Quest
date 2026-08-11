@@ -12,8 +12,21 @@ export async function handleSubmitScore(request, env, db) {
   const { gameDate, score, stats } = body;
   if (!gameDate || score === undefined) return json({ error: 'missing_fields' }, 400, request);
 
-  const pts   = score === 3 ? 100 : score === 2 ? 66 : score === 1 ? 33 : 0;
-  const bonus = (stats?.streak ?? 0) >= 2 ? 10 : 0;
+  const pts = score === 3 ? 100 : score === 2 ? 66 : score === 1 ? 33 : 0;
+
+  // Upsert primero para que calcStreakFromScores ya cuente el día de hoy
+  await db.upsertScore({
+    user_id:      payload.sub,
+    game_date:    gameDate,
+    score,
+    points:       pts,
+    streak_bonus: 0,       // se recalcula abajo
+    total_points: pts,
+  });
+
+  // Racha calculada en el servidor desde los registros reales
+  const streak = await db.calcStreakFromScores(payload.sub);
+  const bonus  = streak >= 2 ? 10 : 0;
 
   await Promise.all([
     db.upsertScore({
@@ -24,10 +37,10 @@ export async function handleSubmitScore(request, env, db) {
       streak_bonus: bonus,
       total_points: pts + bonus,
     }),
-    db.updateUser(payload.sub, { streak: stats?.streak ?? 0 }),
+    db.updateUser(payload.sub, { streak }),
   ]);
 
-  return json({ ok: true }, 200, request);
+  return json({ ok: true, streak }, 200, request);
 }
 
 // POST /scores/migrate  { played: { [date]: { score, total } } }
@@ -44,7 +57,7 @@ export async function handleMigrateScores(request, env, db) {
 
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const dates = Object.keys(played).filter(d => DATE_RE.test(d)).sort();
-  let last = null, streak = 0;
+  let last = null, streakLocal = 0;
   const rows = [];
 
   for (const date of dates) {
@@ -53,16 +66,17 @@ export async function handleMigrateScores(request, env, db) {
     const prevNext = last
       ? (() => { const d = new Date(last + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); })()
       : null;
-    streak = (prevNext === date) ? streak + 1 : 1;
+    streakLocal = (prevNext === date) ? streakLocal + 1 : 1;
     const pts   = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
-    const bonus = streak >= 2 ? 10 : 0;
+    const bonus = streakLocal >= 2 ? 10 : 0;
     rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: bonus, total_points: pts + bonus });
     last = date;
   }
 
   if (rows.length) {
-    // Upsert sobreescribe filas existentes con datos recalculados correctamente
     await db.upsertScores(rows);
+    // Racha calculada desde la BD, no desde el historial del cliente
+    const streak = await db.calcStreakFromScores(payload.sub);
     await db.updateUser(payload.sub, { streak });
   }
 

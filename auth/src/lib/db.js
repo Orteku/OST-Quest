@@ -67,6 +67,31 @@ export function createDb(env) {
     async getUserScores(userId) {
       return check(await supabase.from('scores').select('game_date').eq('user_id', userId));
     },
+    // Calcula la racha actual desde los registros reales de scores (servidor autoritativo)
+    async calcStreakFromScores(userId) {
+      const rows = await check(
+        await supabase.from('scores').select('game_date').eq('user_id', userId).order('game_date', { ascending: false })
+      );
+      if (!rows?.length) return 0;
+      const today     = new Date(); today.setUTCHours(12, 0, 0, 0);
+      const yesterday = new Date(today); yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      const mostRecent = new Date(rows[0].game_date + 'T12:00:00Z');
+      // La racha solo cuenta si el último día jugado es hoy o ayer
+      if (mostRecent < yesterday) return 0;
+      let streak = 0;
+      let expected = mostRecent;
+      for (const { game_date } of rows) {
+        const d = new Date(game_date + 'T12:00:00Z');
+        if (d.getTime() === expected.getTime()) {
+          streak++;
+          expected = new Date(expected);
+          expected.setUTCDate(expected.getUTCDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
+    },
 
     // ── Tokens de reset de contraseña ────────────────────────────────────────
     async createResetToken(userId, token, expiresAt) {
