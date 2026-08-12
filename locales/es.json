@@ -171,6 +171,12 @@
     "383": {"game": "Indiana Jones y el Gran Círculo" },
     "400": {"game": "Dragon Quest XI: Ecos de un pasado perdido" },
     "401": {"game": "Dragon Quest III: Las semillas de la salvación" },
-    "403": {"game": "Dragon Quest IV: Capítulos de los Elegidos" }
+    "403": {"game": "Dragon Quest IV: Capítulos de los Elegidos" },
+    "640": {"game": "Señor del Olimpo - Zeus" },
+    "641": {"game": "Faraón" },
+    "644": {"game": "Mario & Luigi: Viaje al centro de Bowser" },
+    "671": {"game": "Harry Potter y la Orden del Fénix" },
+    "672": {"game": "Harry Potter y la cámara secreta" },
+    "673": {"game": "Harry Potter y la piedra filosofal" }
   }
 }
