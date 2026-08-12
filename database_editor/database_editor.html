@@ -1052,7 +1052,7 @@
     if (field === "trackTags") {
       const ti = Number(input.dataset.track);
       const track = db[index].tracks[ti];
-      track.tags = value.split(',').map(t => t.trim()).filter(Boolean);
+      track.tags = input.value.split(',').map(t => t.trim()).filter(Boolean);
       const suggestions = input.closest('.tags-row')?.querySelector('.tag-suggestions');
       if (suggestions) suggestions.innerHTML = trackTagSuggestionsHtml(track.tags);
       updateRowSearch(row, index);
