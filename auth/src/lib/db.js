@@ -69,11 +69,13 @@ export function createDb(env) {
     },
     // Devuelve true si la quest se jugó "a tiempo": mismo día o día siguiente al game_date
     // played_at null = dato antiguo sin timestamp → no cuenta para la racha
+    // El día de juego va de 03:00 UTC a 02:59 UTC del día siguiente (mismo reset que el cliente)
     _isOnTime(gameDate, playedAt) {
       if (!playedAt) return false;
-      const questStart = new Date(gameDate + 'T00:00:00Z').getTime();
-      const diff       = new Date(playedAt).getTime() - questStart;
-      return diff >= 0 && diff < 48 * 3_600_000;
+      const played   = new Date(playedAt).getTime();
+      const dayStart = new Date(gameDate + 'T03:00:00Z').getTime();
+      const dayEnd   = dayStart + 24 * 3_600_000;
+      return played >= dayStart && played < dayEnd;
     },
 
     // Calcula todas las estadísticas desde la tabla scores (sin depender de localStorage)

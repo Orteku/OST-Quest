@@ -506,13 +506,6 @@ function _renderProfileHTML() {
       <p class="auth-err" id="profile-link-err" style="display:none"></p>
     </section>
 
-    <section class="profile-section">
-      <h3 class="profile-section__title">${t('auth_resync_title')}</h3>
-      <p class="auth-hint" style="margin-bottom:10px">${t('auth_resync_hint')}</p>
-      <button class="btn profile-save-btn" id="profile-resync" style="width:100%">${t('auth_resync_btn')}</button>
-      <p class="auth-err" id="profile-resync-ok" style="display:none;color:#b8e030"></p>
-    </section>
-
     <section class="profile-section profile-section--danger">
       <h3 class="profile-section__title">${t('auth_danger_zone')}</h3>
       <button class="btn profile-delete-btn" id="profile-delete">${t('auth_delete_account')}</button>
@@ -574,17 +567,6 @@ function _bindProfileEvents() {
   });
   document.querySelectorAll('[data-action="unlink"]').forEach(btn => {
     btn.addEventListener('click', () => _unlinkProvider(btn.dataset.provider));
-  });
-
-  // Resincronizar historial desde localStorage
-  document.getElementById('profile-resync')?.addEventListener('click', async () => {
-    const okEl = document.getElementById('profile-resync-ok');
-    okEl.style.display = 'none';
-    // Borrar la sync key del usuario actual para que _migrateIfNeeded vuelva a ejecutarse
-    localStorage.removeItem(_syncKey());
-    await _migrateIfNeeded();
-    okEl.textContent = t('auth_resync_done');
-    okEl.style.display = 'block';
   });
 
   // Borrar cuenta
