@@ -67,6 +67,38 @@ export function createDb(env) {
     async getUserScores(userId) {
       return check(await supabase.from('scores').select('game_date').eq('user_id', userId));
     },
+    // Calcula todas las estadísticas desde la tabla scores (sin depender de localStorage)
+    async calcStats(userId) {
+      const rows = await check(
+        await supabase.from('scores').select('game_date, score').eq('user_id', userId).order('game_date', { ascending: true })
+      );
+      if (!rows?.length) return { played: 0, accuracy: 0, streak: 0, perfectQuests: 0 };
+
+      const played        = rows.length;
+      const totalScore    = rows.reduce((s, r) => s + (r.score || 0), 0);
+      const accuracy      = Math.round(totalScore / (played * 3) * 100);
+      const perfectQuests = rows.filter(r => r.score === 3).length;
+
+      // Racha actual: recorrer desde el más reciente hacia atrás
+      let streak = 0, expected = null;
+      for (let i = rows.length - 1; i >= 0; i--) {
+        const d = new Date(rows[i].game_date + 'T12:00:00Z');
+        if (!expected) {
+          // El día más reciente debe ser hoy o ayer para que cuente
+          const today     = new Date(); today.setUTCHours(12, 0, 0, 0);
+          const yesterday = new Date(today); yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+          if (d < yesterday) break;
+          expected = d;
+        }
+        if (d.getTime() !== expected.getTime()) break;
+        streak++;
+        expected = new Date(expected);
+        expected.setUTCDate(expected.getUTCDate() - 1);
+      }
+
+      return { played, accuracy, streak, perfectQuests };
+    },
+
     // Calcula la racha actual desde los registros reales de scores (servidor autoritativo)
     async calcStreakFromScores(userId) {
       const rows = await check(

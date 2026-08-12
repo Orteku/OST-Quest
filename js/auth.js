@@ -376,6 +376,19 @@ async function openRankingModal() {
   await loadRankingInto('rank-content', 'weekly');
 }
 
+// ─── Stats desde servidor ─────────────────────────────────────────────────────
+
+async function authUpdateStatsDisplay() {
+  if (!_token) return;
+  const stats = await _apiFetch('/scores/stats');
+  if (!stats || stats.error) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('stat-val-played',   stats.played);
+  set('stat-val-accuracy', stats.accuracy + '%');
+  set('stat-val-streak',   stats.streak);
+  set('stat-val-perfect',  stats.perfectQuests);
+}
+
 // ─── Score sync ───────────────────────────────────────────────────────────────
 
 async function submitScoreToSupabase(dateStr, score, stats) {

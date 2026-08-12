@@ -6,7 +6,7 @@ import { handleDiscordStart, handleDiscordCallback } from './routes/discord.js';
 import { handleTwitchStart, handleTwitchCallback } from './routes/twitch.js';
 import { handleSteamStart, handleSteamCallback } from './routes/steam.js';
 import { handleGetMe, handleSetUsername, handleUnlink, handleDeleteAccount } from './routes/user.js';
-import { handleSubmitScore, handleMigrateScores } from './routes/scores.js';
+import { handleSubmitScore, handleMigrateScores, handleGetStats } from './routes/scores.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -49,6 +49,7 @@ export default {
       if (path === '/auth/account'         && method === 'DELETE') return handleDeleteAccount(request, env, db);
 
       // ── Scores ──────────────────────────────────────────────────────────
+      if (path === '/scores/stats'   && method === 'GET')  return handleGetStats(request, env, db);
       if (path === '/scores'         && method === 'POST') return handleSubmitScore(request, env, db);
       if (path === '/scores/migrate' && method === 'POST') return handleMigrateScores(request, env, db);
 

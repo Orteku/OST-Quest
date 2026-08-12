@@ -659,10 +659,10 @@ function openEndModal(score) {
       ${isArchiveMode ? `<p class="modal__archive-note">${t('archive_note')}</p>` : ''}
       ${!isArchiveMode ? `
         <div class="modal__stats">
-          <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
-          <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
-          <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
-          <div class="stat-box"><span class="stat-box__val">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
+          <div class="stat-box"><span class="stat-box__val" id="stat-val-played">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
+          <div class="stat-box"><span class="stat-box__val" id="stat-val-accuracy">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
+          <div class="stat-box"><span class="stat-box__val" id="stat-val-streak">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
+          <div class="stat-box"><span class="stat-box__val" id="stat-val-perfect">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
         </div>
         ${!authGetSession()
           ? `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="end-register-btn">${t('register_cta_link')}</button></p>`
@@ -685,7 +685,7 @@ function openEndModal(score) {
     closeModal();
     openAuthModal('register');
   });
-  if (!isArchiveMode && authGetSession()) _loadEndRankInfo();
+  if (!isArchiveMode && authGetSession()) { _loadEndRankInfo(); authUpdateStatsDisplay?.(); }
   const gmReconfigBtn = document.getElementById('gm-reconfig-btn');
   if (gmReconfigBtn) gmReconfigBtn.addEventListener('click', () => { closeModal(); openGmPanel(); });
 
@@ -742,10 +742,10 @@ function openStatsModal() {
     <div class="modal__end">
       <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1.2rem">${t('stats_title')}</h2>
       <div class="modal__stats">
-        <div class="stat-box"><span class="stat-box__val">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
-        <div class="stat-box"><span class="stat-box__val">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
-        <div class="stat-box"><span class="stat-box__val">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
-        <div class="stat-box"><span class="stat-box__val">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
+        <div class="stat-box"><span class="stat-box__val" id="stat-val-played">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
+        <div class="stat-box"><span class="stat-box__val" id="stat-val-accuracy">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
+        <div class="stat-box"><span class="stat-box__val" id="stat-val-streak">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
+        <div class="stat-box"><span class="stat-box__val" id="stat-val-perfect">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
       </div>
       <div class="stats-rank-section">
         <div id="stats-rank-info" class="stats-rank-info">
@@ -758,6 +758,7 @@ function openStatsModal() {
 
   document.getElementById('close-stats-btn').addEventListener('click', closeModal);
   _loadStatsRankInfo();
+  authUpdateStatsDisplay?.();
   openModal();
 }
 

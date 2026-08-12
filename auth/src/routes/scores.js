@@ -1,6 +1,17 @@
 import { json } from '../lib/cors.js';
 import { requireAuth } from './user.js';
 
+// GET /scores/stats — estadísticas calculadas desde la BD (sin localStorage)
+export async function handleGetStats(request, env, db) {
+  const [payload, err] = await requireAuth(request, env);
+  if (err) return err;
+
+  const stats = await db.calcStats(payload.sub);
+  // Sincronizar racha en player_accounts si cambió
+  await db.updateUser(payload.sub, { streak: stats.streak });
+  return json(stats, 200, request);
+}
+
 // POST /scores  { gameDate, score, stats: { streak } }
 export async function handleSubmitScore(request, env, db) {
   const [payload, err] = await requireAuth(request, env);
