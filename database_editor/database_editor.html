@@ -587,13 +587,13 @@
         <div class="add-track-row1">
           <label><span>Canción</span><input id="newTitle" placeholder="Canción (opcional)" /></label>
           <label><span>Artista</span><input id="newArtist" placeholder="Artista (opcional)" /></label>
-          <label class="lyrics-check"><input type="checkbox" id="newLyrics" /> lyrics</label>
         </div>
         <div class="add-track-row2">
           <label><input id="newMp3Url" class="field-youtube" placeholder="URL del MP3…" /></label>
           <label><span>Inicio (m:ss)</span><input id="newStart" class="field-youtube" placeholder="0:00" value="0:00" /></label>
           <button id="newLoadTrack">▶ Cargar</button>
         </div>
+        <div id="newTrackTagSuggestions" class="tag-suggestions"></div>
       </div>
     </div>
     <div class="actions" style="margin-top:10px;">
@@ -708,12 +708,10 @@
       const titleVal  = escapeHtml(track.title || "");
       const artistVal = escapeHtml(track.artist || "");
       const isFirst = ti === 0;
-      const hasLyrics = (track.tags || []).includes('lyrics');
       const removeBtn = isFirst ? '' : `<button class="small danger" data-action="removeTrack" data-track="${ti}">✕</button>`;
       const titleLabel = `<div class="track-header">
           <label style="flex:1;min-width:0"><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>
           <label style="flex:1;min-width:0"><span>Artista</span><input data-field="artist" data-track="${ti}" placeholder="Artista (opcional)" value="${artistVal}" /></label>
-          <label class="lyrics-check"><input type="checkbox" data-field="trackLyrics" data-track="${ti}"${hasLyrics ? ' checked' : ''} /> lyrics</label>
         </div>`;
       const mp3Link = `<a class="mp3-link" data-mp3link="${ti}"${track.mp3Url ? ` href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener"` : ''}>${track.mp3Url ? 'abrir MP3 ↗' : ''}</a>`;
       const srcRow = `<div class="yt-row">
@@ -722,7 +720,11 @@
           <button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>
           ${mp3Link}
         </div>`;
-      return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${removeBtn}${titleLabel}${srcRow}</div>`;
+      const trackTagsRow = `<div class="tags-row" style="margin-top:4px">
+          <input class="tags-input" data-field="trackTags" data-track="${ti}" value="${escapeHtml((track.tags || []).join(', '))}" placeholder="lyrics..." />
+          <div class="tag-suggestions">${trackTagSuggestionsHtml(track.tags || [])}</div>
+        </div>`;
+      return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${removeBtn}${titleLabel}${srcRow}${trackTagsRow}</div>`;
     }).join("");
     return rows + `<button class="small" data-action="addTrack" style="margin-top:6px">+</button>`;
   }
@@ -810,6 +812,21 @@
     return all.map(tag => {
       const active = activeTags.includes(tag);
       return `<span class="tag-chip${active ? ' active' : ''}" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`;
+    }).join('');
+  }
+
+  function getAllTrackTags() {
+    const set = new Set();
+    db.forEach(item => item.tracks.forEach(t => (t.tags || []).forEach(tag => set.add(tag))));
+    return [...set].sort();
+  }
+
+  function trackTagSuggestionsHtml(activeTags) {
+    const all = getAllTrackTags();
+    if (!all.length) return '';
+    return all.map(tag => {
+      const active = activeTags.includes(tag);
+      return `<span class="tag-chip${active ? ' active' : ''}" data-tag="${escapeHtml(tag)}" data-track-tag>${escapeHtml(tag)}</span>`;
     }).join('');
   }
 
@@ -1032,12 +1049,13 @@
     const index = Number(row.dataset.index);
     const field = input.dataset.field;
 
-    if (field === "trackLyrics") {
+    if (field === "trackTags") {
       const ti = Number(input.dataset.track);
       const track = db[index].tracks[ti];
-      if (!track.tags) track.tags = [];
-      if (input.checked) { if (!track.tags.includes('lyrics')) track.tags.push('lyrics'); }
-      else track.tags = track.tags.filter(t => t !== 'lyrics');
+      track.tags = value.split(',').map(t => t.trim()).filter(Boolean);
+      const suggestions = input.closest('.tags-row')?.querySelector('.tag-suggestions');
+      if (suggestions) suggestions.innerHTML = trackTagSuggestionsHtml(track.tags);
+      updateRowSearch(row, index);
       setDirty(true);
       return;
     }
@@ -1196,22 +1214,44 @@
       const row = chip.closest(".row");
       const index = Number(row.dataset.index);
       const tag = chip.dataset.tag;
-      const tagsInput = row.querySelector('input[data-field="tags"]');
-      if (tagsInput) {
-        const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
-        if (tags.includes(tag)) {
-          const newTags = tags.filter(t => t !== tag);
-          tagsInput.value = newTags.join(', ');
-          db[index].tags = newTags;
-          chip.classList.remove('active');
-        } else {
-          tags.push(tag);
-          tagsInput.value = tags.join(', ');
-          db[index].tags = tags;
-          chip.classList.add('active');
+      if ("trackTag" in chip.dataset) {
+        const tagsInput = chip.closest('.tags-row')?.querySelector('input[data-field="trackTags"]');
+        if (tagsInput) {
+          const ti = Number(tagsInput.dataset.track);
+          const track = db[index].tracks[ti];
+          const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+          if (tags.includes(tag)) {
+            const newTags = tags.filter(t => t !== tag);
+            tagsInput.value = newTags.join(', ');
+            track.tags = newTags;
+            chip.classList.remove('active');
+          } else {
+            tags.push(tag);
+            tagsInput.value = tags.join(', ');
+            track.tags = tags;
+            chip.classList.add('active');
+          }
+          updateRowSearch(row, index);
+          setDirty(true);
         }
-        updateRowSearch(row, index);
-        setDirty(true);
+      } else {
+        const tagsInput = row.querySelector('input[data-field="tags"]');
+        if (tagsInput) {
+          const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+          if (tags.includes(tag)) {
+            const newTags = tags.filter(t => t !== tag);
+            tagsInput.value = newTags.join(', ');
+            db[index].tags = newTags;
+            chip.classList.remove('active');
+          } else {
+            tags.push(tag);
+            tagsInput.value = tags.join(', ');
+            db[index].tags = tags;
+            chip.classList.add('active');
+          }
+          updateRowSearch(row, index);
+          setDirty(true);
+        }
       }
       return;
     }
@@ -1306,6 +1346,20 @@
     $("newTagSuggestions").innerHTML = tagSuggestionsHtml(active);
   }
 
+  function refreshNewTrackTagSuggestions() {
+    const active = [...$("newTrackTagSuggestions").querySelectorAll('.tag-chip.active')].map(c => c.dataset.tag);
+    $("newTrackTagSuggestions").innerHTML = getAllTrackTags().map(tag => {
+      const isActive = active.includes(tag);
+      return `<span class="tag-chip${isActive ? ' active' : ''}" data-tag="${escapeHtml(tag)}" data-track-tag>${escapeHtml(tag)}</span>`;
+    }).join('');
+  }
+
+  $("newTrackTagSuggestions").addEventListener("click", (e) => {
+    const chip = e.target.closest(".tag-chip");
+    if (!chip) return;
+    chip.classList.toggle("active");
+  });
+
   $("newTagSuggestions").addEventListener("click", (e) => {
     const chip = e.target.closest(".tag-chip");
     if (!chip) return;
@@ -1333,6 +1387,7 @@
   $("toggleAdd").addEventListener("click", () => {
     $("addPanel").classList.toggle("open");
     refreshNewTagSuggestions();
+    refreshNewTrackTagSuggestions();
     $("newGame").focus();
   });
 
@@ -1341,7 +1396,7 @@
     $("newCover").value = "";
     $("newTitle").value = "";
     $("newArtist").value = "";
-    $("newLyrics").checked = false;
+    $("newTrackTagSuggestions").querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
     $("newMp3Url").value = "";
     $("newStart").value = "0:00";
     $("newTags").value = "";
@@ -1371,7 +1426,8 @@
     if (!mp3Ok)   { $("newMp3Url").focus(); return; }
 
     const tags = $("newTags").value.split(',').map(t => t.trim()).filter(Boolean);
-    const track = { title, artist, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: $("newLyrics").checked ? ['lyrics'] : [] };
+    const trackTags = [...$("newTrackTagSuggestions").querySelectorAll('.tag-chip.active')].map(c => c.dataset.tag);
+    const track = { title, artist, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: trackTags };
 
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
     db.push({ id: maxId + 1, game, cover, pop, year, tags, tracks: [track] });

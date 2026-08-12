@@ -18,15 +18,19 @@ function getTagScore(tagsA, tagsB) {
   return shared / union;
 }
 
-// track: the specific track being played (answer); null for candidates (any-lyrics heuristic)
+// track: the specific track being played (answer); null for candidates (union of all track tags)
 function effectiveTags(game, track = null) {
-  const base = [...(game.tags || [])];
+  const base = new Set(game.tags || []);
   if (track) {
-    if (track.tags?.includes('lyrics')) base.push('lyrics');
+    // Respuesta: tags del track concreto que se está jugando
+    for (const tag of (track.tags || [])) base.add(tag);
   } else {
-    if (game.tracks?.some(t => t.tags?.includes('lyrics'))) base.push('lyrics');
+    // Señuelos: unión de tags de todos los tracks del juego
+    for (const t of (game.tracks || [])) {
+      for (const tag of (t.tags || [])) base.add(tag);
+    }
   }
-  return base;
+  return [...base];
 }
 
 // Weighted random sample without replacement.
