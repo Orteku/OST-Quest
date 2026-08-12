@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Política de privacidad de Oesti Quest.">
+  <title>Política de privacidad — Oesti Quest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" sizes="48x48" href="img/logo.png">
+  <style>
+    .legal-page {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+      font-family: 'Barlow', sans-serif;
+    }
+    .legal-page__back {
+      display: inline-block;
+      font-size: 13px;
+      color: #7878a8;
+      text-decoration: none;
+      margin-bottom: 24px;
+    }
+    .legal-page__back:hover { color: #b8e030; }
+    .legal-page__title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 26px; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: #b8e030;
+      margin-bottom: 4px;
+    }
+    .legal-page__updated {
+      font-size: 12px;
+      color: #55555f;
+      margin-bottom: 32px;
+    }
+    .legal-page h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #9898c0;
+      margin: 28px 0 8px;
+    }
+    .legal-page p, .legal-page li {
+      font-size: 14px;
+      color: #aaa9b8;
+      line-height: 1.7;
+      margin: 6px 0;
+    }
+    .legal-page ul { padding-left: 20px; }
+    .legal-page a { color: #b8e030; }
+    .legal-page a:hover { text-decoration: underline; }
+
+    body.theme--light .legal-page__back { color: #7878a8; }
+    body.theme--light .legal-page__back:hover { color: #4a6c10; }
+    body.theme--light .legal-page__title { color: #4a6c10; }
+    body.theme--light .legal-page__updated { color: #9898a8; }
+    body.theme--light .legal-page h2 { color: #5858a0; }
+    body.theme--light .legal-page p,
+    body.theme--light .legal-page li { color: #444450; }
+    body.theme--light .legal-page a { color: #4a6c10; }
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem('ostquest_theme')==='light')document.body.classList.add('theme--light');</script>
+
+<div class="legal-page">
+  <a class="legal-page__back" href="/">← Volver al juego</a>
+  <h1 class="legal-page__title">Política de privacidad</h1>
+  <p class="legal-page__updated">Última actualización: agosto de 2026</p>
+
+  <h2>1. Responsable del tratamiento</h2>
+  <p>El responsable del tratamiento de los datos es el desarrollador de Oesti Quest. Puedes contactar en <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a> para cualquier consulta relacionada con tus datos.</p>
+
+  <h2>2. Datos que recogemos</h2>
+  <p>Oesti Quest puede recoger los siguientes datos cuando creas una cuenta:</p>
+  <ul>
+    <li><strong>Nombre de usuario</strong> — elegido por ti al registrarte.</li>
+    <li><strong>Dirección de correo electrónico</strong> — solo si te registras con email y contraseña.</li>
+    <li><strong>Identificador del proveedor de acceso</strong> — un ID numérico anónimo proporcionado por Google, Discord, Twitch o Steam cuando usas el acceso social. No recibimos tu contraseña ni datos adicionales de esos servicios.</li>
+    <li><strong>Resultados de partidas</strong> — puntuación, fecha y hora de cada quest completada.</li>
+  </ul>
+  <p>Si juegas sin cuenta, ningún dato se envía a nuestros servidores. El progreso se guarda únicamente en tu dispositivo mediante <em>localStorage</em>.</p>
+
+  <h2>3. Finalidad y base jurídica</h2>
+  <p>Usamos tus datos exclusivamente para:</p>
+  <ul>
+    <li>Gestionar tu cuenta y permitirte acceder desde cualquier dispositivo.</li>
+    <li>Mostrar tus estadísticas y tu posición en el ranking.</li>
+  </ul>
+  <p>La base jurídica es la ejecución del contrato de uso del servicio (art. 6.1.b RGPD).</p>
+
+  <h2>4. Conservación de los datos</h2>
+  <p>Tus datos se conservan mientras mantengas una cuenta activa. Puedes eliminar tu cuenta en cualquier momento desde <strong>Configuración → Eliminar cuenta</strong>, lo que borrará de forma permanente todos tus datos de nuestros servidores.</p>
+
+  <h2>5. Cesión de datos a terceros</h2>
+  <p>No compartimos tus datos personales con terceros. Utilizamos los siguientes servicios de infraestructura para operar el juego:</p>
+  <ul>
+    <li><strong>Supabase</strong> — base de datos (almacenamiento de cuentas y puntuaciones).</li>
+    <li><strong>Cloudflare Workers</strong> — servidor de autenticación.</li>
+    <li><strong>GitHub Pages</strong> — alojamiento del sitio web.</li>
+  </ul>
+  <p>Cada uno de estos servicios tiene su propia política de privacidad y tratamiento de datos.</p>
+
+  <h2>6. Tus derechos</h2>
+  <p>Como usuario tienes derecho a acceder, rectificar y suprimir tus datos, así como a oponerte a su tratamiento o solicitar su portabilidad. Para ejercer estos derechos, escríbenos a <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a> o elimina tu cuenta directamente desde la configuración del juego.</p>
+
+  <h2>7. Cookies y almacenamiento local</h2>
+  <p>Oesti Quest no utiliza cookies de seguimiento ni publicidad. El juego usa <em>localStorage</em> del navegador para guardar tu progreso y preferencias de forma local. Este almacenamiento es estrictamente necesario para el funcionamiento del juego y no requiere consentimiento.</p>
+
+  <h2>8. Menores de edad</h2>
+  <p>Si eres menor de 14 años, necesitas el consentimiento de tu padre, madre o tutor legal para crear una cuenta.</p>
+
+  <h2>9. Cambios en esta política</h2>
+  <p>Podemos actualizar esta política ocasionalmente. Los cambios relevantes se comunicarán en el propio juego. La fecha de la última actualización aparece al inicio de este documento.</p>
+</div>
+</body>
+</html>

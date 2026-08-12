@@ -205,10 +205,13 @@ function _renderAuthModal() {
         </svg>
       </button>
     </div>
+    ${reg ? `<p class="auth-legal-note" id="auth-legal-note"></p>` : ''}
     <p class="auth-switch"><button class="auth-switch__btn" id="auth-sw">${t(reg ? 'auth_have_account' : 'auth_no_account')}</button></p>
   `;
 
   document.getElementById('auth-close').addEventListener('click', closeAuthModal);
+  const legalEl = document.getElementById('auth-legal-note');
+  if (legalEl) legalEl.innerHTML = t('auth_legal_note');
   document.getElementById('auth-sw').addEventListener('click', () => {
     _authMode = _authMode === 'signin' ? 'register' : 'signin';
     _renderAuthModal();

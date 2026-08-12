@@ -829,7 +829,11 @@ body.theme--light .how-to-play__body p { color: #999; }
   color: #5a5a68;
   margin-bottom: 6px !important;
 }
+.site-footer__legal { color: #55555f; text-decoration: none; }
+.site-footer__legal:hover { color: #b8e030; }
 body.theme--light .site-footer__desc { color: #9898a8; }
+body.theme--light .site-footer__legal { color: #9898a8; }
+body.theme--light .site-footer__legal:hover { color: #4a6c10; }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 520px) {
@@ -1467,6 +1471,11 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
   cursor: pointer;
 }
 .auth-switch__btn:hover { color: #9090c0; }
+.auth-legal-note { font-size: 11px; color: #555568; text-align: center; margin: 4px 0 8px; line-height: 1.5; }
+.auth-legal-note a { color: #7878a8; text-decoration: underline; }
+.auth-legal-note a:hover { color: #9898c0; }
+body.theme--light .auth-legal-note { color: #9898a8; }
+body.theme--light .auth-legal-note a { color: #5858a0; }
 
 /* Perfil: modal más ancho */
 #auth-modal-inner.auth-modal--profile { max-width: 420px; }
