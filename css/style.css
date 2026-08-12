@@ -829,11 +829,11 @@ body.theme--light .how-to-play__body p { color: #999; }
   color: #5a5a68;
   margin-bottom: 6px !important;
 }
-.site-footer__legal { color: #55555f; text-decoration: none; }
-.site-footer__legal:hover { color: #b8e030; }
+.site-footer a { color: #55555f; text-decoration: none; }
+.site-footer a:hover { color: #b8e030; }
 body.theme--light .site-footer__desc { color: #9898a8; }
-body.theme--light .site-footer__legal { color: #9898a8; }
-body.theme--light .site-footer__legal:hover { color: #4a6c10; }
+body.theme--light .site-footer a { color: #9898a8; }
+body.theme--light .site-footer a:hover { color: #4a6c10; }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 520px) {

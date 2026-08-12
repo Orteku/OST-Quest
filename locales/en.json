@@ -47,6 +47,7 @@
   "games": {},
   "footer_desc": "Daily video game soundtrack guessing game. Listen to a clip and pick which of four covers it belongs to. New quest every day.",
   "footer_credit": "Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Developed by Orteku in collaboration with Vyrka",
+  "footer_credit_legal": "Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Developed by Orteku in collaboration with Vyrka · <a href=\"privacy.html\">Privacy</a> · <a href=\"terms.html\">Terms</a>",
   "tutorial_title": "How to play",
   "tutorial_listen_h": "Listen",
   "tutorial_listen_b": "Press ▶ to play a soundtrack clip and try to recognize it.",
