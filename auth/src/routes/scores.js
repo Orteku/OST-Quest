@@ -26,6 +26,7 @@ export async function handleSubmitScore(request, env, db) {
   const pts = score === 3 ? 100 : score === 2 ? 66 : score === 1 ? 33 : 0;
 
   // Upsert primero para que calcStreakFromScores ya cuente el día de hoy
+  const playedAt = new Date().toISOString();
   await db.upsertScore({
     user_id:      payload.sub,
     game_date:    gameDate,
@@ -33,6 +34,7 @@ export async function handleSubmitScore(request, env, db) {
     points:       pts,
     streak_bonus: 0,       // se recalcula abajo
     total_points: pts,
+    played_at:    playedAt,
   });
 
   // Racha calculada en el servidor desde los registros reales
@@ -47,6 +49,7 @@ export async function handleSubmitScore(request, env, db) {
       points:       pts,
       streak_bonus: bonus,
       total_points: pts + bonus,
+      played_at:    playedAt,
     }),
     db.updateUser(payload.sub, { streak }),
   ]);
@@ -78,9 +81,11 @@ export async function handleMigrateScores(request, env, db) {
       ? (() => { const d = new Date(last + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); })()
       : null;
     streakLocal = (prevNext === date) ? streakLocal + 1 : 1;
-    const pts   = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
-    const bonus = streakLocal >= 2 ? 10 : 0;
-    rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: bonus, total_points: pts + bonus });
+    const pts      = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
+    const bonus    = streakLocal >= 2 ? 10 : 0;
+    // ts = Date.now() guardado en localStorage cuando el usuario jugó la quest
+    const playedAt = res.ts ? new Date(res.ts).toISOString() : null;
+    rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: bonus, total_points: pts + bonus, played_at: playedAt });
     last = date;
   }
 

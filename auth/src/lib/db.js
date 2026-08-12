@@ -67,10 +67,19 @@ export function createDb(env) {
     async getUserScores(userId) {
       return check(await supabase.from('scores').select('game_date').eq('user_id', userId));
     },
+    // Devuelve true si la quest se jugó "a tiempo": mismo día o día siguiente al game_date
+    // played_at null = dato antiguo sin timestamp → no cuenta para la racha
+    _isOnTime(gameDate, playedAt) {
+      if (!playedAt) return false;
+      const questStart = new Date(gameDate + 'T00:00:00Z').getTime();
+      const diff       = new Date(playedAt).getTime() - questStart;
+      return diff >= 0 && diff < 48 * 3_600_000;
+    },
+
     // Calcula todas las estadísticas desde la tabla scores (sin depender de localStorage)
     async calcStats(userId) {
       const rows = await check(
-        await supabase.from('scores').select('game_date, score').eq('user_id', userId).order('game_date', { ascending: true })
+        await supabase.from('scores').select('game_date, score, played_at').eq('user_id', userId).order('game_date', { ascending: true })
       );
       if (!rows?.length) return { played: 0, accuracy: 0, streak: 0, perfectQuests: 0 };
 
@@ -79,12 +88,14 @@ export function createDb(env) {
       const accuracy      = Math.round(totalScore / (played * 3) * 100);
       const perfectQuests = rows.filter(r => r.score === 3).length;
 
-      // Racha actual: recorrer desde el más reciente hacia atrás
+      // Solo cuentan para racha las quests jugadas a tiempo (con played_at en ventana de 48h)
+      const db = this;
+      const onTime = rows.filter(r => db._isOnTime(r.game_date, r.played_at));
+
       let streak = 0, expected = null;
-      for (let i = rows.length - 1; i >= 0; i--) {
-        const d = new Date(rows[i].game_date + 'T12:00:00Z');
+      for (let i = onTime.length - 1; i >= 0; i--) {
+        const d = new Date(onTime[i].game_date + 'T12:00:00Z');
         if (!expected) {
-          // El día más reciente debe ser hoy o ayer para que cuente
           const today     = new Date(); today.setUTCHours(12, 0, 0, 0);
           const yesterday = new Date(today); yesterday.setUTCDate(yesterday.getUTCDate() - 1);
           if (d < yesterday) break;
@@ -99,28 +110,29 @@ export function createDb(env) {
       return { played, accuracy, streak, perfectQuests };
     },
 
-    // Calcula la racha actual desde los registros reales de scores (servidor autoritativo)
+    // Calcula la racha actual (usado tras submitScore — filtra por played_at)
     async calcStreakFromScores(userId) {
       const rows = await check(
-        await supabase.from('scores').select('game_date').eq('user_id', userId).order('game_date', { ascending: false })
+        await supabase.from('scores').select('game_date, played_at').eq('user_id', userId).order('game_date', { ascending: false })
       );
       if (!rows?.length) return 0;
+
+      const db = this;
+      const onTime = rows.filter(r => db._isOnTime(r.game_date, r.played_at));
+      if (!onTime.length) return 0;
+
       const today     = new Date(); today.setUTCHours(12, 0, 0, 0);
       const yesterday = new Date(today); yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-      const mostRecent = new Date(rows[0].game_date + 'T12:00:00Z');
-      // La racha solo cuenta si el último día jugado es hoy o ayer
+      const mostRecent = new Date(onTime[0].game_date + 'T12:00:00Z');
       if (mostRecent < yesterday) return 0;
-      let streak = 0;
-      let expected = mostRecent;
-      for (const { game_date } of rows) {
+
+      let streak = 0, expected = mostRecent;
+      for (const { game_date } of onTime) {
         const d = new Date(game_date + 'T12:00:00Z');
         if (d.getTime() === expected.getTime()) {
           streak++;
-          expected = new Date(expected);
-          expected.setUTCDate(expected.getUTCDate() - 1);
-        } else {
-          break;
-        }
+          expected = new Date(expected); expected.setUTCDate(expected.getUTCDate() - 1);
+        } else break;
       }
       return streak;
     },
