@@ -177,6 +177,10 @@
     "644": {"game": "Mario & Luigi: Viaje al centro de Bowser" },
     "671": {"game": "Harry Potter y la Orden del Fénix" },
     "672": {"game": "Harry Potter y la cámara secreta" },
-    "673": {"game": "Harry Potter y la piedra filosofal" }
+    "673": {"game": "Harry Potter y la piedra filosofal" },
+    "691": {"game": "El Señor de los Anillos: La Guerra del Norte" },
+    "692": {"game": "El Señor de los Anillos: El Retorno del Rey" },
+    "693": {"game": "El Señor de los Anillos: La Tercera Edad" },
+    "695": {"game": "El Señor de los Anillos: La Batalla por la Tierra Media" }
   }
 }
