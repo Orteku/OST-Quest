@@ -381,8 +381,11 @@ async function openRankingModal() {
 
 // ─── Stats desde servidor ─────────────────────────────────────────────────────
 
+let _pendingScoreSubmit = null;
+
 async function authUpdateStatsDisplay() {
   if (!_token) return;
+  if (_pendingScoreSubmit) await _pendingScoreSubmit;
   const stats = await _apiFetch('/scores/stats');
   if (!stats || stats.error) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
@@ -396,7 +399,9 @@ async function authUpdateStatsDisplay() {
 
 async function submitScoreToSupabase(dateStr, score, stats) {
   if (!_token) return;
-  await _apiFetch('/scores', 'POST', { gameDate: dateStr, score, stats });
+  _pendingScoreSubmit = _apiFetch('/scores', 'POST', { gameDate: dateStr, score, stats });
+  await _pendingScoreSubmit;
+  _pendingScoreSubmit = null;
 }
 
 // ─── Migración de localStorage ────────────────────────────────────────────────
