@@ -765,6 +765,7 @@ function openStatsModal() {
 async function _loadEndRankInfo() {
   const el = document.getElementById('end-rank-info');
   if (!el) return;
+  await authWaitForScore?.();
   const pos = await getUserWeeklyPosition();
   el.innerHTML = pos
     ? `<p class="stats-rank-pos">#${pos.rank} <span class="stats-rank-pts">${pos.pts} ${t('ranking_pts')}</span></p>`

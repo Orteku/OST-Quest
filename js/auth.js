@@ -383,9 +383,13 @@ async function openRankingModal() {
 
 let _pendingScoreSubmit = null;
 
+async function authWaitForScore() {
+  if (_pendingScoreSubmit) await _pendingScoreSubmit;
+}
+
 async function authUpdateStatsDisplay() {
   if (!_token) return;
-  if (_pendingScoreSubmit) await _pendingScoreSubmit;
+  await authWaitForScore();
   const stats = await _apiFetch('/scores/stats');
   if (!stats || stats.error) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
