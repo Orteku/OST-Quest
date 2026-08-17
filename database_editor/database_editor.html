@@ -258,11 +258,11 @@
     }
     .yt-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 65px auto;
+      grid-template-columns: 22px minmax(0, 1fr) 65px auto;
       gap: 8px;
-      align-items: end;
+      align-items: center;
     }
-    .yt-row > label { min-width: 0; }
+    .yt-row > label { min-width: 0; align-self: end; }
     .yt-row input { width: 100%; min-width: 0; }
     input[data-field="startSeconds"], #newStart { width: 65px; min-width: 0; }
     .track-block { display: flex; flex-direction: column; gap: 4px; }
@@ -305,12 +305,16 @@
     .mp3-link {
       color: var(--muted);
       text-decoration: none;
-      font-size: 13px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 34px;
       align-self: end;
-      justify-self: start;
-      padding-bottom: 8px;
     }
-    .mp3-link:hover { color: var(--accent); }
+    .mp3-link[href] { color: var(--accent); cursor: pointer; }
+    .mp3-link[href]:hover { opacity: 0.75; }
     input.field-error { border-color: var(--danger) !important; }
     input.field-warn  { border-color: var(--warn) !important; }
     .compact .row {
@@ -713,15 +717,15 @@
           <label style="flex:1;min-width:0"><span>Canción</span><input class="track-title-input" data-field="title" data-track="${ti}" placeholder="Canción (opcional)" value="${titleVal}" /></label>
           <label style="flex:1;min-width:0"><span>Artista</span><input data-field="artist" data-track="${ti}" placeholder="Artista (opcional)" value="${artistVal}" /></label>
         </div>`;
-      const mp3Link = `<a class="mp3-link" data-mp3link="${ti}"${track.mp3Url ? ` href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener"` : ''}>${track.mp3Url ? 'abrir MP3 ↗' : ''}</a>`;
+      const mp3Link = `<a class="mp3-link" data-mp3link="${ti}"${track.mp3Url ? ` href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener" title="abrir MP3"` : ''}>↗</a>`;
       const srcRow = `<div class="yt-row">
+          ${mp3Link}
           <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" /></label>
           <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
           <button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>
-          ${mp3Link}
         </div>`;
       const trackTagsRow = `<div class="tags-row" style="margin-top:4px">
-          <input class="tags-input" data-field="trackTags" data-track="${ti}" value="${escapeHtml((track.tags || []).join(', '))}" placeholder="lyrics..." />
+          <input class="tags-input" data-field="trackTags" data-track="${ti}" value="${escapeHtml((track.tags || []).join(', '))}" placeholder="tags..." />
           <div class="tag-suggestions">${trackTagSuggestionsHtml(track.tags || [])}</div>
         </div>`;
       return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${removeBtn}${titleLabel}${srcRow}${trackTagsRow}</div>`;
@@ -1081,8 +1085,9 @@
             newA.href = track.mp3Url;
             newA.target = '_blank';
             newA.rel = 'noopener';
-            newA.textContent = 'abrir MP3 ↗';
+            newA.title = 'abrir MP3';
           }
+          newA.textContent = '↗';
           mp3LinkEl.replaceWith(newA);
         }
         _delFromIdx(_audioIdx, oldAudioUrl, index);
