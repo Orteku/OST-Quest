@@ -313,6 +313,7 @@
     }
     .mp3-link[href] { color: var(--accent); cursor: pointer; }
     .mp3-link[href]:hover { opacity: 0.75; }
+    button.btn-playing { background: #22c55e; border-color: #22c55e; color: #000; }
     input.field-error { border-color: var(--danger) !important; }
     input.field-warn  { border-color: var(--warn) !important; }
     .compact .row {
@@ -1146,10 +1147,21 @@
   }
 
   let _gpIndex = -1;
+  let _activePlayBtn = null;
+
+  function clearActivePlayBtn() {
+    if (!_activePlayBtn) return;
+    _activePlayBtn.textContent = "▶ Cargar";
+    _activePlayBtn.disabled = false;
+    _activePlayBtn.classList.remove("btn-playing");
+    _activePlayBtn = null;
+  }
 
   function loadTrackInPlayer(track, gameName, coverUrl, btn) {
     if (!track?.mp3Url) return;
+    clearActivePlayBtn();
     stopAllMedia();
+    _activePlayBtn = btn;
     if (btn) { btn.textContent = "Cargando…"; btn.disabled = true; }
 
     const audio = $("gpAudio");
@@ -1162,12 +1174,11 @@
     audio.src = track.mp3Url;
     $("globalPlayer").classList.add("active");
 
-    const restoreBtn = () => { if (btn) { btn.textContent = "▶ Cargar"; btn.disabled = false; } };
     audio.addEventListener('loadedmetadata', () => {
       if (track.startSeconds > 0) audio.currentTime = track.startSeconds;
     }, { once: true });
-    audio.addEventListener('canplay', () => { restoreBtn(); audio.play().catch(() => {}); }, { once: true });
-    audio.addEventListener('error', restoreBtn, { once: true });
+    audio.addEventListener('canplay', () => { audio.play().catch(() => clearActivePlayBtn()); }, { once: true });
+    audio.addEventListener('error', () => clearActivePlayBtn(), { once: true });
     audio.load();
   }
 
@@ -1524,6 +1535,15 @@
     const saved = parseFloat(localStorage.getItem('gpVolume'));
     if (!isNaN(saved)) audio.volume = Math.max(0, Math.min(1, saved));
     audio.addEventListener('volumechange', () => localStorage.setItem('gpVolume', audio.volume));
+    audio.addEventListener('play', () => {
+      if (_activePlayBtn) {
+        _activePlayBtn.textContent = "Reproduciendo";
+        _activePlayBtn.classList.add("btn-playing");
+        _activePlayBtn.disabled = false;
+      }
+    });
+    audio.addEventListener('pause', clearActivePlayBtn);
+    audio.addEventListener('ended', clearActivePlayBtn);
   })();
 
   $("newLoadTrack").addEventListener("click", function() {

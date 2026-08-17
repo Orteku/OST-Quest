@@ -87,12 +87,20 @@ function _getAudioEl() {
   return _audioEl;
 }
 
-function prewarmDirectAudio(url) {
+function prewarmDirectAudio(url, _attempt = 0) {
   if (_audioPreloadCache.has(url)) return;
   const el = _makeAudioEl();
   el.preload = 'auto';
   el.src = url;
   _audioPreloadCache.set(url, el);
+
+  if (_attempt < 3) {
+    el.addEventListener('error', () => {
+      if (el.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) return;
+      _audioPreloadCache.delete(url);
+      setTimeout(() => prewarmDirectAudio(url, _attempt + 1), [3000, 8000, 15000][_attempt]);
+    }, { once: true });
+  }
 }
 
 function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying, onError) {
