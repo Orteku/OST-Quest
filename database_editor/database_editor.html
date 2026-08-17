@@ -258,12 +258,15 @@
     }
     .yt-row {
       display: grid;
-      grid-template-columns: 22px minmax(0, 1fr) 65px auto;
+      grid-template-columns: minmax(0, 1fr) 65px auto;
       gap: 8px;
-      align-items: center;
+      align-items: end;
     }
-    .yt-row > label { min-width: 0; align-self: end; }
+    .yt-row > label { min-width: 0; }
     .yt-row input { width: 100%; min-width: 0; }
+    .url-wrap { position: relative; }
+    .url-wrap input { padding-right: 28px; }
+    .url-wrap .mp3-link { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: auto; height: auto; }
     input[data-field="startSeconds"], #newStart { width: 65px; min-width: 0; }
     .track-block { display: flex; flex-direction: column; gap: 4px; }
     .track-block + .track-block { margin-top: 6px; }
@@ -305,13 +308,8 @@
     .mp3-link {
       color: var(--muted);
       text-decoration: none;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 34px;
-      align-self: end;
+      font-size: 13px;
+      line-height: 1;
     }
     .mp3-link[href] { color: var(--accent); cursor: pointer; }
     .mp3-link[href]:hover { opacity: 0.75; }
@@ -719,8 +717,7 @@
         </div>`;
       const mp3Link = `<a class="mp3-link" data-mp3link="${ti}"${track.mp3Url ? ` href="${escapeHtml(track.mp3Url)}" target="_blank" rel="noopener" title="abrir MP3"` : ''}>↗</a>`;
       const srcRow = `<div class="yt-row">
-          ${mp3Link}
-          <label><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" /></label>
+          <label><div class="url-wrap"><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" />${mp3Link}</div></label>
           <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
           <button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>
         </div>`;
