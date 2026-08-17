@@ -356,6 +356,7 @@
     .lyrics-check { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; padding-bottom: 8px; font-weight: normal; }
     .lyrics-check input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); margin: 0; width: auto; height: auto; padding: 0; border: none; border-radius: 0; background: none; }
     .tags-row { display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
+    .track-block .tags-row { margin-top: 0; }
     .tags-input { width: 100%; }
     .tag-suggestions { display: flex; flex-wrap: wrap; gap: 4px; min-height: 4px; }
     .tag-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); cursor: pointer; color: var(--muted); line-height: 1.6; user-select: none; }
@@ -721,8 +722,8 @@
           <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
           <button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>
         </div>`;
-      const trackTagsRow = `<div class="tags-row" style="margin-top:4px">
-          <input class="tags-input" data-field="trackTags" data-track="${ti}" value="${escapeHtml((track.tags || []).join(', '))}" placeholder="tags..." />
+      const trackTagsRow = `<div class="tags-row">
+          <label><input class="tags-input" data-field="trackTags" data-track="${ti}" value="${escapeHtml((track.tags || []).join(', '))}" placeholder="tags..." /></label>
           <div class="tag-suggestions">${trackTagSuggestionsHtml(track.tags || [])}</div>
         </div>`;
       return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${removeBtn}${titleLabel}${srcRow}${trackTagsRow}</div>`;
