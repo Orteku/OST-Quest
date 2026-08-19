@@ -345,7 +345,7 @@ async function loadRankingInto(containerId, tab) {
         <td class="rank-pos">${i + 1}</td>
         <td class="rank-name">${_esc(r.username)}${isMe ? ' ★' : ''}</td>
         <td class="rank-pts">${r.pts}</td>
-        <td class="rank-streak">${r.streak || 0}</td>
+        <td class="rank-streak">${r.streak || '—'}</td>
       </tr>`;
     }).join('')}</tbody>
   </table>`;
