@@ -1160,8 +1160,14 @@
 
   let _gpIndex = -1;
   let _activePlayContainer = null; // .track-btns div del track en reproducción
+  let _activeSimpleBtn = null;     // botón suelto (formulario nueva entrada)
 
   function clearActivePlayBtn() {
+    if (_activeSimpleBtn) {
+      _activeSimpleBtn.textContent = "▶ Cargar";
+      _activeSimpleBtn.disabled = false;
+      _activeSimpleBtn = null;
+    }
     if (!_activePlayContainer) return;
     const ti = _activePlayContainer.dataset.track;
     _activePlayContainer.innerHTML = `<button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>`;
@@ -1178,7 +1184,7 @@
       _activePlayContainer = element;
       element.innerHTML = `<button class="small" disabled>Cargando…</button>`;
     } else {
-      _activePlayContainer = null;
+      _activeSimpleBtn = element || null;
       if (element) { element.textContent = "Cargando…"; element.disabled = true; }
     }
 
@@ -1192,15 +1198,15 @@
     audio.src = track.mp3Url;
     $("globalPlayer").classList.add("active");
 
-    const onError = () => {
-      if (isContainer) clearActivePlayBtn();
-      else if (element) { element.textContent = "▶ Cargar"; element.disabled = false; }
-    };
+    const onError = () => { clearActivePlayBtn(); };
 
     audio.addEventListener('loadedmetadata', () => {
       if (track.startSeconds > 0) audio.currentTime = track.startSeconds;
     }, { once: true });
-    audio.addEventListener('canplay', () => { audio.play().catch(onError); }, { once: true });
+    audio.addEventListener('canplay', () => {
+      if (!isContainer && element) { element.textContent = "▶ Cargar"; element.disabled = false; _activeSimpleBtn = null; }
+      audio.play().catch(onError);
+    }, { once: true });
     audio.addEventListener('error', onError, { once: true });
     audio.load();
   }
