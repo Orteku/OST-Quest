@@ -314,6 +314,9 @@
     .mp3-link[href] { color: var(--accent); cursor: pointer; }
     .mp3-link[href]:hover { opacity: 0.75; }
     button.btn-playing { background: #22c55e; border-color: #22c55e; color: #000; }
+    .track-btns { display: flex; gap: 4px; align-items: end; }
+    .meta-fields select { width: 100%; min-width: 0; }
+    .compact select { padding: 6px 8px; }
     input.field-error { border-color: var(--danger) !important; }
     input.field-warn  { border-color: var(--warn) !important; }
     .compact .row {
@@ -580,7 +583,7 @@
       <div class="add-row1">
         <label><span>Juego</span><input id="newGame" placeholder="Nombre del juego" /></label>
         <label><span>Cover URL</span><input id="newCover" class="field-cover" placeholder="https://..." /></label>
-        <label><span>Año</span><input id="newYear" type="number" min="1970" max="2100" step="1" value="2026" /></label>
+        <label><span>Año</span><select id="newYear"></select></label>
         <label><span>Pop (1–6)</span><input id="newPop" type="number" min="1" max="6" step="1" value="5" /></label>
       </div>
       <div class="add-row-tags" style="display:flex;flex-direction:column;gap:5px">
@@ -721,7 +724,7 @@
       const srcRow = `<div class="yt-row">
           <label><div class="url-wrap"><input class="field-youtube" data-field="source" data-track="${ti}" placeholder="URL del MP3…" value="${srcVal}" />${mp3Link}</div></label>
           <label><input class="field-youtube" placeholder="0:00" data-field="startSeconds" data-track="${ti}" value="${stVal}" /></label>
-          <button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>
+          <div class="track-btns" data-track="${ti}"><button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button></div>
         </div>`;
       const trackTagsRow = `<div class="tags-row">
           <label><input class="tags-input" data-field="trackTags" data-track="${ti}" value="${escapeHtml((track.tags || []).join(', '))}" placeholder="tags..." /></label>
@@ -801,6 +804,15 @@
       year:   Number(x.year) || 0,
       tags:   Array.isArray(x.tags) ? x.tags.map(String).filter(Boolean) : [],
     }));
+  }
+
+  function yearSelectHtml(selected) {
+    const cur = new Date().getFullYear();
+    let opts = '';
+    for (let y = cur; y >= 1970; y--) {
+      opts += `<option value="${y}"${Number(selected) === y ? ' selected' : ''}>${y}</option>`;
+    }
+    return opts;
   }
 
   function getAllTags() {
@@ -924,7 +936,7 @@
       }
     });
     const gameInput = row.querySelector('input[data-field="game"]');
-    const yearInput = row.querySelector('input[data-field="year"]');
+    const yearInput = row.querySelector('[data-field="year"]');
     if (gameInput && yearInput) validateGameYearInputs(gameInput, yearInput, item.game, item.year, index);
   }
 
@@ -944,7 +956,7 @@
         });
       } else if (field === 'gameyear') {
         const gi = row.querySelector('input[data-field="game"]');
-        const yi = row.querySelector('input[data-field="year"]');
+        const yi = row.querySelector('[data-field="year"]');
         if (gi && yi) validateGameYearInputs(gi, yi, item.game, item.year, idx);
       }
     });
@@ -983,7 +995,7 @@
           <label><span>Juego</span><input class="game-input" data-field="game" value="${escapeHtml(item.game)}" /></label>
           <label><span>Cover URL</span><input class="field-cover" data-field="cover" value="${escapeHtml(item.cover)}" placeholder="https://..." /></label>
           <button class="small" data-action="reloadCover">↺ Cover</button>
-          <label><span>Año</span><input type="number" min="1970" max="2100" step="1" data-field="year" value="${escapeHtml(item.year)}" /></label>
+          <label><span>Año</span><select data-field="year">${yearSelectHtml(item.year)}</select></label>
           <label><span>Pop</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
         </div>
         <div class="tags-row">
@@ -1147,22 +1159,28 @@
   }
 
   let _gpIndex = -1;
-  let _activePlayBtn = null;
+  let _activePlayContainer = null; // .track-btns div del track en reproducción
 
   function clearActivePlayBtn() {
-    if (!_activePlayBtn) return;
-    _activePlayBtn.textContent = "▶ Cargar";
-    _activePlayBtn.disabled = false;
-    _activePlayBtn.classList.remove("btn-playing");
-    _activePlayBtn = null;
+    if (!_activePlayContainer) return;
+    const ti = _activePlayContainer.dataset.track;
+    _activePlayContainer.innerHTML = `<button class="small" data-action="loadTrack" data-track="${ti}">▶ Cargar</button>`;
+    _activePlayContainer = null;
   }
 
-  function loadTrackInPlayer(track, gameName, coverUrl, btn) {
+  function loadTrackInPlayer(track, gameName, coverUrl, element) {
     if (!track?.mp3Url) return;
     clearActivePlayBtn();
     stopAllMedia();
-    _activePlayBtn = btn;
-    if (btn) { btn.textContent = "Cargando…"; btn.disabled = true; }
+
+    const isContainer = element?.classList?.contains('track-btns');
+    if (isContainer) {
+      _activePlayContainer = element;
+      element.innerHTML = `<button class="small" disabled>Cargando…</button>`;
+    } else {
+      _activePlayContainer = null;
+      if (element) { element.textContent = "Cargando…"; element.disabled = true; }
+    }
 
     const audio = $("gpAudio");
     $("gpGame").textContent = gameName;
@@ -1174,11 +1192,16 @@
     audio.src = track.mp3Url;
     $("globalPlayer").classList.add("active");
 
+    const onError = () => {
+      if (isContainer) clearActivePlayBtn();
+      else if (element) { element.textContent = "▶ Cargar"; element.disabled = false; }
+    };
+
     audio.addEventListener('loadedmetadata', () => {
       if (track.startSeconds > 0) audio.currentTime = track.startSeconds;
     }, { once: true });
-    audio.addEventListener('canplay', () => { audio.play().catch(() => clearActivePlayBtn()); }, { once: true });
-    audio.addEventListener('error', () => clearActivePlayBtn(), { once: true });
+    audio.addEventListener('canplay', () => { audio.play().catch(onError); }, { once: true });
+    audio.addEventListener('error', onError, { once: true });
     audio.load();
   }
 
@@ -1186,7 +1209,7 @@
     _gpIndex = index;
     const item = db[index];
     const track = item.tracks[ti];
-    loadTrackInPlayer(track, item.game, item.cover, btn);
+    loadTrackInPlayer(track, item.game, item.cover, btn.closest('.track-btns') ?? btn);
   }
 
   function reloadRowCover(row) {
@@ -1208,7 +1231,7 @@
   }
 
   list.addEventListener("change", (e) => {
-    if (e.target.matches("input[data-field]")) updateItemFromInput(e.target);
+    if (e.target.matches("input[data-field], select[data-field]")) updateItemFromInput(e.target);
   });
 
   list.addEventListener("keydown", (e) => {
@@ -1276,9 +1299,13 @@
     const index = Number(row.dataset.index);
     const action = btn.dataset.action;
 
-    if (action === "loadTrack") {
+    if (action === "loadTrack" || action === "reloadTrack") {
       const ti = Number(btn.dataset.track || 0);
       loadInGlobalPlayer(index, ti, btn);
+    } else if (action === "togglePlay") {
+      const audio = $("gpAudio");
+      if (audio.paused) audio.play().catch(() => {});
+      else audio.pause();
     } else if (action === "reloadCover") {
       reloadRowCover(row);
     } else if (action === "addTrack") {
@@ -1397,6 +1424,11 @@
     validateGameYearInputs($("newGame"), $("newYear"), $("newGame").value.trim(), Number($("newYear").value) || 0, -1, false);
   }
   ["newCover", "newMp3Url", "newGame", "newYear"].forEach(id => $(id).addEventListener("change", validateNewForm));
+
+  (function() {
+    const sel = $("newYear"); const cur = new Date().getFullYear();
+    for (let y = cur; y >= 1970; y--) { const o = document.createElement('option'); o.value = o.textContent = y; if (y === cur) o.selected = true; sel.appendChild(o); }
+  })();
 
   $("toggleAdd").addEventListener("click", () => {
     $("addPanel").classList.toggle("open");
@@ -1536,13 +1568,23 @@
     if (!isNaN(saved)) audio.volume = Math.max(0, Math.min(1, saved));
     audio.addEventListener('volumechange', () => localStorage.setItem('gpVolume', audio.volume));
     audio.addEventListener('play', () => {
-      if (_activePlayBtn) {
-        _activePlayBtn.textContent = "Reproduciendo";
-        _activePlayBtn.classList.add("btn-playing");
-        _activePlayBtn.disabled = false;
+      if (!_activePlayContainer) return;
+      const ti = _activePlayContainer.dataset.track;
+      const toggleBtn = _activePlayContainer.querySelector('[data-action="togglePlay"]');
+      if (toggleBtn) {
+        toggleBtn.textContent = '⏸';
+      } else {
+        _activePlayContainer.innerHTML = `
+          <button class="small" data-action="reloadTrack" data-track="${ti}" title="Recargar">↺</button>
+          <button class="small btn-playing" data-action="togglePlay" data-track="${ti}">⏸</button>`;
       }
     });
-    audio.addEventListener('pause', clearActivePlayBtn);
+    audio.addEventListener('pause', () => {
+      if (audio.seeking) return;
+      if (!_activePlayContainer) return;
+      const toggleBtn = _activePlayContainer.querySelector('[data-action="togglePlay"]');
+      if (toggleBtn) toggleBtn.textContent = '▶';
+    });
     audio.addEventListener('ended', clearActivePlayBtn);
   })();
 
