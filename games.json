@@ -14907,5 +14907,133 @@
       ],
       "trackIndex": 2
     }
+  ],
+  "2027-08-19": [
+    {
+      "answerId": 529,
+      "coverIds": [
+        191,
+        529,
+        105,
+        79
+      ],
+      "trackIndex": 2
+    },
+    {
+      "answerId": 245,
+      "coverIds": [
+        245,
+        356,
+        169,
+        511
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 649,
+      "coverIds": [
+        649,
+        61,
+        84,
+        433
+      ],
+      "trackIndex": 0
+    }
+  ],
+  "2027-08-20": [
+    {
+      "answerId": 345,
+      "coverIds": [
+        699,
+        540,
+        389,
+        345
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 333,
+      "coverIds": [
+        333,
+        600,
+        291,
+        151
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 39,
+      "coverIds": [
+        216,
+        449,
+        255,
+        39
+      ],
+      "trackIndex": 0
+    }
+  ],
+  "2027-08-21": [
+    {
+      "answerId": 561,
+      "coverIds": [
+        561,
+        527,
+        321,
+        366
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 171,
+      "coverIds": [
+        171,
+        452,
+        571,
+        584
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 122,
+      "coverIds": [
+        101,
+        383,
+        122,
+        204
+      ],
+      "trackIndex": 0
+    }
+  ],
+  "2027-08-22": [
+    {
+      "answerId": 224,
+      "coverIds": [
+        418,
+        328,
+        224,
+        348
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 337,
+      "coverIds": [
+        49,
+        259,
+        167,
+        337
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 353,
+      "coverIds": [
+        289,
+        435,
+        353,
+        204
+      ],
+      "trackIndex": 0
+    }
   ]
 }

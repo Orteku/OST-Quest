@@ -103,7 +103,7 @@ async function _handleOAuthMessage(event) {
   if (linked) {
     // Vínculo de proveedor completado — actualizar sesión y refrescar modal de perfil
     _token = token;
-    localStorage.setItem(_TOKEN_KEY, token);
+    localStorage.setItem(_JWT_KEY, token);
     await openProfileModal();
     return;
   }
@@ -351,32 +351,26 @@ async function loadRankingInto(containerId, tab) {
   </table>`;
 }
 
-async function openRankingModal() {
-  _rankTab = 'weekly';
-  document.getElementById('auth-modal-inner').innerHTML = `
-    <button class="modal__close-x" id="auth-close">&times;</button>
-    <h2 class="auth-title">${t('ranking_title')}</h2>
-    <div class="rank-tabs">
-      <button class="rank-tab rank-tab--active" id="rtab-weekly">${t('ranking_weekly')}</button>
-      <button class="rank-tab" id="rtab-global">${t('ranking_global')}</button>
-    </div>
-    <div id="rank-content" class="rank-content"><p class="rank-empty">${t('ranking_loading')}</p></div>
-  `;
-  document.getElementById('auth-modal').style.display = 'flex';
-  document.getElementById('auth-close').addEventListener('click', closeAuthModal);
-  document.getElementById('rtab-weekly').addEventListener('click', () => {
-    _rankTab = 'weekly';
-    document.getElementById('rtab-weekly').classList.add('rank-tab--active');
-    document.getElementById('rtab-global').classList.remove('rank-tab--active');
-    loadRankingInto('rank-content', 'weekly');
+// ─── customConfirm ────────────────────────────────────────────────────────────
+
+function customConfirm(message) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML = `
+      <div style="background:#18191e;border:1px solid #2c2c34;border-radius:14px;padding:28px 24px;max-width:320px;width:100%;text-align:center">
+        <p style="font-family:Barlow,sans-serif;font-size:14px;color:#ddd9cf;line-height:1.5;margin-bottom:20px">${message}</p>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button id="cc-cancel" style="flex:1;padding:10px;border-radius:8px;border:1px solid #2a2a34;background:#20202a;color:#ddd9cf;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">${t('btn_close')}</button>
+          <button id="cc-ok" style="flex:1;padding:10px;border-radius:8px;border:none;background:#7a1010;color:#ffc0c0;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">${t('auth_delete_account')}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const cleanup = val => { overlay.remove(); resolve(val); };
+    overlay.querySelector('#cc-ok').addEventListener('click', () => cleanup(true));
+    overlay.querySelector('#cc-cancel').addEventListener('click', () => cleanup(false));
+    overlay.addEventListener('click', e => { if (e.target === overlay) cleanup(false); });
   });
-  document.getElementById('rtab-global').addEventListener('click', () => {
-    _rankTab = 'global';
-    document.getElementById('rtab-global').classList.add('rank-tab--active');
-    document.getElementById('rtab-weekly').classList.remove('rank-tab--active');
-    loadRankingInto('rank-content', 'global');
-  });
-  await loadRankingInto('rank-content', 'weekly');
 }
 
 // ─── Stats desde servidor ─────────────────────────────────────────────────────

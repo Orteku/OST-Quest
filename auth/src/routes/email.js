@@ -1,5 +1,5 @@
 import { hashPassword, verifyPassword } from '../lib/password.js';
-import { signJwt } from '../lib/jwt.js';
+import { signJwt, verifyJwt } from '../lib/jwt.js';
 import { sendPasswordResetEmail } from '../lib/mailer.js';
 import { json } from '../lib/cors.js';
 
@@ -62,7 +62,7 @@ export async function handleForgotPassword(request, env, db) {
 
   const user = await db.getUserByEmail(email.toLowerCase());
   // Devolvemos OK igualmente para no revelar si el email existe
-  if (!user || user.provider !== 'email') return json({ ok: true }, 200, request);
+  if (!user || !user.password_hash) return json({ ok: true }, 200, request);
 
   const token     = generateHexToken();
   const expiresAt = new Date(Date.now() + 3_600_000).toISOString(); // 1 hora
@@ -81,7 +81,6 @@ export async function handleChangePassword(request, env, db) {
   const jwt   = auth.startsWith('Bearer ') ? auth.slice(7) : null;
   if (!jwt) return json({ error: 'unauthorized' }, 401, request);
 
-  const { verifyJwt } = await import('../lib/jwt.js');
   const payload = await verifyJwt(jwt, env.JWT_SECRET);
   if (!payload) return json({ error: 'invalid_token' }, 401, request);
 

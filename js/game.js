@@ -1,6 +1,5 @@
 // OST Quest - Main Game Controller
 
-const ARCHIVE_START = '2026-06-08'; // Primera quest disponible
 
 let currentGroups  = [];
 let colStates      = [];
@@ -799,7 +798,7 @@ function openArchive() {
 
   // Generar todos los días desde el inicio hasta ayer
   const days = [];
-  const cur  = new Date(ARCHIVE_START + 'T12:00:00Z');
+  const cur  = new Date(QUEST_START + 'T12:00:00Z');
   while (true) {
     const ds = cur.toISOString().slice(0, 10);
     if (ds >= today) break;
@@ -1148,7 +1147,7 @@ function openGmPanel() {
           const [picked] = weightedPickN(pool, answer, answerEffTags, WEIGHTS.normal, Math.random, 1);
           decoyId = picked.id;
         } else if (usedIds.has(decoyId)) {
-          errorEl.textContent = `"${byId[decoyId]?.game}" ya está en uso.`;
+          errorEl.textContent = t('gm_error_in_use').replace('{name}', byId[decoyId]?.game);
           return;
         }
         resolvedDecoys.push(decoyId);

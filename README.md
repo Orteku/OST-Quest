@@ -1,103 +1,135 @@
-# OST Quest 🎮🎵
+# Oesti Quest
 
-Juego diario de bandas sonoras de videojuegos. Escucha un fragmento de 30 segundos y elige el juego correcto entre 4 portadas. Mismo juego para todo el mundo, se renueva a las 03:00 UTC.
+Juego diario de bandas sonoras de videojuegos. Escucha un fragmento y elige el juego correcto entre 4 portadas. La misma quest para todo el mundo, se renueva a las 03:00 UTC.
 
 ## Estructura del proyecto
 
 ```
 ostquest/
-├── index.html        # Página principal
-├── games.json        # Juegos pre-generados por fecha
-├── update.js         # Script para actualizar games.json (Node.js)
+├── index.html              # Página principal
+├── soundtracks.html        # Lista de canciones
+├── ranking.html            # Ranking de jugadores
+├── privacy.html            # Política de privacidad
+├── terms.html              # Términos de servicio
+├── games.json              # Quests pregeneradas (generado por update.js)
+├── sitemap.xml
+├── robots.txt
+├── update.js               # Regenera games.json (Node.js)
+├── backfill.js             # Rellena los últimos 30 días sin sobreescribir
+├── check-links.js          # Verifica que las URLs de audio siguen activas
 ├── css/
-│   └── style.css     # Estilos
+│   └── style.css
 ├── js/
-│   ├── database.js   # Base de datos de juegos
-│   ├── daily.js      # Juego diario, estadísticas y progreso
-│   ├── assets.js     # Carga de portadas (IGDB / thumbnail YouTube)
-│   ├── youtube.js    # Reproductor de audio (YouTube IFrame API)
-│   └── game.js       # Controlador principal del juego
-└── README.md
+│   ├── database.js         # GAME_DB: 500+ juegos con portadas, audio, tags, pop, year
+│   ├── i18n.js             # Internacionalización (es / en)
+│   ├── daily.js            # Carga de games.json, lógica de fecha, persistencia, Quest Log
+│   ├── algorithm.js        # Selección ponderada de grupos (compartido con update.js)
+│   ├── assets.js           # Extrae portada y URL de audio de cada entrada
+│   ├── player.js           # Reproductor de audio HTML5
+│   ├── supabase.js         # Cliente Supabase (scores, stats, ranking)
+│   ├── auth.js             # Autenticación (email, Google, Discord, Twitter, Twitch)
+│   └── game.js             # Controlador principal: juego, modales, modo GM
+├── locales/
+│   ├── es.json             # Textos en español
+│   └── en.json             # Textos en inglés
+├── auth/                   # Cloudflare Worker (backend de autenticación)
+│   └── src/
+│       ├── index.js        # Router principal
+│       ├── routes/         # email.js, oauth.js, profile.js, score.js, ranking.js
+│       ├── lib/            # jwt.js, password.js, mailer.js, cors.js, db.js
+│       └── wrangler.toml
+└── database_editor/        # Herramienta interna para editar database.js
 ```
+
+**Orden de carga de scripts en el browser:**
+`database.js` → `i18n.js` → `daily.js` → `algorithm.js` → `assets.js` → `player.js` → `supabase.js` → `auth.js` → `game.js`
 
 ## Despliegue
 
-Proyecto de HTML/CSS/JS puro, sin backend ni build step. Funciona en cualquier hosting estático.
+Proyecto estático (HTML/CSS/JS puro, sin bundler). Publicado en GitHub Pages.
 
-### GitHub Pages (gratis)
-1. Sube la carpeta a un repositorio de GitHub
-2. Settings → Pages → Source: `main branch / root`
-3. URL: `https://tuusuario.github.io/ostquest`
-
-### Servidor local (para desarrollo)
+### Servidor local (desarrollo)
 ```bash
-cd ostquest
 python -m http.server 8000
 # Abrir http://localhost:8000
 ```
-> El audio de YouTube puede no funcionar en local por restricciones del navegador. En hosting funciona sin problemas.
+
+### Backend (Cloudflare Worker)
+```bash
+cd auth
+npx wrangler deploy
+```
+El Worker gestiona autenticación, scores y ranking. Se conecta a Supabase como base de datos.
 
 ## Cómo funciona
 
 ### Juego diario
-El juego de cada día está pre-generado en `games.json`. Al cargar la página se lee el juego correspondiente a la fecha actual (UTC, el día cambia a las 03:00 UTC). Si por algún motivo no existe la entrada para ese día, cae a un sistema de generación por semilla como fallback.
+Las quests están pregeneradas en `games.json`. Al cargar la página se lee la entrada correspondiente a la fecha actual (UTC, el día cambia a las 03:00 UTC). `games.json` almacena solo IDs (`answerId`, `coverIds[]`, `trackIndex`); el browser reconstruye los objetos completos desde `GAME_DB` en `database.js`.
 
 ### Audio
-Usa la **YouTube IFrame API** oficial. Al pulsar play se carga el vídeo de YouTube correspondiente en un reproductor invisible y se reproduce durante 30 segundos. No requiere API key.
-
-### Portadas
-Cada juego en `database.js` puede tener:
-- `cover`: URL directa a una imagen portrait (recomendado). Se usan URLs de IGDB (`images.igdb.com`).
-- Si no hay `cover`, usa el thumbnail de YouTube (`hqdefault.jpg`) como fallback.
+Usa la API de audio HTML5. Las URLs apuntan principalmente a Archive.org y KHInsider. El reproductor aplica prewarm silencioso al cargar la quest; si falla, reintenta hasta 3 veces con backoff (3 s / 8 s / 15 s). Si el usuario pulsa play y el audio aún no está listo, se realiza un intento fresco.
 
 ### Grupos equilibrados
-Cada grupo de 4 portadas tiene juegos con popularidad similar (campo `pop`, rango ±2). Así se evita mezclar un juego muy oscuro con tres AAA superconocidos, lo que haría trivial adivinar.
+Cada grupo de 4 portadas (1 respuesta + 3 señuelos) se selecciona con el algoritmo de `algorithm.js`:
+- **Filtro duro**: `|pop_señuelo - pop_respuesta| ≤ 1`
+- **Scoring ponderado**: proximidad de año + Jaccard de effective tags + aleatoriedad
+- **Modo normal** (`year: 0.30, tags: 0.15, random: 0.55`) — predomina la aleatoriedad
+- **Modo estricto** (`year: 0.55, tags: 0.35, random: 0.10`) — prima año y tags
+- Cada quest asigna aleatoriamente el modo estricto a uno de sus tres grupos
 
 **Escala de popularidad (1-6):**
-- **6** — Iconos absolutos, conocidos más allá del gaming. *Mario, Zelda, GTA, Minecraft*
-- **5** — Grandes éxitos, cualquier gamer los conoce. *The Last of Us, Elden Ring, The Witcher 3*
-- **4** — Muy conocidos dentro del hobby. *Hollow Knight, Persona 5, Celeste*
-- **3** — Conocidos por aficionados. *Grim Fandango, Transistor, Ace Combat 04*
-- **2** — Nicho, de culto o muy retro con audiencia reducida. *Lufia II...*
-- **1** — Reservado para juegos muy desconocidos fuera de su comunidad específica
+- **6** — Iconos absolutos, conocidos más allá del gaming. *Mario, Zelda, GTA*
+- **5** — Grandes éxitos, cualquier gamer los conoce. *Elden Ring, The Witcher 3*
+- **4** — Muy conocidos dentro del hobby. *Hollow Knight, Persona 5*
+- **3** — Conocidos por aficionados. *Transistor, Ace Combat 04*
+- **2** — Nicho o muy retro. *Lufia II...*
+- **1** — Reservado para juegos muy desconocidos
 
 ### Progreso y estadísticas
 - El progreso de cada partida se guarda en `localStorage` (`ostquest_prog_YYYY-MM-DD`)
-- Las estadísticas globales (jugadas, racha, % aciertos) se guardan en `ostquest_stats`
-- El Quest Log muestra los últimos 14 días con su resultado
-- Las partidas del Quest Log no afectan a las estadísticas ni a la racha
+- Las estadísticas globales se guardan en `ostquest_stats` (local) y en Supabase (si hay sesión)
+- El Quest Log muestra todos los días desde el inicio del juego (`QUEST_START`)
+- Las partidas del Quest Log no afectan a estadísticas ni racha
+
+### Autenticación y ranking
+El backend es un Cloudflare Worker (`auth/`) que se conecta a Supabase. Métodos de login: email/contraseña, Google, Discord, Twitter/X y Twitch. Al iniciar sesión, las estadísticas locales se migran a la cuenta. El ranking es semanal (lunes–domingo) y global.
+
+La puntuación por quest es: 100 pts (3/3) · 66 pts (2/3) · 33 pts (1/3). La racha activa suma +10 pts por quest perfecta consecutiva.
 
 ## Actualizar la base de datos
 
-Cuando añadas o modifiques juegos en `database.js`, ejecuta:
+Tras añadir o modificar juegos en `database.js`:
 
 ```bash
 node update.js
 ```
 
-El script **preserva todos los días hasta hoy** (el historial no se altera) y **regenera desde mañana** en adelante con la base de datos actualizada. Genera 365 días de juegos futuros.
+El script preserva todos los días hasta hoy y regenera desde mañana en adelante con la base de datos actualizada (365 días futuros).
 
-Después haz commit y push de `database.js` y `games.json` juntos.
-
-## Ampliar la base de datos
-
-Edita `js/database.js` y añade entradas al array `GAME_DB`:
+## Estructura de una entrada en GAME_DB
 
 ```js
 {
-  id: 116,                    // ID único (no repetir)
-  game: "Nombre del juego",   // Nombre visible al jugador
-  cover: "https://...",       // URL portrait opcional (recomendado ~400x600px)
-  youtubeId: "ID_DEL_VIDEO",  // ID del vídeo de YouTube (parte de la URL tras ?v=)
-  startSeconds: 60,           // Segundo donde empieza el fragmento de audio
-  pop: 4,                     // Popularidad 1-6 (equilibra los grupos)
-  year: 2020                  // Año de lanzamiento (informativo)
+  id: 116,
+  game: "Nombre del juego",
+  cover: "https://images.igdb.com/igdb/image/upload/t_cover_big/CODIGO.jpg",
+  pop: 4,         // Popularidad 1-6
+  year: 2020,     // Año de lanzamiento
+  tags: ['rpg', 'action'],
+  tracks: [
+    {
+      title: "Nombre de la canción",
+      mp3Url: "https://archive.org/download/...",
+      startSeconds: 30,       // opcional
+      tags: ['lyrics'],       // opcional, solo si la pista tiene letra vocal
+    }
+  ]
 }
 ```
 
+Tags de juego disponibles: `rpg`, `action`, `fps`, `platformer`, `strategy`, `racing`, `fighting`, `puzzle`, `horror`, `adventure`, `simulation`, `rhythm`, `roguelike`, `metroidvania`, `sandbox`, `mmo`, `stealth`, `indie`, `visual-novel`.
+
 **Cómo encontrar portadas en IGDB:**
 1. Busca el juego en [igdb.com](https://www.igdb.com)
-2. En la URL de la portada, copia el código (ej. `co4jni`)
+2. Copia el código de la URL de la portada (ej. `co4jni`)
 3. URL: `https://images.igdb.com/igdb/image/upload/t_cover_big/CODIGO.jpg`
-
-**Nota sobre vídeos de Nintendo:** Nintendo retira periódicamente vídeos de YouTube por copyright. Si una portada o audio falla, busca un nuevo vídeo de la BSO en YouTube, copia el ID de la URL y actualiza `youtubeId` en `database.js`.

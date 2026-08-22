@@ -478,15 +478,6 @@ body.theme--light .site-tagline { color: #9898a8; }
   background: rgba(255, 196, 0, 0.12);
 }
 
-.tutorial-step__icon--score {
-  font-size: 10px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 800;
-  flex-direction: column;
-  gap: 1px;
-  letter-spacing: 0.5px;
-}
-
 .tutorial-hit  { color: #b8e030; }
 .tutorial-miss { color: #c84040; }
 
@@ -750,7 +741,6 @@ body.theme--light .site-tagline { color: #9898a8; }
 .archive__badge--ok      { background: #1a3008; color: #6bc832; }
 .archive__badge--partial { background: #2a2000; color: #d4a820; }
 .archive__badge--fail    { background: #300808; color: #c84040; }
-.archive__badge--new     { background: #1e1e24; color: #7a9af0; }
 .archive__badge--ongoing { background: #1c1c20; color: #a080e0; }
 
 /* ─── Toast ──────────────────────────────────────────────────────────────────── */
@@ -1311,7 +1301,6 @@ body.theme--light .archive__month-sep { color: #9898a8; }
 body.theme--light .archive__badge--ok      { background: #d4f0b8; color: #2e5808; }
 body.theme--light .archive__badge--partial { background: #f8ecc0; color: #7a5800; }
 body.theme--light .archive__badge--fail    { background: #f8d8d8; color: #a02020; }
-body.theme--light .archive__badge--new     { background: #d8e4f8; color: #28488a; }
 body.theme--light .archive__badge--ongoing { background: #e8d8f8; color: #502880; }
 
 /* Toast */
@@ -1648,6 +1637,7 @@ body.theme--light .profile-delete-btn:hover { background: #f8e8e8; border-color:
 }
 .rank-table td { padding: 7px 8px; border-bottom: 1px solid #222228; }
 .rank-th--pos    { text-align: center !important; }
+.rank-th--name   { text-align: left !important; }
 .rank-th--pts    { text-align: right !important; }
 .rank-th--streak { text-align: right !important; }
 .rank-pos { width: 1%; white-space: nowrap; color: #555560; text-align: center; }
