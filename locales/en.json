@@ -56,7 +56,7 @@
   "tutorial_archive_h": "Quest Log",
   "tutorial_archive_b": "Replay all past quests.",
   "tutorial_stats_h": "Stats",
-  "tutorial_stats_b": "Your consecutive quest chain, accuracy and perfect quests.",
+  "tutorial_stats_b": "Your consecutive quest chain, accuracy, and perfect quests.",
   "msg_fail": [
     "Bad luck",
     "Next time",
@@ -109,7 +109,7 @@
   "auth_connected_accounts": "Connected accounts",
   "auth_connect": "Connect",
   "auth_disconnect": "Disconnect",
-  "auth_not_configured": "Not configured",
+  "auth_not_configured": "Not set up",
   "auth_current_password": "Current password",
   "auth_new_password": "New password",
   "auth_confirm_password": "Confirm password",
