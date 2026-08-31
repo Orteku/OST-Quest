@@ -20,6 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/png" sizes="48x48" href="img/logo.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7677038770205132" crossorigin="anonymous"></script>
   <style>
     .score-bar { display: none !important; }
 
@@ -125,6 +126,7 @@
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
       </button>
+      <button class="icon-btn" id="btn-auth" aria-label="Cuenta"></button>
     </div>
   </header>
 
@@ -607,6 +609,7 @@
 <div class="st-entry"><h2 class="st-game">Omori<span class="st-year">2020</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">World's End Valentine</span><span class="st-track__artist">Pedro Silva</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">Onimusha: Dawn of Dreams<span class="st-year">2006</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Jubei Yagyu (Red Theme)</span><span class="st-track__artist">Hideyuki Fukasawa</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">Onimusha: Warlords<span class="st-year">2001</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Samanosuke Theme</span><span class="st-track__artist">Mamoru Samuragochi</span></li></ul></div>
+<div class="st-entry"><h2 class="st-game">Onimusha: Way of the Sword<span class="st-year">2026</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Kimon – Main Menu</span><span class="st-track__artist">Nozomi Ohmoto</span></li><li class="st-track"><span class="st-track__title">Sasaki Ganryu Battle Theme</span><span class="st-track__artist">Marika Suzuki</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">Ori and the Blind Forest<span class="st-year">2015</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Ori, Lost In the Storm (feat. Aeralie Brighton)</span><span class="st-track__artist">Gareth Coker</span></li><li class="st-track"><span class="st-track__title">Up the Spirit Caverns Walls (feat. Tom Boyd)</span><span class="st-track__artist">Gareth Coker</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">Ori and the Will of the Wisps<span class="st-year">2020</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Ku's First Flight</span><span class="st-track__artist">Gareth Coker</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">Orwell: Keeping an Eye on You<span class="st-year">2016</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Orwell (Title Theme)</span><span class="st-track__artist">Matthew Mclean</span></li></ul></div>
@@ -785,6 +788,7 @@
 <div class="st-entry"><h2 class="st-game">The Alters<span class="st-year">2025</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">What If (The Alters Song)</span><span class="st-track__artist">Piotr Musiał ft. Alex Jordan</span></li><li class="st-track"><span class="st-track__title">The Alters Theme</span><span class="st-track__artist">Piotr Musiał</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">The Awesome Adventures of Captain Spirit<span class="st-year">2018</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Death With Dignity</span><span class="st-track__artist">Sufjan Stevens</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">The Binding of Isaac<span class="st-year">2011</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Sacrificial</span><span class="st-track__artist">Danny Baranowsky</span></li></ul></div>
+<div class="st-entry"><h2 class="st-game">The Blood of Dawnwalker<span class="st-year">2026</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Main Theme</span><span class="st-track__artist">Nikola Kołodziejczyk</span></li><li class="st-track"><span class="st-track__title">Desperate Meausres</span><span class="st-track__artist">Piotr Musiał</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">The Curse of Monkey Island<span class="st-year">1997</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">The Curse of Monkey Island</span><span class="st-track__artist">Michael Land</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">The Elder Scroll Online<span class="st-year">2014</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Greenheart</span><span class="st-track__artist">Brad Derrick</span></li></ul></div>
 <div class="st-entry"><h2 class="st-game">The Elder Scrolls IV: Oblivion<span class="st-year">2006</span></h2><ul class="st-tracks"><li class="st-track"><span class="st-track__title">Reign of the Septims</span><span class="st-track__artist">Jeremy Soule</span></li></ul></div>
@@ -917,14 +921,20 @@
 <div id="modal" role="dialog" aria-modal="true">
   <div id="modal-inner"></div>
 </div>
+<div id="auth-modal" role="dialog" aria-modal="true">
+  <div id="auth-modal-inner"></div>
+</div>
 <div id="toast" role="status" aria-live="polite"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/database.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/daily.js"></script>
 <script src="js/algorithm.js"></script>
 <script src="js/assets.js"></script>
 <script src="js/player.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/game.js"></script>
 <script src="js/soundtracks.js"></script>
 </body>

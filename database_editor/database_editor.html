@@ -1482,18 +1482,31 @@
     const track = { title, artist, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: trackTags };
 
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
+    const newIndex = db.length;
     db.push({ id: maxId + 1, game, cover, pop, year, tags, tracks: [track] });
+    const newItem = db[newIndex];
+    _addToIdx(_coverIdx, newItem.cover, newIndex);
+    newItem.tracks.forEach(t => _addToIdx(_audioIdx, t.mp3Url, newIndex));
+    _addToIdx(_gyIdx, _gyKey(newItem.game, newItem.year), newIndex);
+    const sa = rowSearchAttrs(newItem);
+    const article = document.createElement('article');
+    article.className = 'row';
+    article.dataset.index = String(newIndex);
+    for (const [attr, val] of Object.entries(sa)) article.setAttribute(attr, val);
+    list.appendChild(article);
+    const q = $("search").value.trim().toLowerCase();
+    if (q) {
+      const sAttr = SEARCH_ATTR[$("searchField").value] || 'data-search';
+      const hay = (article.getAttribute(sAttr) || '').trim();
+      const hidden = q === '<empty>' ? hay !== '' : !q.split(/\s+/).every(w => hay.includes(w));
+      article.classList.toggle("hidden", hidden);
+    }
+    fillRow(article);
     setDirty(true);
+    updateStats();
     $("clearNew").click();
     $("addPanel").classList.remove("open");
-    render();
-    setTimeout(() => {
-      fillAllRows();
-      requestAnimationFrame(() => {
-        const lastRow = list.querySelector(".row:last-child");
-        if (lastRow) lastRow.scrollIntoView({ behavior: "smooth", block: "end" });
-      });
-    }, 50);
+    requestAnimationFrame(() => article.scrollIntoView({ behavior: "smooth", block: "end" }));
   });
 
   function loadText(text, filename) {
@@ -1882,11 +1895,12 @@
 
   async function runPartialSync(entries, label) {
     const status = $("supabaseStatus");
+    status.textContent = "Guardando...";
+    status.className = "sheets-status";
+    await new Promise(r => setTimeout(r, 0));
     const now = new Date();
     const stamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}-${String(now.getHours()).padStart(2,"0")}${String(now.getMinutes()).padStart(2,"0")}`;
     download(`database-${stamp}.js`, toJs(), "text/javascript;charset=utf-8");
-    status.textContent = "Guardando...";
-    status.className = "sheets-status";
     try {
       const client = getSupaClient();
       const table = $("supabaseTableInput").value.trim() || "games";

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sobre Oesti Quest: quiénes somos, por qué lo creamos y cómo puedes contactarnos.">
+  <title>Sobre el proyecto — Oesti Quest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" sizes="48x48" href="img/logo.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7677038770205132" crossorigin="anonymous"></script>
+  <style>
+    .score-bar { display: none !important; }
+
+    .about-wrap {
+      max-width: 680px;
+      margin: 28px auto 0;
+    }
+
+    /* ── Sección ── */
+    .about-section {
+      margin-bottom: 40px;
+    }
+    .about-section-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; color: #555960;
+      margin-bottom: 14px;
+    }
+
+    /* ── Intro ── */
+    .about-intro {
+      font-size: 14px; color: #9898a8; line-height: 1.7;
+    }
+    .about-intro strong { color: #b8e030; font-weight: 600; }
+
+    /* ── Tarjetas de creadores ── */
+    .about-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 520px) { .about-cards { grid-template-columns: 1fr; } }
+
+    .about-card {
+      background: #14141e;
+      border: 1px solid #1e1e2e;
+      border-radius: 12px;
+      padding: 20px 18px;
+    }
+    .about-card__avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px; font-weight: 800; letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .about-card__avatar--o { background: rgba(184,224,48,0.12); color: #b8e030; }
+    .about-card__avatar--v { background: rgba(160,128,224,0.12); color: #a080e0; }
+
+    .about-card__name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 17px; font-weight: 800; letter-spacing: 0.5px;
+      color: #ddd9cf; margin-bottom: 6px;
+    }
+    .about-card__role {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #555960;
+      margin-bottom: 10px;
+    }
+    .about-card__bio {
+      font-size: 13px; color: #7a7a88; line-height: 1.65;
+    }
+
+    /* ── Formulario de contacto ── */
+    .about-contact-text {
+      font-size: 14px; color: #9898a8; line-height: 1.7;
+      margin-bottom: 18px;
+    }
+
+    .about-form {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .about-form__field {
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .about-form__label {
+      font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+      color: #7a7a88;
+    }
+    .about-form__input,
+    .about-form__textarea {
+      background: #14141e;
+      border: 1px solid #2e2e3e;
+      border-radius: 8px;
+      color: #ddd9cf;
+      font-size: 14px;
+      font-family: inherit;
+      padding: 10px 12px;
+      transition: border-color 0.15s;
+      resize: none;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .about-form__input:focus,
+    .about-form__textarea:focus { border-color: #b8e030; }
+    .about-form__textarea { min-height: 120px; }
+
+    .about-form__send {
+      align-self: flex-start;
+      background: #b8e030; color: #0e0e14;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
+      border: none; border-radius: 8px;
+      padding: 10px 22px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .about-form__send:hover { background: #c8f040; }
+
+    .about-form__note {
+      font-size: 12px; color: #555960; margin-top: 2px;
+    }
+
+    /* ── Light theme ── */
+    body.theme--light .about-section-title { color: #9898a8; }
+    body.theme--light .about-intro         { color: #5a5a68; }
+    body.theme--light .about-intro strong  { color: #4a6c10; }
+    body.theme--light .about-card          { background: #f4f4ec; border-color: #d0ccc4; }
+    body.theme--light .about-card__avatar--o { background: rgba(74,108,16,0.1); color: #4a6c10; }
+    body.theme--light .about-card__avatar--v { background: rgba(80,40,128,0.1); color: #502880; }
+    body.theme--light .about-card__name    { color: #1e1d28; }
+    body.theme--light .about-card__role    { color: #9898a8; }
+    body.theme--light .about-card__bio     { color: #5a5a68; }
+    body.theme--light .about-contact-text  { color: #5a5a68; }
+    body.theme--light .about-form__label   { color: #9898a8; }
+    body.theme--light .about-form__input,
+    body.theme--light .about-form__textarea {
+      background: #fff; border-color: #d0ccc4; color: #1e1d28;
+    }
+    body.theme--light .about-form__send    { background: #4a6c10; color: #fff; }
+    body.theme--light .about-form__send:hover { background: #3a5c00; }
+    body.theme--light .about-form__note    { color: #9898a8; }
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem('ostquest_theme')==='light')document.body.classList.add('theme--light');</script>
+<script>window.SOUNDTRACKS_PAGE = true;</script>
+
+<div class="app-wrapper">
+
+  <header class="site-header">
+    <div class="site-header__left">
+      <a href="index.html"><img src="img/banner.png" alt="Oesti Quest" class="site-banner"></a>
+      <span class="site-tagline" data-i18n="tagline">Adivina la OST</span>
+    </div>
+    <div class="site-header__right">
+      <div class="archive-banner" id="archive-banner"></div>
+      <div class="header-countdown">
+        <span data-i18n="next_quest">Siguiente quest:</span> <span id="header-countdown">--:--:--</span>
+      </div>
+      <button class="today-btn" id="btn-today" data-i18n="btn_today">Hoy</button>
+      <button class="icon-btn" id="btn-archive" data-i18n-aria="btn_archive_label" aria-label="Quest Log">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"/>
+          <path d="M14 2v6h6"/>
+          <line x1="8" y1="13" x2="16" y2="13"/>
+          <line x1="8" y1="17" x2="13" y2="17"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btn-stats" data-i18n-aria="btn_stats_label" aria-label="Estadísticas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btn-auth" aria-label="Cuenta"></button>
+    </div>
+  </header>
+
+  <button class="theme-btn" id="btn-theme" aria-label="Modo claro">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+  <button class="icon-btn icon-btn--ghost" id="btn-help" aria-label="Ayuda">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-width="2.5"/>
+    </svg>
+  </button>
+
+  <div class="settings-panel">
+    <div class="vol-control" id="vol-control">
+      <button class="vol-btn" id="btn-vol" aria-label="Volumen">
+        <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path id="vol-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
+      <div class="vol-slider-wrap">
+        <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="80">
+      </div>
+    </div>
+    <div class="lang-dropdown" id="lang-dropdown">
+      <button class="lang-dropdown__btn" id="lang-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+        <span id="lang-dropdown-flag"><svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg></span>
+        <span id="lang-dropdown-label">Español</span>
+        <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="lang-dropdown__chevron"><path d="M1 1l4 4 4-4"/></svg>
+      </button>
+      <div class="lang-dropdown__menu" id="lang-dropdown-menu">
+        <button class="lang-dropdown__option" data-lang="es"><svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg> Español</button>
+        <button class="lang-dropdown__option" data-lang="en"><svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#012169"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="white" stroke-width="4"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="#c8102e" stroke-width="2"/><rect x="8.5" y="0" width="3" height="14" fill="white"/><rect x="0" y="5.5" width="20" height="3" fill="white"/><rect x="9.25" y="0" width="1.5" height="14" fill="#c8102e"/><rect x="0" y="6.25" width="20" height="1.5" fill="#c8102e"/></svg> English</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stubs requeridos por game.js -->
+  <div class="score-bar">
+    <div><span id="score-hits">0</span></div>
+    <div><span id="score-miss">0</span></div>
+  </div>
+  <div id="gm-panel" style="display:none"></div>
+  <div id="loading-screen" style="display:none"></div>
+  <div id="game-area" style="display:none"><div class="columns-wrapper" id="columns-wrapper"></div></div>
+
+  <!-- Contenido -->
+  <div class="about-wrap">
+
+    <!-- Intro -->
+    <section class="about-section">
+      <p class="about-section-title">El proyecto</p>
+      <p class="about-intro">
+        <strong>Oesti Quest</strong> nació de una idea sencilla: ¿y si hubiera un Wordle para bandas sonoras
+        de videojuegos? Habíamos visto juegos parecidos, como <strong>Musicle</strong>, pero nos parecían
+        incompletos — poca variedad, pocos géneros, sin ese feeling de explorar una colección real.
+        Queríamos algo más cuidado, con cientos de juegos de todas las épocas y géneros, para jugar
+        en grupo con amigos y debatir de qué juego era cada canción.
+      </p>
+    </section>
+
+    <!-- Creadores -->
+    <section class="about-section">
+      <p class="about-section-title">Quiénes somos</p>
+      <div class="about-cards">
+
+        <div class="about-card">
+          <div class="about-card__avatar about-card__avatar--o">OR</div>
+          <p class="about-card__name">Orteku</p>
+          <p class="about-card__role">Creador &amp; desarrollador</p>
+          <p class="about-card__bio">
+            Amante de los videojuegos y la música desde siempre. Lleva años coleccionando BSOs
+            de todo tipo, desde clásicos de los 90 hasta lanzamientos recientes. Cuando no encuentra
+            el juego que busca en otras plataformas, lo construye él mismo.
+          </p>
+        </div>
+
+        <div class="about-card">
+          <div class="about-card__avatar about-card__avatar--v">VY</div>
+          <p class="about-card__name">Vyrka</p>
+          <p class="about-card__role">Colaboradora &amp; curadora</p>
+          <p class="about-card__bio">
+            Conocida en el grupo por su mítico chinofarmeo. Aplica esa misma dedicación a Oesti Quest:
+            busca, escucha y añade canciones a la base de datos con una paciencia que no tiene fin.
+            Gran parte del catálogo existe gracias a ella.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Contacto -->
+    <section class="about-section">
+      <p class="about-section-title">Comentarios y sugerencias</p>
+      <p class="about-contact-text">
+        ¿Echas de menos algún juego? ¿Encontraste algún error? ¿Tienes alguna idea para mejorar
+        Oesti Quest? Mándanos un mensaje y lo leeremos encantados.
+      </p>
+      <form class="about-form" id="about-form">
+        <div class="about-form__field">
+          <label class="about-form__label" for="about-subject">Asunto</label>
+          <input class="about-form__input" id="about-subject" type="text"
+                 placeholder="Sugerencia de canción, error, idea...">
+        </div>
+        <div class="about-form__field">
+          <label class="about-form__label" for="about-msg">Mensaje</label>
+          <textarea class="about-form__textarea" id="about-msg"
+                    placeholder="Escribe aquí tu mensaje..."></textarea>
+        </div>
+        <button class="about-form__send" type="submit">Enviar →</button>
+        <p class="about-form__note">Se abrirá tu cliente de correo con el mensaje listo para enviar.</p>
+      </form>
+    </section>
+
+  </div>
+
+  <footer class="site-footer" style="margin-top:32px">
+    <p data-i18n-html="footer_credit_legal"></p>
+  </footer>
+
+</div>
+
+<div id="modal" role="dialog" aria-modal="true">
+  <div id="modal-inner"></div>
+</div>
+<div id="auth-modal" role="dialog" aria-modal="true">
+  <div id="auth-modal-inner"></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  document.getElementById('about-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const subject = document.getElementById('about-subject').value.trim() || 'Mensaje desde Oesti Quest';
+    const body    = document.getElementById('about-msg').value.trim();
+    if (!body) { document.getElementById('about-msg').focus(); return; }
+    location.href = 'mailto:oestiquest@gmail.com'
+      + '?subject=' + encodeURIComponent(subject)
+      + '&body='    + encodeURIComponent(body);
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/database.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/daily.js"></script>
+<script src="js/algorithm.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/player.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

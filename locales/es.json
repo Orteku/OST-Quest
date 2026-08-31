@@ -83,7 +83,7 @@
   "soundtracks_cta_text": "¿Podrías adivinar la OST de tu juego favorito?",
   "soundtracks_cta_btn": "Resuelve la quest de hoy →",
   "soundtracks_play": "Jugar",
-  "footer_soundtracks_line": "¿Tienes alguna sugerencia? Consulta la <a href=\"soundtracks.html\">lista de canciones</a> · Contacto: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
+  "footer_soundtracks_line": "¿Tienes alguna sugerencia? Consulta la <a href=\"soundtracks.html\">lista de canciones</a> · <a href=\"about.html\">Sobre el proyecto</a> · Contacto: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
   "auth_sign_in": "Entrar",
   "auth_register": "Registrarse",
   "auth_or": "o",
