@@ -52,13 +52,9 @@
     .about-card__avatar {
       width: 48px; height: 48px;
       border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 20px; font-weight: 800; letter-spacing: 0.5px;
+      object-fit: cover;
       margin-bottom: 12px;
     }
-    .about-card__avatar--o { background: rgba(184,224,48,0.12); color: #b8e030; }
-    .about-card__avatar--v { background: rgba(160,128,224,0.12); color: #a080e0; }
 
     .about-card__name {
       font-family: 'Barlow Condensed', sans-serif;
@@ -129,8 +125,6 @@
     body.theme--light .about-intro         { color: #5a5a68; }
     body.theme--light .about-intro strong  { color: #4a6c10; }
     body.theme--light .about-card          { background: #f4f4ec; border-color: #d0ccc4; }
-    body.theme--light .about-card__avatar--o { background: rgba(74,108,16,0.1); color: #4a6c10; }
-    body.theme--light .about-card__avatar--v { background: rgba(80,40,128,0.1); color: #502880; }
     body.theme--light .about-card__name    { color: #1e1d28; }
     body.theme--light .about-card__role    { color: #9898a8; }
     body.theme--light .about-card__bio     { color: #5a5a68; }
@@ -234,7 +228,7 @@
       <p class="about-section-title">El proyecto</p>
       <p class="about-intro">
         <strong>Oesti Quest</strong> nació de una idea sencilla: ¿y si hubiera un Wordle para bandas sonoras
-        de videojuegos? Habíamos visto juegos parecidos, como <strong>Musicle</strong>, pero nos parecían
+        de videojuegos? Habíamos visto juegos parecidos, como Musicle, pero nos parecían
         incompletos — poca variedad, pocos géneros, sin ese feeling de explorar una colección real.
         Queríamos algo más cuidado, con cientos de juegos de todas las épocas y géneros, para jugar
         en grupo con amigos y debatir de qué juego era cada canción.
@@ -247,7 +241,7 @@
       <div class="about-cards">
 
         <div class="about-card">
-          <div class="about-card__avatar about-card__avatar--o">OR</div>
+          <img class="about-card__avatar" src="https://cdn.discordapp.com/avatars/101839459124776960/6d641c6cb6ebb796f8639a8cebc32d4a.webp?size=128" alt="Orteku">
           <p class="about-card__name">Orteku</p>
           <p class="about-card__role">Creador &amp; desarrollador</p>
           <p class="about-card__bio">
@@ -258,7 +252,7 @@
         </div>
 
         <div class="about-card">
-          <div class="about-card__avatar about-card__avatar--v">VY</div>
+          <img class="about-card__avatar" src="https://cdn.discordapp.com/avatars/239452281102139392/ad64858b7133eb1941c99255fa8e1b36.webp?size=128" alt="Vyrka">
           <p class="about-card__name">Vyrka</p>
           <p class="about-card__role">Colaboradora &amp; curadora</p>
           <p class="about-card__bio">
