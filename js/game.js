@@ -468,6 +468,18 @@ function openTutorialModal() {
   openModal();
 }
 
+function toggleTutorialPanel() {
+  const panel = document.getElementById('tutorial-panel');
+  const btn = document.getElementById('btn-help');
+  if (!panel) { openTutorialModal(); return; }
+  const isOpen = !panel.classList.contains('is-open');
+  document.documentElement.style.setProperty('--tp-height', isOpen ? `${panel.scrollHeight}px` : '0px');
+  panel.classList.toggle('is-open', isOpen);
+  panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+  btn?.classList.toggle('is-active', isOpen);
+  if (isOpen) localStorage.setItem('ostquest_tutorial', '1');
+}
+
 // ─── Media widget helpers ─────────────────────────────────────────────────────
 
 const _PLAY_SM    = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>`;
@@ -1254,7 +1266,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('btn-stats').addEventListener('click', openStatsModal);
   document.getElementById('btn-archive').addEventListener('click', openArchive);
-  document.getElementById('btn-help').addEventListener('click', openTutorialModal);
+  document.getElementById('btn-help').addEventListener('click', () => {
+    if (window.SOUNDTRACKS_PAGE) { openTutorialModal(); return; }
+    toggleTutorialPanel();
+  });
+  document.addEventListener('click', e => {
+    const panel = document.getElementById('tutorial-panel');
+    if (!panel?.classList.contains('is-open')) return;
+    if (document.getElementById('btn-help').contains(e.target)) return;
+    if (panel.contains(e.target)) return;
+    panel.classList.remove('is-open');
+    panel.setAttribute('aria-hidden', 'true');
+    document.documentElement.style.setProperty('--tp-height', '0px');
+    document.getElementById('btn-help')?.classList.remove('is-active');
+  });
   document.getElementById('btn-today').addEventListener('click', () => {
     if (window.SOUNDTRACKS_PAGE) { location.href = 'index.html'; return; }
     stopAudio();
@@ -1272,7 +1297,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     const _open = _params.get('open');
     const _date = _params.get('date');
-    if (!localStorage.getItem('ostquest_tutorial') && !_open && !_date) openTutorialModal();
+    if (!localStorage.getItem('ostquest_tutorial') && !_open && !_date) {
+      const _tp = document.getElementById('tutorial-panel');
+      if (_tp) {
+        document.documentElement.style.setProperty('--tp-height', `${_tp.scrollHeight}px`);
+        _tp.classList.add('is-open');
+        _tp.setAttribute('aria-hidden', 'false');
+        document.getElementById('btn-help')?.classList.add('is-active');
+      } else {
+        openTutorialModal();
+      }
+    }
     if (_date) {
       await initGame(_date, true);
       const [ay, am, ad] = _date.split('-');

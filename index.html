@@ -54,8 +54,7 @@
   </div>
 </noscript>
 
-<div class="app-wrapper">
-
+<div class="site-header-wrap">
   <header class="site-header">
     <div class="site-header__left">
       <img src="img/banner.png" alt="Oesti Quest" class="site-banner">
@@ -85,16 +84,68 @@
       <button class="icon-btn" id="btn-auth" aria-label="Cuenta"></button>
     </div>
   </header>
+    <section class="tutorial-panel" id="tutorial-panel" aria-hidden="true">
+      <div class="tutorial-panel__inner">
+        <ul class="tutorial-steps">
+          <li>
+            <span class="tutorial-step__icon">&#x25B6;</span>
+            <div>
+              <strong data-i18n="tutorial_listen_h">Escucha</strong>
+              <p data-i18n="tutorial_listen_b">Pulsa ▶ para reproducir un fragmento de la banda sonora e intenta reconocerla.</p>
+            </div>
+          </li>
+          <li>
+            <span class="tutorial-step__icon">?</span>
+            <div>
+              <strong data-i18n="tutorial_guess_h">Adivina</strong>
+              <p data-i18n="tutorial_guess_b">Elige la portada del videojuego al que crees que pertenece la música. Tienes 3 canciones cada día.</p>
+            </div>
+          </li>
+          <li>
+            <span class="tutorial-step__icon">&#x2605;</span>
+            <div>
+              <strong data-i18n="tutorial_daily_h">Vuelve cada día</strong>
+              <p data-i18n="tutorial_daily_b">Las canciones cambian a diario. ¡Entra cada día y mantén tu cadena de quests!</p>
+            </div>
+          </li>
+        </ul>
+        <div class="tutorial-btns">
+          <div class="tutorial-btn-item">
+            <span class="tutorial-step__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
+                <path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"/>
+                <path d="M14 2v6h6"/>
+                <line x1="8" y1="13" x2="16" y2="13"/>
+                <line x1="8" y1="17" x2="13" y2="17"/>
+              </svg>
+            </span>
+            <div>
+              <strong data-i18n="tutorial_archive_h">Quest Log</strong>
+              <p data-i18n="tutorial_archive_b">Revive todas las quests anteriores.</p>
+            </div>
+          </div>
+          <div class="tutorial-btn-item">
+            <span class="tutorial-step__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+            </span>
+            <div>
+              <strong data-i18n="tutorial_stats_h">Estadísticas</strong>
+              <p data-i18n="tutorial_stats_b">Tu cadena de quests consecutivas, precisión y quests perfectas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <button class="tutorial-tab" id="btn-help" aria-label="Ayuda">?</button>
+</div><!-- /.site-header-wrap -->
 
+<div class="app-wrapper">
   <button class="theme-btn" id="btn-theme" aria-label="Modo claro">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-  </button>
-  <button class="icon-btn icon-btn--ghost" id="btn-help" aria-label="Ayuda">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-width="2.5"/>
-    </svg>
   </button>
 
 
