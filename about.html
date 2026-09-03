@@ -225,27 +225,28 @@
 
     <!-- Intro -->
     <section class="about-section">
-      <p class="about-section-title">El proyecto</p>
-      <p class="about-intro">
-        ¿Un juego de adivinanzas diario? ¿Estamos en 2020? Pues precisamente por culpa de Wordle y similares existe <strong>Oesti Quest</strong>.</br>
+      <p class="about-section-title" data-i18n="about_section_project">El proyecto</p>
+      <p class="about-intro" data-i18n-html="about_intro">
+        ¿Un juego de adivinanzas diario? ¿Estamos en 2020? Pues precisamente por culpa de Wordle y similares existe <strong>Oesti Quest</strong>.<br>
         Y es que somos un grupo de amigos que nos gusta hacer este tipo de juegos diarios, adivinar música y nos gustan los videojuegos.
         Existen otros juegos similares como Musicle, pero nos parecían incompletos: poca variedad, pocos géneros, casi nos sabiamos ya de memoria los juegos que salían.
-        Así que de la idea de tener algo más interesante y desafiante y de tener una suscripción a Claude nació este proyecto, una web dedicada y tematizada por nuestra pasión por los videojuegos.
+        Así que de la idea de tener algo más interesante y desafiante y de tener que rellenar el repositorio de Github nació este proyecto,
+        una web dedicada y tematizada por nuestra pasión por los videojuegos.
       </p>
     </section>
 
     <!-- Creadores -->
     <section class="about-section">
-      <p class="about-section-title">Quiénes somos</p>
+      <p class="about-section-title" data-i18n="about_section_team">Quiénes somos</p>
       <div class="about-cards">
 
         <div class="about-card">
           <img class="about-card__avatar" src="https://cdn.discordapp.com/avatars/101839459124776960/6d641c6cb6ebb796f8639a8cebc32d4a.webp?size=128" alt="Orteku">
           <p class="about-card__name">Orteku</p>
-          <p class="about-card__role">Creador &amp; &quot;desarrollador&quot;</p>
-          <p class="about-card__bio">
-            Informático aficionado a los videojuegos y la música desde siempre. Buscando modernizarse con esto de las IAs,
-            le surgió la inspiración de decirle a Claude <i>&quot;¿Y si probamos a hacer una web de adivinar canciones de videojuegos?&quot;</i>.
+          <p class="about-card__role" data-i18n="about_orteku_role">Creador &amp; &quot;desarrollador&quot;</p>
+          <p class="about-card__bio" data-i18n-html="about_orteku_bio">
+            Informático aficionado a los videojuegos y la música desde siempre. Buscando modernizarse aprendiendo nuevas tecnologías,
+            un día se le pasó por la cabeza <i>&quot;¿Y si probase a hacer una web de adivinar canciones de videojuegos?&quot;</i>.
             Y desde entonces no ha parado de añadir funciones y mejorar la experiencia de juego, o intentándolo al menos.
           </p>
         </div>
@@ -253,9 +254,10 @@
         <div class="about-card">
           <img class="about-card__avatar" src="https://cdn.discordapp.com/avatars/239452281102139392/ad64858b7133eb1941c99255fa8e1b36.webp?size=128" alt="Vyrka">
           <p class="about-card__name">Vyrka</p>
-          <p class="about-card__role">Colaboradora &amp; curadora</p>
-          <p class="about-card__bio">
-            Conocida en el grupo por su mítico chinofarmeo. Aplica esa misma dedicación a Oesti Quest:
+          <p class="about-card__role" data-i18n="about_vyrka_role">Colaboradora &amp; curradora</p>
+          <p class="about-card__bio" data-i18n-html="about_vyrka_bio">
+            Conocida en el grupo por su mítico chinofarmeo y su milenaria técnica del 半分寝ている労働者.
+            Aplica esa misma dedicación a Oesti Quest:
             busca, escucha y añade canciones a la base de datos con una paciencia que no tiene fin.
             Gran parte del catálogo existe gracias a ella.
           </p>
@@ -266,24 +268,26 @@
 
     <!-- Contacto -->
     <section class="about-section">
-      <p class="about-section-title">Comentarios y sugerencias</p>
-      <p class="about-contact-text">
+      <p class="about-section-title" data-i18n="about_section_contact">Comentarios y sugerencias</p>
+      <p class="about-contact-text" data-i18n="about_contact_text">
         ¿Echas de menos algún juego? ¿Encontraste algún error? ¿Tienes alguna idea para mejorar
         Oesti Quest? Mándanos un mensaje y lo leeremos encantados.
       </p>
       <form class="about-form" id="about-form">
         <div class="about-form__field">
-          <label class="about-form__label" for="about-subject">Asunto</label>
+          <label class="about-form__label" for="about-subject" data-i18n="about_label_subject">Asunto</label>
           <input class="about-form__input" id="about-subject" type="text"
-                 placeholder="Sugerencia de canción, error, idea...">
+                 placeholder="Sugerencia de canción, error, idea..."
+                 data-i18n-placeholder="about_placeholder_subject">
         </div>
         <div class="about-form__field">
-          <label class="about-form__label" for="about-msg">Mensaje</label>
+          <label class="about-form__label" for="about-msg" data-i18n="about_label_message">Mensaje</label>
           <textarea class="about-form__textarea" id="about-msg"
-                    placeholder="Escribe aquí tu mensaje..."></textarea>
+                    placeholder="Escribe aquí tu mensaje..."
+                    data-i18n-placeholder="about_placeholder_message"></textarea>
         </div>
-        <button class="about-form__send" type="submit">Enviar →</button>
-        <p class="about-form__note">Se abrirá tu cliente de correo con el mensaje listo para enviar.</p>
+        <button class="about-form__send" type="submit" data-i18n="about_send">Enviar →</button>
+        <p class="about-form__note" data-i18n="about_send_note">Se abrirá tu cliente de correo con el mensaje listo para enviar.</p>
       </form>
     </section>
 
@@ -306,7 +310,7 @@
 <script>
   document.getElementById('about-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const subject = document.getElementById('about-subject').value.trim() || 'Mensaje desde Oesti Quest';
+    const subject = document.getElementById('about-subject').value.trim() || t('about_email_subject');
     const body    = document.getElementById('about-msg').value.trim();
     if (!body) { document.getElementById('about-msg').focus(); return; }
     location.href = 'mailto:oestiquest@gmail.com'

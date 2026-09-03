@@ -32,6 +32,10 @@ function _applyDOM() {
     const v = _t[el.dataset.i18nAria];
     if (typeof v === 'string') el.setAttribute('aria-label', v);
   });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const v = _t[el.dataset.i18nPlaceholder];
+    if (typeof v === 'string') el.setAttribute('placeholder', v);
+  });
   const flag  = document.getElementById('lang-dropdown-flag');
   const label = document.getElementById('lang-dropdown-label');
   if (flag)  flag.innerHTML    = _lang === 'es' ? _FLAG_ES : _FLAG_EN;
