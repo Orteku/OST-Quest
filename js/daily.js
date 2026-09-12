@@ -5,9 +5,11 @@
 const QUEST_START = '2026-06-08';
 
 function getQuestNumber(dateStr) {
+  if (getSpecialForDate(dateStr)) return null;
   const start = new Date(QUEST_START + 'T12:00:00Z');
   const date  = new Date(dateStr  + 'T12:00:00Z');
-  return Math.round((date - start) / 86400000) + 1;
+  const total = Math.round((date - start) / 86400000) + 1;
+  return total - countSpecialsBefore(dateStr);
 }
 
 function getGameDay(date) {

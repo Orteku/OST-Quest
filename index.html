@@ -58,7 +58,10 @@
   <header class="site-header">
     <div class="site-header__left">
       <img src="img/banner.png" alt="Oesti Quest" class="site-banner">
-      <span class="site-tagline" data-i18n="tagline">Adivina la OST</span>
+      <div class="site-header__brand">
+        <span id="special-event-label" hidden></span>
+        <span class="site-tagline" data-i18n="tagline">Adivina la OST</span>
+      </div>
     </div>
     <div class="site-header__right">
       <div class="archive-banner" id="archive-banner"></div>
@@ -225,6 +228,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/database.js"></script>
 <script src="js/i18n.js"></script>
+<script src="js/specials.js"></script>
 <script src="js/daily.js"></script>
 <script src="js/algorithm.js"></script>
 <script src="js/assets.js"></script>

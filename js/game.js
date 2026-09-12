@@ -706,8 +706,10 @@ function openEndModal(score) {
       const [y, m, d] = currentDateStr.split('-');
       const emojis  = colStates.map(s => s.correct ? '🟩' : '🟥').join('');
       const pct     = Math.round(score / 3 * 100);
-      const questN  = getQuestNumber(currentDateStr);
-      const text = `🎮 Quest #${questN} ${d}/${m}/${y}\n${emojis} - ${pct}%\nhttps://oestiquest.com`;
+      const questN   = getQuestNumber(currentDateStr);
+      const shareSpecial = questN === null ? getSpecialForDate(currentDateStr) : null;
+      const shareLabel   = shareSpecial ? `⭐ ${shareSpecial.label}` : `Quest #${questN}`;
+      const text = `🎮 ${shareLabel} ${d}/${m}/${y}\n${emojis} - ${pct}%\nhttps://oestiquest.com`;
       navigator.clipboard.writeText(text).then(() => {
         showToast(t('share_copied'));
       }).catch(() => {
@@ -850,9 +852,15 @@ function openArchive() {
       : inProgress
         ? `<span class="archive__badge archive__badge--ongoing">${t('archive_in_progress')}</span>`
         : '';
-    const isActive = ds === currentDateStr && isArchiveMode;
-    return monthHeader + `<li class="archive__item ${isActive ? 'archive__item--active' : ''}" data-date="${ds}">
-      <span class="archive__left">Quest #${getQuestNumber(ds)}${badge}</span>
+    const isActive  = ds === currentDateStr && isArchiveMode;
+    const questNum  = getQuestNumber(ds);
+    const special   = questNum === null ? getSpecialForDate(ds) : null;
+    const questLabel = special
+      ? `<span class="archive__special-label">${t('special_prefix')} ${special.label}</span>`
+      : `Quest #${questNum}`;
+    const itemClass = ['archive__item', isActive ? 'archive__item--active' : '', special ? 'archive__item--special' : ''].filter(Boolean).join(' ');
+    return monthHeader + `<li class="${itemClass}" data-date="${ds}">
+      <span class="archive__left">${questLabel}${badge}</span>
       <span class="archive__date">${d}-${m}-${y}</span>
     </li>`;
   }).join('');
@@ -873,7 +881,12 @@ function openArchive() {
       stopAudio();
       const [ay,am,ad] = ds.split('-');
       const banner = document.getElementById('archive-banner');
-      if (banner) { banner.innerHTML = `Quest #${getQuestNumber(ds)}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`; banner.style.display = 'block'; }
+      if (banner) {
+        const _qn = getQuestNumber(ds);
+        const _sp = _qn === null ? getSpecialForDate(ds) : null;
+        banner.innerHTML = `${_sp ? '⭐ ' + _sp.label : 'Quest #' + _qn}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+        banner.style.display = 'block';
+      }
       document.body.classList.add('is-archive');
       initGame(ds, true);
     });
@@ -1257,6 +1270,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const today = getGameDay();
 
+  // Tema de evento especial (solo para el día de hoy, no en modo archivo)
+  const _todaySpecial = getSpecialForDate(today);
+  if (_todaySpecial) {
+    document.documentElement.style.setProperty('--special-color', _todaySpecial.color);
+    document.body.classList.add('is-special');
+    const _lbl = document.getElementById('special-event-label');
+    if (_lbl) {
+      _lbl.textContent = `${t('special_prefix')} ${_todaySpecial.name}`;
+      _lbl.hidden = false;
+    }
+  }
+
   // Clic fuera del modal cierra siempre (incluyendo el modal final)
   document.getElementById('modal').addEventListener('click', e => {
     if (e.target.id !== 'modal') return;
@@ -1313,7 +1338,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const [ay, am, ad] = _date.split('-');
       const banner = document.getElementById('archive-banner');
       if (banner) {
-        banner.innerHTML = `Quest #${getQuestNumber(_date)}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+        const _qn2 = getQuestNumber(_date);
+        const _sp2 = _qn2 === null ? getSpecialForDate(_date) : null;
+        banner.innerHTML = `${_sp2 ? '⭐ ' + _sp2.label : 'Quest #' + _qn2}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
         banner.style.display = 'block';
       }
       document.body.classList.add('is-archive');
