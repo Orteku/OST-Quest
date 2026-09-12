@@ -942,17 +942,35 @@ body.theme--light .site-footer a:hover { color: #4a6c10; }
   font-family: 'Barlow', sans-serif;
   font-size: 13px;
   font-weight: 700;
+  line-height: 1;
   letter-spacing: 0.2px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   text-decoration: none;
-  transition: opacity 0.15s, transform 0.1s;
+  box-shadow:
+    0 3px 10px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -2px 0 rgba(0,0,0,0.2);
+  transition: box-shadow 0.12s, transform 0.12s, opacity 0.12s;
 }
 .footer-social__btn:hover,
 .site-footer .footer-social__btn,
 .site-footer .footer-social__btn:hover { color: #fff; text-decoration: none; }
-.footer-social__btn:hover { opacity: 0.85; transform: translateY(-1px); }
-.footer-social__btn--x    { background: #000; }
-.footer-social__btn--kofi { background: #209c41; }
+.footer-social__btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -2px 0 rgba(0,0,0,0.2);
+}
+.footer-social__btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 4px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    inset 0 -1px 0 rgba(0,0,0,0.15);
+}
+.footer-social__btn--x    { background: linear-gradient(180deg, #222 0%, #000 100%); }
+.footer-social__btn--kofi { background: linear-gradient(180deg, #25b24a 0%, #1a8536 100%); }
 
 @keyframes kofi-wobble {
   0%, 100% { transform: rotate(0deg); }

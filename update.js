@@ -33,6 +33,10 @@ try {
 
 console.log(`📦 Base de datos cargada: ${GAME_DB.length} juegos`);
 
+// ── Cargar eventos especiales ─────────────────────────────────────────────────
+
+const { getSpecialForDate } = require('./specials.js');
+
 // ── Cargar algoritmo compartido ───────────────────────────────────────────────
 
 const algoSrc     = fs.readFileSync(path.join(__dirname, 'js', 'algorithm.js'), 'utf8');
@@ -78,12 +82,12 @@ function seededShuffle(arr, rng) {
 
 // ── Generación ────────────────────────────────────────────────────────────────
 
-function generateGameForDate(dateStr) {
+function generateGameForDate(dateStr, pool = GAME_DB) {
   const seed = dateToSeed(dateStr);
   const rng  = seededRng(seed);
   const used = new Set();
   const groups = [];
-  const shuffled = seededShuffle(GAME_DB, rng);
+  const shuffled = seededShuffle(pool, rng);
 
   const strictGroupIndex = Math.floor(rng() * 3);
 
@@ -92,19 +96,20 @@ function generateGameForDate(dateStr) {
     for (const g of shuffled) {
       if (!used.has(g.id)) { answer = g; break; }
     }
+    if (!answer) break;
     used.add(answer.id);
 
     const trackIndex    = Math.floor(rng() * answer.tracks.length);
     const answerEffTags = effectiveTags(answer, answer.tracks[trackIndex]);
 
     const weights    = gi === strictGroupIndex ? WEIGHTS.strict : WEIGHTS.normal;
-    const candidates = GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
+    const candidates = pool.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
 
     let distractors = weightedPickN(candidates, answer, answerEffTags, weights, rng, 3);
 
     if (distractors.length < 3) {
       const distIds = new Set(distractors.map(d => d.id));
-      const fallback = GAME_DB.filter(g => !used.has(g.id) && !distIds.has(g.id));
+      const fallback = pool.filter(g => !used.has(g.id) && !distIds.has(g.id));
       const extra    = weightedPickN(fallback, answer, answerEffTags, WEIGHTS.normal, rng, 3 - distractors.length);
       distractors    = [...distractors, ...extra];
     }
@@ -118,6 +123,18 @@ function generateGameForDate(dateStr) {
   }
 
   return groups;
+}
+
+function getPoolForDate(dateStr) {
+  const special = getSpecialForDate(dateStr);
+  if (!special) return GAME_DB;
+  const pool = GAME_DB.filter(g => special.gameIds.includes(g.id));
+  if (pool.length < 4) {
+    console.warn(`⚠️  Especial "${special.label}" (${dateStr}): solo ${pool.length} juegos en DB, se usará DB completa`);
+    return GAME_DB;
+  }
+  console.log(`🎉 Especial: ${special.label} (${dateStr}) — pool de ${pool.length} juegos`);
+  return pool;
 }
 
 // ── Fechas ────────────────────────────────────────────────────────────────────
@@ -157,18 +174,24 @@ const result = {};
 let preserved = 0;
 let generated = 0;
 
-// 1. Preservar todos los días hasta hoy (inclusive)
+// 1. Preservar días pasados. Hoy se preserva solo si NO es especial.
 for (const [dateStr, game] of Object.entries(existing)) {
-  if (dateStr <= today) {
+  if (dateStr < today || (dateStr === today && !getSpecialForDate(today))) {
     result[dateStr] = game;
     preserved++;
   }
 }
 
-// 2. Regenerar desde mañana hasta 365 días adelante
+// 2. Regenerar hoy si es especial
+if (getSpecialForDate(today)) {
+  result[today] = generateGameForDate(today, getPoolForDate(today));
+  generated++;
+}
+
+// 3. Regenerar desde mañana hasta 365 días adelante
 for (let i = 0; i < 365; i++) {
   const dateStr = addDays(tomorrow, i);
-  result[dateStr] = generateGameForDate(dateStr);
+  result[dateStr] = generateGameForDate(dateStr, getPoolForDate(dateStr));
   generated++;
 }
 
