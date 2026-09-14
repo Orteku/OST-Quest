@@ -128,7 +128,11 @@ function generateGameForDate(dateStr, pool = GAME_DB) {
 function getPoolForDate(dateStr) {
   const special = getSpecialForDate(dateStr);
   if (!special) return GAME_DB;
-  const pool = GAME_DB.filter(g => special.gameIds.includes(g.id));
+  const pool = special.gameIds
+    ? GAME_DB.filter(g => special.gameIds.includes(g.id))
+    : special.tag
+      ? GAME_DB.filter(g => g.tags && g.tags.includes(special.tag))
+      : GAME_DB;
   if (pool.length < 4) {
     console.warn(`⚠️  Especial "${special.label}" (${dateStr}): solo ${pool.length} juegos en DB, se usará DB completa`);
     return GAME_DB;

@@ -68,6 +68,7 @@
   "gm_subtitle": "Configura las tres columnas para testear el juego",
   "gm_start": "Empezar juego",
   "gm_random": "Aleatorio",
+  "gm_no_special": "Ninguno",
   "gm_column": "Columna",
   "gm_answer_label": "Respuesta",
   "gm_decoys_label": "Señuelos",

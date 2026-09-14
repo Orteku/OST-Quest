@@ -856,7 +856,7 @@ function openArchive() {
     const questNum  = getQuestNumber(ds);
     const special   = questNum === null ? getSpecialForDate(ds) : null;
     const questLabel = special
-      ? `<span class="archive__special-label">${t('special_prefix')} ${special.label}</span>`
+      ? `<span class="archive__special-label">⭐ ${special.label}</span>`
       : `Quest #${questNum}`;
     const itemClass = ['archive__item', isActive ? 'archive__item--active' : '', special ? 'archive__item--special' : ''].filter(Boolean).join(' ');
     return monthHeader + `<li class="${itemClass}" data-date="${ds}">
@@ -884,7 +884,15 @@ function openArchive() {
       if (banner) {
         const _qn = getQuestNumber(ds);
         const _sp = _qn === null ? getSpecialForDate(ds) : null;
-        banner.innerHTML = `${_sp ? '⭐ ' + _sp.label : 'Quest #' + _qn}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+        if (_sp) {
+          banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span>${_sp.label}`;
+          banner.style.setProperty('--archive-banner-color', _sp.color);
+          banner.classList.add('archive-banner--special');
+        } else {
+          banner.innerHTML = `Quest #${_qn}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+          banner.style.removeProperty('--archive-banner-color');
+          banner.classList.remove('archive-banner--special');
+        }
         banner.style.display = 'block';
       }
       document.body.classList.add('is-archive');
@@ -996,6 +1004,22 @@ function updateScoreDisplay() {
 function startCountdownTicker() {
   const el = document.getElementById('header-countdown');
   if (!el) return;
+
+  // Si mañana es un especial, cambiar el label y el color del timer
+  const _td = new Date(getGameDay() + 'T12:00:00Z');
+  _td.setUTCDate(_td.getUTCDate() + 1);
+  const _nextSpecial = getSpecialForDate(_td.toISOString().slice(0, 10));
+  if (_nextSpecial) {
+    const _lbl = el.parentElement.querySelector('[data-i18n]');
+    if (_lbl) {
+      const _prefix = t('special_prefix');
+      _lbl.textContent = t('special_order') === 'suffix'
+        ? `${_nextSpecial.name} ${_prefix}`
+        : `${_prefix} ${_nextSpecial.name}`;
+    }
+    el.style.color = _nextSpecial.color;
+  }
+
   (function tick() {
     el.textContent = formatCountdown(timeUntilNextGame());
     setTimeout(tick, 1000);
@@ -1072,11 +1096,23 @@ function openGmPanel() {
         </select>`).join('')}
     </div>`).join('');
 
+  let _gmPool = [...GAME_DB];
+
+  const _availSpecials = SPECIAL_EVENTS;
+  const _specialOptHtml = _availSpecials.map(e => `<option value="${e.date}">${e.label}</option>`).join('');
+
   panel.innerHTML = `
     <div class="gm-panel__inner">
       <div class="gm-panel__header">
         <h2 class="gm-panel__title">Game Master</h2>
         <p class="gm-panel__sub">${t('gm_subtitle')}</p>
+      </div>
+      <div class="gm-panel__special-row">
+        <span class="gm-label">${t('special_prefix')}</span>
+        <select class="gm-select" id="gm-special">
+          <option value="">${t('gm_no_special')}</option>
+          ${_specialOptHtml}
+        </select>
       </div>
       <div class="gm-cols">${colsHtml}</div>
       <div class="gm-panel__footer">
@@ -1086,6 +1122,62 @@ function openGmPanel() {
     </div>`;
 
   const byId = Object.fromEntries(GAME_DB.map(g => [g.id, g]));
+
+  function _getGmPool(sp) {
+    if (!sp) return GAME_DB;
+    if (sp.gameIds && sp.gameIds.length) return GAME_DB.filter(g => sp.gameIds.includes(g.id));
+    if (sp.tag) return GAME_DB.filter(g => g.tags && g.tags.includes(sp.tag));
+    return GAME_DB;
+  }
+
+  function _rebuildGmSelects(pool) {
+    const _s = [...pool].sort((a, b) => localizeGame(a).game.localeCompare(localizeGame(b).game));
+    const _o = _s.map(g => `<option value="${g.id}">${localizeGame(g).game}${g.year ? ' (' + g.year + ')' : ''}</option>`).join('');
+    const _r = `<option value="-1" selected>${t('gm_random')}</option>`;
+    [0, 1, 2].forEach(gi => {
+      const a = document.getElementById(`gm-answer-${gi}`);
+      a.innerHTML = _r + _o; _gmStyle(a);
+      [0, 1, 2].forEach(di => {
+        const d = document.getElementById(`gm-decoy-${gi}-${di}`);
+        d.innerHTML = _r + _o; _gmStyle(d);
+      });
+    });
+  }
+
+  document.getElementById('gm-special').addEventListener('change', function () {
+    const _sel = _availSpecials.find(e => e.date === this.value) || null;
+    _gmPool = _getGmPool(_sel);
+    _rebuildGmSelects(_gmPool);
+    if (_sel) {
+      document.documentElement.style.setProperty('--special-color', _sel.color);
+      document.body.classList.add('is-special');
+      const _lbl = document.getElementById('special-event-label');
+      if (_lbl) {
+        _lbl.textContent = t('special_order') === 'suffix'
+          ? `${_sel.name} ${t('special_prefix')}`
+          : `${t('special_prefix')} ${_sel.name}`;
+        _lbl.hidden = false;
+      }
+    } else {
+      const _real = getSpecialForDate(getGameDay());
+      if (_real) {
+        document.documentElement.style.setProperty('--special-color', _real.color);
+        document.body.classList.add('is-special');
+        const _lbl = document.getElementById('special-event-label');
+        if (_lbl) {
+          _lbl.textContent = t('special_order') === 'suffix'
+            ? `${_real.name} ${t('special_prefix')}`
+            : `${t('special_prefix')} ${_real.name}`;
+          _lbl.hidden = false;
+        }
+      } else {
+        document.documentElement.style.removeProperty('--special-color');
+        document.body.classList.remove('is-special');
+        const _lbl = document.getElementById('special-event-label');
+        if (_lbl) _lbl.hidden = true;
+      }
+    }
+  });
 
   function _gmStyle(el) {
     el.classList.toggle('gm-select--random', el.value === '-1');
@@ -1139,7 +1231,7 @@ function openGmPanel() {
       let answerId = parseInt(document.getElementById(`gm-answer-${gi}`).value);
       let trackIdx = 0;
       if (isNaN(answerId) || answerId === -1) {
-        const avail = GAME_DB.filter(g => !usedIds.has(g.id));
+        const avail = _gmPool.filter(g => !usedIds.has(g.id));
         if (!avail.length) { errorEl.textContent = t('gm_error_no_games'); return; }
         const picked = avail[Math.floor(Math.random() * avail.length)];
         answerId = picked.id;
@@ -1166,8 +1258,8 @@ function openGmPanel() {
       for (let di = 0; di < 3; di++) {
         let decoyId = parseInt(document.getElementById(`gm-decoy-${gi}-${di}`).value);
         if (isNaN(decoyId) || decoyId === -1) {
-          const similar = GAME_DB.filter(g => !usedIds.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
-          const pool = similar.length ? similar : GAME_DB.filter(g => !usedIds.has(g.id));
+          const similar = _gmPool.filter(g => !usedIds.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
+          const pool = similar.length ? similar : _gmPool.filter(g => !usedIds.has(g.id));
           if (!pool.length) { errorEl.textContent = t('gm_error_no_decoys'); return; }
           const [picked] = weightedPickN(pool, answer, answerEffTags, WEIGHTS.normal, Math.random, 1);
           decoyId = picked.id;
@@ -1277,7 +1369,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('is-special');
     const _lbl = document.getElementById('special-event-label');
     if (_lbl) {
-      _lbl.textContent = `${t('special_prefix')} ${_todaySpecial.name}`;
+      _lbl.textContent = t('special_order') === 'suffix'
+        ? `${_todaySpecial.name} ${t('special_prefix')}`
+        : `${t('special_prefix')} ${_todaySpecial.name}`;
       _lbl.hidden = false;
     }
   }
@@ -1340,7 +1434,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (banner) {
         const _qn2 = getQuestNumber(_date);
         const _sp2 = _qn2 === null ? getSpecialForDate(_date) : null;
-        banner.innerHTML = `${_sp2 ? '⭐ ' + _sp2.label : 'Quest #' + _qn2}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+        if (_sp2) {
+          banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span>${_sp2.label}`;
+          banner.style.setProperty('--archive-banner-color', _sp2.color);
+          banner.classList.add('archive-banner--special');
+        } else {
+          banner.innerHTML = `Quest #${_qn2}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+          banner.style.removeProperty('--archive-banner-color');
+          banner.classList.remove('archive-banner--special');
+        }
         banner.style.display = 'block';
       }
       document.body.classList.add('is-archive');
