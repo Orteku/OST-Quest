@@ -194,6 +194,10 @@
     "691": {"game": "El Señor de los Anillos: La Guerra del Norte" },
     "692": {"game": "El Señor de los Anillos: El Retorno del Rey" },
     "693": {"game": "El Señor de los Anillos: La Tercera Edad" },
-    "695": {"game": "El Señor de los Anillos: La Batalla por la Tierra Media" }
+    "695": {"game": "El Señor de los Anillos: La Batalla por la Tierra Media" },
+    "750": {"game": "Marvel: Lobezno" },
+    "741": {"game": "Syphon Filter: Riesgo Biológico" },
+    "742": {"game": "Syphon Filter 2: Conspiración mortal" },
+    "744": {"game": "Syphon Filter 3: Sentencia final" }
   }
 }

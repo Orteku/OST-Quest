@@ -884,14 +884,15 @@ function openArchive() {
       if (banner) {
         const _qn = getQuestNumber(ds);
         const _sp = _qn === null ? getSpecialForDate(ds) : null;
-        if (_sp) {
-          banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span>${_sp.label}`;
+        if (_sp && ds >= getGameDay()) {
+          banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span><span class="archive-banner__special-name">${_sp.label}</span>`;
           banner.style.setProperty('--archive-banner-color', _sp.color);
           banner.classList.add('archive-banner--special');
         } else {
-          banner.innerHTML = `Quest #${_qn}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
-          banner.style.removeProperty('--archive-banner-color');
-          banner.classList.remove('archive-banner--special');
+          const _label = _sp ? _sp.label : `Quest #${_qn}`;
+          banner.innerHTML = `${_label}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+          if (_sp) { banner.style.setProperty('--archive-banner-color', _sp.color); banner.classList.add('archive-banner--special'); }
+          else { banner.style.removeProperty('--archive-banner-color'); banner.classList.remove('archive-banner--special'); }
         }
         banner.style.display = 'block';
       }
@@ -1148,33 +1149,29 @@ function openGmPanel() {
     const _sel = _availSpecials.find(e => e.date === this.value) || null;
     _gmPool = _getGmPool(_sel);
     _rebuildGmSelects(_gmPool);
-    if (_sel) {
-      document.documentElement.style.setProperty('--special-color', _sel.color);
-      document.body.classList.add('is-special');
-      const _lbl = document.getElementById('special-event-label');
-      if (_lbl) {
-        _lbl.textContent = t('special_order') === 'suffix'
-          ? `${_sel.name} ${t('special_prefix')}`
-          : `${t('special_prefix')} ${_sel.name}`;
-        _lbl.hidden = false;
+    const _tgl = document.querySelector('.site-tagline');
+    if (_tgl) {
+      if (_sel) {
+        if (!_tgl.dataset.origText) _tgl.dataset.origText = _tgl.textContent;
+        _tgl.innerHTML = _tgl.dataset.origText.trim().split(/\s+/).join('<br>');
+        _tgl.style.fontSize = '9px';
+      } else if (_tgl.dataset.origText) {
+        _tgl.textContent = _tgl.dataset.origText;
+        _tgl.style.fontSize = '';
       }
-    } else {
-      const _real = getSpecialForDate(getGameDay());
-      if (_real) {
-        document.documentElement.style.setProperty('--special-color', _real.color);
-        document.body.classList.add('is-special');
-        const _lbl = document.getElementById('special-event-label');
-        if (_lbl) {
-          _lbl.textContent = t('special_order') === 'suffix'
-            ? `${_real.name} ${t('special_prefix')}`
-            : `${t('special_prefix')} ${_real.name}`;
-          _lbl.hidden = false;
-        }
+    }
+    const _banner = document.getElementById('archive-banner');
+    if (_banner) {
+      if (_sel) {
+        _banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span><span class="archive-banner__special-name">${_sel.label}</span>`;
+        _banner.style.setProperty('--archive-banner-color', _sel.color);
+        _banner.classList.add('archive-banner--special');
+        _banner.classList.remove('archive-banner--gm');
+        _banner.style.display = 'block';
       } else {
-        document.documentElement.style.removeProperty('--special-color');
-        document.body.classList.remove('is-special');
-        const _lbl = document.getElementById('special-event-label');
-        if (_lbl) _lbl.hidden = true;
+        _banner.style.display = 'none';
+        _banner.classList.remove('archive-banner--special');
+        _banner.style.removeProperty('--archive-banner-color');
       }
     }
   });
@@ -1289,6 +1286,8 @@ function openGmPanel() {
     }
 
     panel.style.display = 'none';
+    const _cleanBanner = document.getElementById('archive-banner');
+    if (_cleanBanner) { _cleanBanner.classList.remove('archive-banner--special'); _cleanBanner.style.removeProperty('--archive-banner-color'); }
     initGmGame(groups);
   });
 }
@@ -1374,6 +1373,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         : `${t('special_prefix')} ${_todaySpecial.name}`;
       _lbl.hidden = false;
     }
+    const _tagline = document.querySelector('.site-tagline');
+    if (_tagline) {
+      _tagline.innerHTML = _tagline.textContent.trim().split(/\s+/).join('<br>');
+    }
   }
 
   // Clic fuera del modal cierra siempre (incluyendo el modal final)
@@ -1434,14 +1437,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (banner) {
         const _qn2 = getQuestNumber(_date);
         const _sp2 = _qn2 === null ? getSpecialForDate(_date) : null;
-        if (_sp2) {
-          banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span>${_sp2.label}`;
+        if (_sp2 && _date >= getGameDay()) {
+          banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span><span class="archive-banner__special-name">${_sp2.label}</span>`;
           banner.style.setProperty('--archive-banner-color', _sp2.color);
           banner.classList.add('archive-banner--special');
         } else {
-          banner.innerHTML = `Quest #${_qn2}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
-          banner.style.removeProperty('--archive-banner-color');
-          banner.classList.remove('archive-banner--special');
+          const _label2 = _sp2 ? _sp2.label : `Quest #${_qn2}`;
+          banner.innerHTML = `${_label2}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+          if (_sp2) { banner.style.setProperty('--archive-banner-color', _sp2.color); banner.classList.add('archive-banner--special'); }
+          else { banner.style.removeProperty('--archive-banner-color'); banner.classList.remove('archive-banner--special'); }
         }
         banner.style.display = 'block';
       }

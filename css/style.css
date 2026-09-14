@@ -97,6 +97,7 @@ ul, li { list-style: none; }
   white-space: nowrap;
 }
 body.theme--light .site-tagline { color: #9898a8; }
+body.is-special .site-tagline { font-size: 9px; }
 .site-header__right { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 
 .site-header .icon-btn {
@@ -250,14 +251,23 @@ body.theme--light.is-special .today-btn:hover { background: rgba(0,0,0,0.1); }
   background: #080810;
   border-color: var(--archive-banner-color, #6699ff);
   color: var(--archive-banner-color, #6699ff);
+  padding: 3px 14px 4px;
 }
 .archive-banner__special-prefix {
   display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  opacity: 0.75;
-  margin-bottom: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  opacity: 0.7;
+  line-height: 1.1;
+  margin-bottom: 1px;
+}
+.archive-banner__special-name {
+  display: block;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.05;
 }
 
 /* ─── Score bar ─────────────────────────────────────────────────────────────── */
