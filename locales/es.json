@@ -153,6 +153,13 @@
   "ranking_page_title": "Ranking — Oesti Quest",
   "ranking_view_full": "Ver ranking completo",
   "ranking_no_score": "Aún no tienes puntuación esta semana",
+  "profile_page_title": "Perfil — Oesti Quest",
+  "profile_achievements_section": "Logros",
+  "profile_wip": "En construcción",
+  "profile_wip_desc": "Los logros llegarán pronto",
+  "profile_settings_section": "Ajustes de cuenta",
+  "auth_view_profile": "Ver perfil",
+  "profile_not_logged_in": "Inicia sesión para ver tu perfil",
   "games": {
     "40":  { "game": "Pokémon Rojo/Azul" },
     "591": { "game": "Pokémon Oro/Plata" },

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tu perfil de Oesti Quest — estadísticas, logros y ajustes de cuenta.">
+  <title>Perfil — Oesti Quest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" sizes="48x48" href="img/logo.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7677038770205132" crossorigin="anonymous"></script>
+  <style>
+    .score-bar { display: none !important; }
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem('ostquest_theme')==='light')document.body.classList.add('theme--light');</script>
+<script>
+  window.SOUNDTRACKS_PAGE = true;
+  window.PROFILE_PAGE     = true;
+  document.addEventListener('langchange', () => {
+    if (typeof t === 'function') document.title = t('profile_page_title') || 'Perfil — Oesti Quest';
+  });
+</script>
+
+<div class="app-wrapper">
+
+  <header class="site-header">
+    <div class="site-header__left">
+      <a href="index.html"><img src="img/banner.png" alt="Oesti Quest" class="site-banner"></a>
+      <span class="site-tagline" data-i18n="tagline">Adivina la OST</span>
+    </div>
+    <div class="site-header__right">
+      <div class="archive-banner" id="archive-banner"></div>
+      <div class="header-countdown">
+        <span data-i18n="next_quest">Siguiente quest:</span> <span id="header-countdown">--:--:--</span>
+      </div>
+      <button class="today-btn" id="btn-today" data-i18n="btn_today">Hoy</button>
+      <button class="icon-btn" id="btn-archive" data-i18n-aria="btn_archive_label" aria-label="Quest Log">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"/>
+          <path d="M14 2v6h6"/>
+          <line x1="8" y1="13" x2="16" y2="13"/>
+          <line x1="8" y1="17" x2="13" y2="17"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btn-stats" data-i18n-aria="btn_stats_label" aria-label="Estadísticas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btn-auth" aria-label="Cuenta"></button>
+    </div>
+  </header>
+
+  <button class="theme-btn" id="btn-theme" aria-label="Modo claro">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+  <button class="icon-btn icon-btn--ghost" id="btn-help" aria-label="Ayuda">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-width="2.5"/>
+    </svg>
+  </button>
+
+  <div class="settings-panel">
+    <div class="vol-control" id="vol-control">
+      <button class="vol-btn" id="btn-vol" aria-label="Volumen">
+        <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path id="vol-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
+      <div class="vol-slider-wrap">
+        <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="80">
+      </div>
+    </div>
+    <div class="lang-dropdown" id="lang-dropdown">
+      <button class="lang-dropdown__btn" id="lang-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+        <span id="lang-dropdown-flag"><svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg></span>
+        <span id="lang-dropdown-label">Español</span>
+        <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="lang-dropdown__chevron"><path d="M1 1l4 4 4-4"/></svg>
+      </button>
+      <div class="lang-dropdown__menu" id="lang-dropdown-menu">
+        <button class="lang-dropdown__option" data-lang="es"><svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg> Español</button>
+        <button class="lang-dropdown__option" data-lang="en"><svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#012169"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="white" stroke-width="4"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="#c8102e" stroke-width="2"/><rect x="8.5" y="0" width="3" height="14" fill="white"/><rect x="0" y="5.5" width="20" height="3" fill="white"/><rect x="9.25" y="0" width="1.5" height="14" fill="#c8102e"/><rect x="0" y="6.25" width="20" height="1.5" fill="#c8102e"/></svg> English</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stubs requeridos por game.js -->
+  <div class="score-bar">
+    <div><span id="score-hits">0</span></div>
+    <div><span id="score-miss">0</span></div>
+  </div>
+  <div id="gm-panel" style="display:none"></div>
+  <div id="loading-screen" style="display:none"></div>
+  <div id="game-area" style="display:none"><div class="columns-wrapper" id="columns-wrapper"></div></div>
+
+  <!-- Contenido -->
+  <div class="profile-wrap">
+
+    <!-- Tarjeta de perfil -->
+    <div id="profile-card">
+      <!-- Poblado por auth.js -->
+    </div>
+
+    <!-- Logros -->
+    <section>
+      <p class="profile-section-heading" data-i18n="profile_achievements_section">Logros</p>
+      <div class="profile-achievements-wip">
+        <span class="profile-wip-icon">🚧</span>
+        <p class="profile-wip-text" data-i18n="profile_wip">En construcción</p>
+        <p class="profile-wip-desc" data-i18n="profile_wip_desc">Los logros llegarán pronto</p>
+      </div>
+    </section>
+
+    <!-- Ajustes de cuenta -->
+    <section id="profile-settings-section">
+      <p class="profile-section-heading" data-i18n="profile_settings_section">Ajustes de cuenta</p>
+      <div class="profile-settings-box">
+        <div id="profile-settings">
+          <!-- Poblado por auth.js -->
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="site-footer" style="margin-top:32px">
+    <p data-i18n-html="footer_credit_legal">Música provista por <a href="https://archive.org" target="_blank" rel="noopener">Archive.org</a> y <a href="https://downloads.khinsider.com" target="_blank" rel="noopener">KHInsider</a> · Desarrollado por Orteku en colaboración con Vyrka · <a href="privacy.html">Privacidad</a> · <a href="terms.html">Términos</a></p>
+  </footer>
+
+</div>
+
+<div id="modal" role="dialog" aria-modal="true">
+  <div id="modal-inner"></div>
+</div>
+<div id="auth-modal" role="dialog" aria-modal="true">
+  <div id="auth-modal-inner"></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/database.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/daily.js"></script>
+<script src="js/algorithm.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/player.js"></script>
+<script src="js/specials.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

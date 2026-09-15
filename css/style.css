@@ -1600,6 +1600,40 @@ body.theme--light .auth-drop__item:hover { background: #e4e2da; }
 body.theme--light .auth-drop__item--out { color: #b02020; }
 body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
 
+/* ─── Steam-card dropdown ───────────────────────────────────────────────────── */
+.auth-drop--card { min-width: 230px; }
+.auth-drop__card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid #2c2c34;
+}
+.auth-drop__avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #b8e030; color: #0e0e14;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.auth-drop__info { flex: 1; min-width: 0; }
+.auth-drop__drop-stats { display: flex; gap: 12px; margin-top: 4px; }
+.auth-drop__drop-stat { font-size: 11px; color: #7a7a88; }
+.auth-drop__drop-stat strong { color: #b8e030; font-weight: 700; }
+.auth-drop__actions { display: flex; }
+.auth-drop__item--profile {
+  flex: 1; text-decoration: none;
+  display: block; padding: 10px 14px;
+  font-size: 13px; color: #b8e030; font-weight: 600;
+  transition: background 0.12s;
+}
+.auth-drop__item--profile:hover { background: #28292e; color: #c8f040; }
+body.theme--light .auth-drop__card { border-color: #d0cec6; }
+body.theme--light .auth-drop__avatar { background: #4a6c10; color: #fff; }
+body.theme--light .auth-drop__drop-stat { color: #9898a8; }
+body.theme--light .auth-drop__drop-stat strong { color: #4a6c10; }
+body.theme--light .auth-drop__item--profile { color: #4a6c10; }
+body.theme--light .auth-drop__item--profile:hover { background: #e4e2da; }
+
 /* ─── Auth modal ────────────────────────────────────────────────────────────── */
 #auth-modal {
   display: none;
@@ -1941,4 +1975,106 @@ body.theme--light .modal__register-link:hover { color: #3a5810; }
 /* Columna racha en tabla ranking */
 .rank-streak { width: 1%; white-space: nowrap; text-align: right; color: #888898; font-variant-numeric: tabular-nums; }
 body.theme--light .rank-streak { color: #9898a8; }
+
+/* ─── Página de perfil ───────────────────────────────────────────────────────── */
+.profile-wrap {
+  max-width: 680px;
+  margin: 28px auto 0;
+  padding-bottom: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.profile-section-heading {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
+  text-transform: uppercase; color: #555960;
+  margin: 0 0 14px;
+}
+
+/* Tarjeta de perfil */
+.pcard {
+  background: #14141e;
+  border: 1px solid #1e1e2e;
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.pcard__avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: #b8e030; color: #0e0e14;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 32px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pcard__body { flex: 1; min-width: 0; }
+.pcard__username {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px; font-weight: 800;
+  color: #ddd9cf; margin-bottom: 14px; line-height: 1;
+}
+.pcard__stats { display: flex; gap: 22px; flex-wrap: wrap; }
+.pcard__stat { display: flex; flex-direction: column; gap: 2px; }
+.pcard__stat-value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 800;
+  color: #b8e030; line-height: 1;
+}
+.pcard__stat-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #555960;
+}
+.pcard--guest {
+  justify-content: center; flex-direction: column;
+  text-align: center; gap: 14px; padding: 40px 24px;
+}
+.pcard__guest-msg { font-size: 15px; color: #9898a8; margin: 0; }
+
+/* Logros WIP */
+.profile-achievements-wip {
+  background: #14141e;
+  border: 1px dashed #2c2c3e;
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.profile-wip-icon { font-size: 28px; display: block; margin-bottom: 10px; }
+.profile-wip-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 700;
+  color: #ddd9cf; margin: 0 0 4px;
+}
+.profile-wip-desc { font-size: 13px; color: #555960; margin: 0; }
+
+/* Contenedor de ajustes de cuenta en la página */
+.profile-settings-box {
+  background: #14141e;
+  border: 1px solid #1e1e2e;
+  border-radius: 12px;
+  padding: 4px 20px 0;
+}
+
+/* Light theme — página de perfil */
+body.theme--light .profile-section-heading { color: #9898a8; }
+body.theme--light .pcard { background: #f4f4ec; border-color: #d0ccc4; }
+body.theme--light .pcard__avatar { background: #4a6c10; color: #fff; }
+body.theme--light .pcard__username { color: #1e1d28; }
+body.theme--light .pcard__stat-value { color: #4a6c10; }
+body.theme--light .pcard__stat-label { color: #9898a8; }
+body.theme--light .pcard__guest-msg { color: #5a5a68; }
+body.theme--light .profile-achievements-wip { background: #f4f4ec; border-color: #c6c4bc; }
+body.theme--light .profile-wip-text { color: #1e1d28; }
+body.theme--light .profile-wip-desc { color: #9898a8; }
+body.theme--light .profile-settings-box { background: #f4f4ec; border-color: #d0ccc4; }
+
+@media (max-width: 520px) {
+  .pcard { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .pcard__avatar { width: 56px; height: 56px; font-size: 24px; }
+  .pcard__username { font-size: 22px; }
+  .pcard__stats { gap: 16px; }
+}
 

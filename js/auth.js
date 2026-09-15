@@ -80,6 +80,7 @@ async function authInit() {
   }
 
   _renderAuthBtn();
+  if (window.PROFILE_PAGE) initProfilePage();
 }
 
 // Procesa un token nuevo (tras login, registro o OAuth)
@@ -91,6 +92,7 @@ async function _handleNewToken(token) {
   _renderAuthBtn();
   closeAuthModal();
   _migrateIfNeeded();
+  if (window.PROFILE_PAGE) initProfilePage();
 }
 
 // Recibe el JWT desde el popup OAuth vía postMessage
@@ -101,10 +103,17 @@ async function _handleOAuthMessage(event) {
   if (error) { _showErr(t('auth_error_generic')); return; }
   if (!token) return;
   if (linked) {
-    // Vínculo de proveedor completado — actualizar sesión y refrescar modal de perfil
+    // Vínculo de proveedor completado — actualizar sesión y refrescar perfil
     _token = token;
     localStorage.setItem(_JWT_KEY, token);
-    await openProfileModal();
+    if (window.PROFILE_PAGE) {
+      const data = await _apiFetch('/auth/me');
+      if (data?.id) { _profile = data; localStorage.setItem(_USER_KEY, JSON.stringify(data)); }
+      const settingsEl = document.getElementById('profile-settings');
+      if (settingsEl) { settingsEl.innerHTML = _renderProfileHTML(true); _bindProfilePageEvents(); }
+    } else {
+      await openProfileModal();
+    }
     return;
   }
   await _handleNewToken(token);
@@ -121,18 +130,37 @@ function _renderAuthBtn() {
 
 // ─── Dropdown (usuario logado) ────────────────────────────────────────────────
 
+function _loadLocalStats() {
+  try { return JSON.parse(localStorage.getItem('ostquest_stats')) || {}; } catch { return {}; }
+}
+
 function _openDrop() {
   const existing = document.getElementById('auth-drop');
   if (existing) { existing.remove(); return; }
 
-  const btn  = document.getElementById('btn-auth');
-  const drop = document.createElement('div');
+  const btn   = document.getElementById('btn-auth');
+  const drop  = document.createElement('div');
   drop.id        = 'auth-drop';
-  drop.className = 'auth-drop';
+  drop.className = 'auth-drop auth-drop--card';
+
+  const stats   = _loadLocalStats();
+  const initial = (_profile.username || '?')[0].toUpperCase();
+
   drop.innerHTML = `
-    <div class="auth-drop__name">${_esc(_profile.username)}</div>
-    <button class="auth-drop__item" id="auth-drop-profile">${t('auth_profile')}</button>
-    <button class="auth-drop__item auth-drop__item--out" id="auth-drop-out">${t('auth_sign_out')}</button>
+    <div class="auth-drop__card">
+      <div class="auth-drop__avatar">${initial}</div>
+      <div class="auth-drop__info">
+        <div class="auth-drop__name">${_esc(_profile.username)}</div>
+        <div class="auth-drop__drop-stats">
+          <span class="auth-drop__drop-stat">⚡ <strong>${stats.streak || 0}</strong></span>
+          <span class="auth-drop__drop-stat">🎮 <strong>${stats.played || 0}</strong></span>
+        </div>
+      </div>
+    </div>
+    <div class="auth-drop__actions">
+      <a class="auth-drop__item auth-drop__item--profile" href="profile.html">${t('auth_view_profile')}</a>
+      <button class="auth-drop__item auth-drop__item--out" id="auth-drop-out">${t('auth_sign_out')}</button>
+    </div>
   `;
   document.body.appendChild(drop);
 
@@ -140,7 +168,6 @@ function _openDrop() {
   drop.style.top   = (rect.bottom + window.scrollY + 6) + 'px';
   drop.style.right = (document.documentElement.clientWidth - rect.right) + 'px';
 
-  document.getElementById('auth-drop-profile').addEventListener('click', () => { drop.remove(); openProfileModal(); });
   document.getElementById('auth-drop-out').addEventListener('click', () => { drop.remove(); _signOut(); });
 
   setTimeout(() => {
@@ -450,7 +477,7 @@ async function openProfileModal() {
   _bindProfileEvents();
 }
 
-function _renderProfileHTML() {
+function _renderProfileHTML(forPage = false) {
   const p = _profile || {};
   const providers = p.providers || {};
 
@@ -479,10 +506,7 @@ function _renderProfileHTML() {
     <span class="profile-provider__status">${providers.email ? (p.email || '') : t('auth_not_configured')}</span>
   </div>`;
 
-  return `
-    <button class="modal__close-x" id="auth-close">&times;</button>
-    <h2 class="auth-title">${t('auth_profile')}</h2>
-
+  const _sections = `
     <section class="profile-section">
       <h3 class="profile-section__title">${t('auth_username')}</h3>
       <div class="profile-uname-row">
@@ -517,6 +541,122 @@ function _renderProfileHTML() {
       <button class="btn profile-delete-btn" id="profile-delete">${t('auth_delete_account')}</button>
     </section>
   `;
+  if (forPage) return _sections;
+  return `
+    <button class="modal__close-x" id="auth-close">&times;</button>
+    <h2 class="auth-title">${t('auth_profile')}</h2>
+    ${_sections}
+  `;
+}
+
+function _renderProfileCardHTML() {
+  const p       = _profile || {};
+  const stats   = _loadLocalStats();
+  const initial = (p.username || '?')[0].toUpperCase();
+  const played  = stats.played || 0;
+  const wins    = stats.wins   || 0;
+  const accuracy = played > 0 ? Math.round((wins / (played * 3)) * 100) : 0;
+  const streak  = stats.streak || 0;
+  const perfect = stats.perfectQuests || 0;
+  return `
+    <div class="pcard">
+      <div class="pcard__avatar">${initial}</div>
+      <div class="pcard__body">
+        <div class="pcard__username">${_esc(p.username || '')}</div>
+        <div class="pcard__stats">
+          <div class="pcard__stat"><span class="pcard__stat-value">${played}</span><span class="pcard__stat-label">${t('stat_played')}</span></div>
+          <div class="pcard__stat"><span class="pcard__stat-value">${accuracy}%</span><span class="pcard__stat-label">${t('stat_accuracy')}</span></div>
+          <div class="pcard__stat"><span class="pcard__stat-value">${streak}</span><span class="pcard__stat-label">${t('stat_streak_current')}</span></div>
+          <div class="pcard__stat"><span class="pcard__stat-value">${perfect}</span><span class="pcard__stat-label">${t('stat_max_streak')}</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function initProfilePage() {
+  const cardEl     = document.getElementById('profile-card');
+  const settingsEl = document.getElementById('profile-settings');
+  const sectionEl  = document.getElementById('profile-settings-section');
+
+  if (!_token || !_profile) {
+    if (cardEl) cardEl.innerHTML = `
+      <div class="pcard pcard--guest">
+        <p class="pcard__guest-msg">${t('profile_not_logged_in')}</p>
+        <button class="btn" onclick="openAuthModal('signin')">${t('auth_sign_in_btn')}</button>
+      </div>`;
+    if (sectionEl) sectionEl.hidden = true;
+    return;
+  }
+
+  const data = await _apiFetch('/auth/me');
+  if (data?.id) { _profile = data; localStorage.setItem(_USER_KEY, JSON.stringify(data)); }
+
+  if (cardEl) cardEl.innerHTML = _renderProfileCardHTML();
+  if (settingsEl) {
+    settingsEl.innerHTML = _renderProfileHTML(true);
+    _bindProfilePageEvents();
+  }
+}
+
+function _bindProfilePageEvents() {
+  // Cambiar username
+  document.getElementById('profile-uname-save')?.addEventListener('click', async () => {
+    const uname  = document.getElementById('profile-uname')?.value.trim();
+    const errEl  = document.getElementById('profile-uname-err');
+    const setErr = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
+    errEl.style.display = 'none';
+    if (!_validUname(uname)) { setErr(t('auth_username_invalid')); return; }
+    const data = await _apiFetch('/auth/set-username', 'POST', { username: uname });
+    if (data?.error === 'username_taken') { setErr(t('auth_username_taken')); return; }
+    if (data?.error) { setErr(t('auth_error_generic')); return; }
+    _profile = { ..._profile, username: uname };
+    localStorage.setItem(_USER_KEY, JSON.stringify(_profile));
+    _renderAuthBtn();
+    const cardEl = document.getElementById('profile-card');
+    if (cardEl) cardEl.innerHTML = _renderProfileCardHTML();
+    if (typeof showToast === 'function') showToast(t('auth_saved'));
+  });
+
+  // Cambiar contraseña
+  document.getElementById('profile-pwd-save')?.addEventListener('click', async () => {
+    const curEl  = document.getElementById('profile-pwd-cur');
+    const newPwd = document.getElementById('profile-pwd-new')?.value;
+    const repPwd = document.getElementById('profile-pwd-new2')?.value;
+    const errEl  = document.getElementById('profile-pwd-err');
+    const setErr = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
+    errEl.style.display = 'none';
+    if (!newPwd || newPwd.length < 6) { setErr(t('auth_password_too_short')); return; }
+    if (newPwd !== repPwd)            { setErr(t('auth_passwords_dont_match')); return; }
+    const body = { newPassword: newPwd };
+    if (curEl) body.currentPassword = curEl.value;
+    const data = await _apiFetch('/auth/change-password', 'POST', body);
+    if (data?.error === 'invalid_current_password') { setErr(t('auth_error_invalid_credentials')); return; }
+    if (data?.error) { setErr(t('auth_error_generic')); return; }
+    _profile = { ..._profile, providers: { ..._profile?.providers, email: true } };
+    localStorage.setItem(_USER_KEY, JSON.stringify(_profile));
+    if (typeof showToast === 'function') showToast(t('auth_saved'));
+    if (curEl) curEl.value = '';
+    document.getElementById('profile-pwd-new').value  = '';
+    document.getElementById('profile-pwd-new2').value = '';
+  });
+
+  // Vincular / desvincular proveedores
+  document.querySelectorAll('[data-action="link"]').forEach(btn => {
+    btn.addEventListener('click', () => _linkProvider(btn.dataset.provider));
+  });
+  document.querySelectorAll('[data-action="unlink"]').forEach(btn => {
+    btn.addEventListener('click', () => _unlinkProvider(btn.dataset.provider));
+  });
+
+  // Borrar cuenta
+  document.getElementById('profile-delete')?.addEventListener('click', async () => {
+    const ok = await customConfirm(t('auth_delete_confirm'));
+    if (!ok) return;
+    await _apiFetch('/auth/account', 'DELETE');
+    _signOut();
+    window.location.href = 'index.html';
+  });
 }
 
 function _bindProfileEvents() {
@@ -614,8 +754,15 @@ async function _unlinkProvider(provider) {
     errEl.style.display = 'block';
     return;
   }
-  // Recargar modal para reflejar el cambio
-  openProfileModal();
+  // Recargar perfil para reflejar el cambio
+  if (window.PROFILE_PAGE) {
+    const d = await _apiFetch('/auth/me');
+    if (d?.id) { _profile = d; localStorage.setItem(_USER_KEY, JSON.stringify(d)); }
+    const settingsEl = document.getElementById('profile-settings');
+    if (settingsEl) { settingsEl.innerHTML = _renderProfileHTML(true); _bindProfilePageEvents(); }
+  } else {
+    openProfileModal();
+  }
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
