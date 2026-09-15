@@ -1605,7 +1605,7 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
 
 .auth-drop__top {
   display: flex; gap: 11px;
-  padding: 11px 12px 9px;
+  padding: 10px 12px 5px;
 }
 .auth-drop__avatar {
   width: 46px; height: 46px; border-radius: 50%;
@@ -1615,7 +1615,10 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.auth-drop__body { flex: 1; min-width: 0; }
+.auth-drop__body {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
 .auth-drop__controls {
   display: flex; align-items: center; justify-content: flex-end; gap: 8px;
   margin-bottom: 1px;
@@ -1640,19 +1643,19 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
   color: #ddd9cf;
   line-height: 1.1;
 }
-.auth-drop__drop-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 3px; }
+.auth-drop__drop-stats { display: flex; gap: 12px; flex-wrap: wrap; }
 .auth-drop__drop-stat { font-size: 12px; color: #9898a8; }
 .auth-drop__drop-stat strong { color: #ddd9cf; font-weight: 700; }
 
 .auth-drop__trofeos {
   border-top: 1px solid #2c2c34;
-  padding: 8px 12px 11px;
+  padding: 5px 12px 9px;
 }
 .auth-drop__trofeos-title {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 10px; font-weight: 700; letter-spacing: 2px;
   text-transform: uppercase; color: #555960;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .auth-drop__trofeos-wip { font-size: 13px; color: #555960; text-align: center; }
 
