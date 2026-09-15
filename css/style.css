@@ -1601,38 +1601,63 @@ body.theme--light .auth-drop__item--out { color: #b02020; }
 body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
 
 /* ─── Steam-card dropdown ───────────────────────────────────────────────────── */
-.auth-drop--card { min-width: 230px; }
-.auth-drop__card {
-  display: flex; align-items: center; gap: 12px;
+.auth-drop--card { min-width: 290px; padding: 0; }
+
+.auth-drop__top {
+  display: flex; gap: 12px;
   padding: 14px 14px 12px;
-  border-bottom: 1px solid #2c2c34;
 }
 .auth-drop__avatar {
-  width: 44px; height: 44px; border-radius: 50%;
+  width: 48px; height: 48px; border-radius: 50%;
   background: #b8e030; color: #0e0e14;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 20px; font-weight: 800;
+  font-size: 22px; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  flex-shrink: 0; margin-top: 2px;
 }
-.auth-drop__info { flex: 1; min-width: 0; }
-.auth-drop__drop-stats { display: flex; gap: 12px; margin-top: 4px; }
-.auth-drop__drop-stat { font-size: 11px; color: #7a7a88; }
-.auth-drop__drop-stat strong { color: #b8e030; font-weight: 700; }
-.auth-drop__actions { display: flex; }
-.auth-drop__item--profile {
-  flex: 1; text-decoration: none;
-  display: block; padding: 10px 14px;
-  font-size: 13px; color: #b8e030; font-weight: 600;
-  transition: background 0.12s;
+.auth-drop__body { flex: 1; min-width: 0; }
+.auth-drop__controls {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  margin-bottom: 4px;
 }
-.auth-drop__item--profile:hover { background: #28292e; color: #c8f040; }
-body.theme--light .auth-drop__card { border-color: #d0cec6; }
+.auth-drop__config-link {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: #7a7a88; text-decoration: none;
+  transition: color 0.12s;
+}
+.auth-drop__config-link:hover { color: #ddd9cf; }
+.auth-drop__signout-btn {
+  display: flex; align-items: center;
+  background: none; border: none; padding: 0;
+  color: #c05050; cursor: pointer; transition: color 0.12s;
+}
+.auth-drop__signout-btn:hover { color: #e06060; }
+.auth-drop__drop-stats { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 5px; }
+.auth-drop__drop-stat { font-size: 12px; color: #9898a8; }
+.auth-drop__drop-stat strong { color: #ddd9cf; font-weight: 700; }
+
+.auth-drop__trofeos {
+  border-top: 1px solid #2c2c34;
+  padding: 10px 14px 14px;
+}
+.auth-drop__trofeos-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: #555960;
+  margin-bottom: 8px;
+}
+.auth-drop__trofeos-wip { font-size: 13px; color: #555960; text-align: center; }
+
 body.theme--light .auth-drop__avatar { background: #4a6c10; color: #fff; }
-body.theme--light .auth-drop__drop-stat { color: #9898a8; }
-body.theme--light .auth-drop__drop-stat strong { color: #4a6c10; }
-body.theme--light .auth-drop__item--profile { color: #4a6c10; }
-body.theme--light .auth-drop__item--profile:hover { background: #e4e2da; }
+body.theme--light .auth-drop__config-link { color: #9898a8; }
+body.theme--light .auth-drop__config-link:hover { color: #1e1d28; }
+body.theme--light .auth-drop__signout-btn { color: #c04040; }
+body.theme--light .auth-drop__signout-btn:hover { color: #a02020; }
+body.theme--light .auth-drop__drop-stat { color: #7a7a88; }
+body.theme--light .auth-drop__drop-stat strong { color: #1e1d28; }
+body.theme--light .auth-drop__trofeos { border-color: #d0cec6; }
+body.theme--light .auth-drop__trofeos-title { color: #9898a8; }
+body.theme--light .auth-drop__trofeos-wip { color: #9898a8; }
 
 /* ─── Auth modal ────────────────────────────────────────────────────────────── */
 #auth-modal {

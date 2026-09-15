@@ -162,5 +162,6 @@
   "profile_settings_section": "Account settings",
   "auth_view_profile": "View profile",
   "profile_not_logged_in": "Sign in to view your profile",
+  "stat_streak_short": "Streak",
   "games": {}
 }

@@ -160,6 +160,7 @@
   "profile_settings_section": "Ajustes de cuenta",
   "auth_view_profile": "Ver perfil",
   "profile_not_logged_in": "Inicia sesión para ver tu perfil",
+  "stat_streak_short": "Racha",
   "games": {
     "40":  { "game": "Pokémon Rojo/Azul" },
     "591": { "game": "Pokémon Oro/Plata" },
