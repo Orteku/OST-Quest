@@ -21,7 +21,7 @@ const SPECIAL_EVENTS = [
     date:    '2026-12-11',     // jueves aprox. — actualizar cuando se confirme
     label:   'The Game Awards 2026',
     name:    'The Game Awards',
-    color:   '#C9A227',
+    color:   '#C9C9C9',
     gameIds: [],               // pendiente: añadir IDs con los nominados
   },
 ];
