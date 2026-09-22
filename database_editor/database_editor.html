@@ -594,10 +594,6 @@
       <input id="supabaseKey" class="sheets-url-input" type="password" placeholder="eyJhbGci..." />
     </div>
     <div class="sheets-row">
-      <span class="sheets-label">Repo GitHub:</span>
-      <input id="githubRepo" class="sheets-url-input" placeholder="usuario/repositorio (ej. Orteku/ostquest)" />
-    </div>
-    <div class="sheets-row">
       <button id="doImportSupabase" class="primary">Cargar desde Supabase</button>
       <button id="doSaveSupabase">Guardar en Supabase</button>
       <span id="supabaseStatus" class="sheets-status"></span>
@@ -762,6 +758,9 @@
     if (typeof updateSupaDiffBtns === "function") {
       clearTimeout(_diffTimer);
       _diffTimer = setTimeout(updateSupaDiffBtns, 400);
+    }
+    if (typeof setTabDiff === "function") {
+      if (value) setTabDiff('db', true);
     }
   }
 
@@ -1854,7 +1853,6 @@
   if (savedSupa.url)    $("supabaseUrl").value        = savedSupa.url;
   if (savedSupa.key)    $("supabaseKey").value        = savedSupa.key;
   if (savedSupa.table)  $("supabaseTableInput").value = savedSupa.table;
-  if (savedSupa.github) $("githubRepo").value         = savedSupa.github;
 
   $("supabaseBtn").addEventListener("click", () => {
     $("supabasePanel").classList.toggle("open");
@@ -1866,8 +1864,7 @@
     if (!url || !key) throw new Error("Introduce la URL del proyecto y la clave anon");
     localStorage.setItem(SUPA_STORAGE_KEY, JSON.stringify({
       url, key,
-      table:  $("supabaseTableInput").value.trim() || "games",
-      github: $("githubRepo").value.trim(),
+      table: $("supabaseTableInput").value.trim() || "games",
     }));
     return supabase.createClient(url, key);
   }
@@ -2066,11 +2063,11 @@
     if (btn) btn.classList.toggle('tab-diff', hasDiff);
   }
 
+  const GITHUB_RAW = 'https://raw.githubusercontent.com/Orteku/OST-Quest/main/';
+
   async function getGithubRaw(filePath) {
-    const repo = $("githubRepo").value.trim();
-    if (!repo) return null;
     try {
-      const r = await fetch(`https://raw.githubusercontent.com/${repo}/main/${filePath}`);
+      const r = await fetch(GITHUB_RAW + filePath);
       return r.ok ? r.text() : null;
     } catch { return null; }
   }
@@ -2134,13 +2131,14 @@
       + funcs;
   }
 
+  const normalizeEol = s => s.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+
   async function checkDbDiff() {
     if (db.length === 0) return;
     const github = await getGithubRaw('js/database.js');
     if (github === null) return;
     await new Promise(r => setTimeout(r, 0));
-    const local = toJs();
-    setTabDiff('db', local.trim() !== github.trim());
+    setTabDiff('db', normalizeEol(toJs()) !== normalizeEol(github));
   }
 
   async function checkTransDiff() {
@@ -2148,16 +2146,38 @@
     const lang = $("transLang").value;
     const github = await getGithubRaw(`locales/games-${lang}.json`);
     if (github === null) return;
-    const local = generateTranslationsJson(lang);
-    setTabDiff('traducciones', local.trim() !== github.trim());
+    let hasDiff;
+    try {
+      const ghObj = JSON.parse(github);
+      const localObj = JSON.parse(generateTranslationsJson(lang));
+      hasDiff = JSON.stringify(localObj) !== JSON.stringify(ghObj);
+    } catch {
+      hasDiff = normalizeEol(generateTranslationsJson(lang)) !== normalizeEol(github);
+    }
+    setTabDiff('traducciones', hasDiff);
   }
 
   async function checkSpecialsDiff() {
     if (!_specialsLoaded) return;
     const github = await getGithubRaw('js/specials.js');
     if (github === null) return;
-    const local = generateSpecialsJs();
-    setTabDiff('especiales', local.trim() !== github.trim());
+    let hasDiff;
+    try {
+      // Comparación semántica: ejecutar el JS del repo y comparar datos, ignorando formato
+      // eslint-disable-next-line no-new-func
+      const ghEvents = new Function(
+        github.replace(/if\s*\(typeof\s+module[^\n]*/g, '') + '; return SPECIAL_EVENTS;'
+      )();
+      const canon = e => JSON.stringify({
+        date: e.date || '', label: e.label || '', name: e.name || '', color: e.color || '',
+        tag: e.tag || '', gameIds: (e.gameIds || []).map(Number), developer: e.developer || '',
+      });
+      const byDate = arr => [...arr].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      hasDiff = JSON.stringify(byDate(_specials).map(canon)) !== JSON.stringify(byDate(ghEvents || []).map(canon));
+    } catch {
+      hasDiff = normalizeEol(generateSpecialsJs()) !== normalizeEol(github);
+    }
+    setTabDiff('especiales', hasDiff);
   }
 
   function switchTab(tab) {
