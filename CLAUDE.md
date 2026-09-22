@@ -34,6 +34,7 @@ Cada entrada en `js/database.js`:
   id: 1,
   game: "Nombre del juego",
   cover: "URL de la portada",
+  developer: "Nombre del estudio",  // opcional
   pop: 5,          // popularidad 1-6, usada como filtro en la selección de grupos
   year: 2025,      // año de lanzamiento
   tags: ['rpg', 'action'],  // tags de género del juego

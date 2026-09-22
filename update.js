@@ -128,11 +128,13 @@ function generateGameForDate(dateStr, pool = GAME_DB) {
 function getPoolForDate(dateStr) {
   const special = getSpecialForDate(dateStr);
   if (!special) return GAME_DB;
-  const pool = special.gameIds
+  const pool = special.gameIds && special.gameIds.length
     ? GAME_DB.filter(g => special.gameIds.includes(g.id))
     : special.tag
       ? GAME_DB.filter(g => g.tags && g.tags.includes(special.tag))
-      : GAME_DB;
+      : special.developer
+        ? GAME_DB.filter(g => g.developer === special.developer)
+        : GAME_DB;
   if (pool.length < 4) {
     console.warn(`⚠️  Especial "${special.label}" (${dateStr}): solo ${pool.length} juegos en DB, se usará DB completa`);
     return GAME_DB;
@@ -211,8 +213,7 @@ console.log(`   📆 Hasta:                         ${addDays(tomorrow, 364)}`);
 
 // ── Generar HTML estático en soundtracks.html ─────────────────────────────────
 
-const esJson  = JSON.parse(fs.readFileSync(path.join(__dirname, 'locales', 'es.json'), 'utf8'));
-const esGames = esJson.games || {};
+const esGames = JSON.parse(fs.readFileSync(path.join(__dirname, 'locales', 'games-es.json'), 'utf8'));
 
 function escHtml(str) {
   return String(str)

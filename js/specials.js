@@ -1,6 +1,6 @@
 // OST Quest — Eventos especiales
 // date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
-// Pool: usar 'gameIds' (lista de IDs) o 'tag' (filtra GAME_DB por tag). Mínimo ~12 juegos.
+// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'developer' (filtra por desarrollador). Mínimo ~12 juegos.
 
 const SPECIAL_EVENTS = [
   {

@@ -486,9 +486,42 @@
       .add-track-row1 { flex-wrap: wrap; }
       .add-track-row2 { grid-template-columns: 1fr 65px; }
     }
+    /* ── Tabs ──────────────────────────────── */
+    .tab-bar { display: flex; gap: 4px; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 8px; }
+    .tab-btn { background: none; border: 1px solid transparent; color: var(--muted); padding: 6px 16px; border-radius: 8px; font-weight: 650; }
+    .tab-btn.active { background: var(--panel2); border-color: var(--line); color: var(--text); }
+    .tab-btn:hover:not(.active) { color: var(--text); background: var(--panel); }
+    .tab-btn.tab-diff::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    /* ── Traducciones ─────────────────────── */
+    .trans-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .trans-list { display: grid; gap: 4px; }
+    .trans-row { display: grid; grid-template-columns: 52px 1fr 1fr; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; }
+    .trans-id { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; padding-right: 4px; }
+    .trans-original { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .trans-input { font-size: 13px; width: 100%; }
+    /* ── Especiales ───────────────────────── */
+    .specials-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .special-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+    .special-card-header { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+    .special-color { width: 38px; height: 34px; padding: 2px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
+    .special-date { width: 160px; font-family: ui-monospace, monospace; font-size: 13px; }
+    .special-name { width: 140px; }
+    .special-label { flex: 1; min-width: 120px; }
+    .special-card-body { display: flex; flex-direction: column; gap: 10px; }
+    .special-field-row { display: flex; gap: 8px; align-items: flex-start; }
+    .special-field-label { color: var(--muted); font-size: 12px; padding-top: 10px; width: 64px; flex-shrink: 0; }
+    .special-gameids { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; }
+    .special-gameid-preview { display: flex; flex-wrap: wrap; gap: 4px; min-height: 4px; }
+    .sp-id-search { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+    .sp-id-results { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .sp-id-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); color: var(--muted); cursor: pointer; user-select: none; }
+    .sp-id-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .sp-id-chip strong { color: var(--text); }
   </style>
 </head>
-<body>
+<body data-tab="db">
 <header>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <div style="display:flex;align-items:center;gap:10px">
@@ -561,6 +594,10 @@
       <input id="supabaseKey" class="sheets-url-input" type="password" placeholder="eyJhbGci..." />
     </div>
     <div class="sheets-row">
+      <span class="sheets-label">Repo GitHub:</span>
+      <input id="githubRepo" class="sheets-url-input" placeholder="usuario/repositorio (ej. Orteku/ostquest)" />
+    </div>
+    <div class="sheets-row">
       <button id="doImportSupabase" class="primary">Cargar desde Supabase</button>
       <button id="doSaveSupabase">Guardar en Supabase</button>
       <span id="supabaseStatus" class="sheets-status"></span>
@@ -572,9 +609,15 @@
       <button id="doUpsertSupabase" disabled>Añadir y modificar</button>
     </div>
   </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="db">Base de datos</button>
+    <button class="tab-btn" data-tab="traducciones">Traducciones</button>
+    <button class="tab-btn" data-tab="especiales">Especiales</button>
+  </div>
 </header>
 
 <main>
+  <div id="tab-db" class="tab-pane active">
   <div id="list" class="list"></div>
 
   <section id="addPanel" class="add-panel">
@@ -585,6 +628,7 @@
         <label><span>Cover URL</span><input id="newCover" class="field-cover" placeholder="https://..." /></label>
         <label><span>Año</span><select id="newYear"></select></label>
         <label><span>Pop (1–6)</span><input id="newPop" type="number" min="1" max="6" step="1" value="5" /></label>
+        <label><span>Desarrollador</span><input id="newDeveloper" placeholder="Estudio o publisher (opcional)" /></label>
       </div>
       <div class="add-row-tags" style="display:flex;flex-direction:column;gap:5px">
         <label style="display:grid;gap:4px;color:var(--muted);font-size:12px"><span>Tags</span><input id="newTags" class="field-youtube" placeholder="rpg, action..." /></label>
@@ -608,6 +652,45 @@
       <button id="clearNew">Limpiar</button>
     </div>
   </section>
+  </div><!-- /tab-db -->
+
+  <div id="tab-traducciones" class="tab-pane">
+    <div class="trans-toolbar">
+      <button id="transLoad" class="primary">Cargar desde Supabase</button>
+      <button id="transSave">Guardar en Supabase</button>
+      <button id="transDownload">Descargar JSON</button>
+      <select id="transLang" style="width:auto">
+        <option value="es">Español</option>
+      </select>
+      <input id="transSearch" placeholder="Buscar juego..." style="flex:1;min-width:140px" />
+      <label class="lyrics-check"><input type="checkbox" id="transOnlyWith" checked /> Solo con traducción</label>
+      <span id="transCount" style="color:var(--muted);font-size:12px;white-space:nowrap"></span>
+      <span id="transDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+      <span id="transStatus" class="sheets-status"></span>
+    </div>
+    <div id="transList" class="trans-list">
+      <p style="color:var(--muted);padding:16px 0">Carga las traducciones desde Supabase para empezar.</p>
+    </div>
+  </div><!-- /tab-traducciones -->
+
+  <div id="tab-especiales" class="tab-pane">
+    <div class="specials-toolbar">
+      <button id="specialsLoad" class="primary">Cargar desde Supabase</button>
+      <button id="specialsSave">Guardar en Supabase</button>
+      <button id="specialsDownload">Descargar specials.js</button>
+      <button id="specialsAdd" class="success">+ Añadir evento</button>
+      <span id="specialsDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+      <span id="specialsStatus" class="sheets-status"></span>
+    </div>
+    <div class="sp-id-search">
+      <span style="color:var(--muted);font-size:12px;white-space:nowrap">Buscar ID:</span>
+      <input id="spIdSearch" placeholder="Nombre del juego..." style="flex:1;min-width:140px" />
+      <div id="spIdResults" class="sp-id-results" style="flex-basis:100%"></div>
+    </div>
+    <div id="specialsList">
+      <p style="color:var(--muted);padding:16px 0">Carga los eventos desde Supabase o añade uno nuevo.</p>
+    </div>
+  </div><!-- /tab-especiales -->
 
   <div class="footer-space"></div>
 </main>
@@ -796,13 +879,14 @@
 
   function normalizeDb(arr) {
     return arr.map((x, idx) => ({
-      id:     Number(x.id) || idx + 1,
-      game:   String(x.game ?? "").trim(),
-      cover:  cleanUrl(x.cover ?? ""),
-      tracks: normalizeTracks(x),
-      pop:    Number(x.pop) || 1,
-      year:   Number(x.year) || 0,
-      tags:   Array.isArray(x.tags) ? x.tags.map(String).filter(Boolean) : [],
+      id:        Number(x.id) || idx + 1,
+      game:      String(x.game ?? "").trim(),
+      cover:     cleanUrl(x.cover ?? ""),
+      developer: String(x.developer ?? "").trim(),
+      tracks:    normalizeTracks(x),
+      pop:       Number(x.pop) || 1,
+      year:      Number(x.year) || 0,
+      tags:      Array.isArray(x.tags) ? x.tags.map(String).filter(Boolean) : [],
     }));
   }
 
@@ -997,6 +1081,7 @@
           <button class="small" data-action="reloadCover">↺ Cover</button>
           <label><span>Año</span><select data-field="year">${yearSelectHtml(item.year)}</select></label>
           <label><span>Pop</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
+          <label style="grid-column:1/-1"><span>Desarrollador</span><input data-field="developer" value="${escapeHtml(item.developer || '')}" placeholder="Estudio o publisher (opcional)" /></label>
         </div>
         <div class="tags-row">
           <label><span>Tags</span><input class="tags-input field-youtube" data-field="tags" value="${escapeHtml((item.tags || []).join(', '))}" placeholder="rpg, action..." /></label>
@@ -1009,7 +1094,7 @@
 
   function rowSearchAttrs(item) {
     return {
-      'data-search': `${item.game} ${item.tracks.map(t => `${t.title} ${t.mp3Url} ${t.artist} ${(t.tags||[]).join(" ")}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
+      'data-search': `${item.game} ${item.developer || ""} ${item.tracks.map(t => `${t.title} ${t.mp3Url} ${t.artist} ${(t.tags||[]).join(" ")}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
       'data-sg':   item.game.toLowerCase(),
       'data-st':   item.tracks.map(t => `${t.title} ${t.artist}`).join(" ").toLowerCase(),
       'data-stag': `${(item.tags||[]).join(" ")} ${item.tracks.map(t => (t.tags||[]).join(" ")).join(" ")}`.toLowerCase(),
@@ -1446,6 +1531,7 @@
   $("clearNew").addEventListener("click", () => {
     $("newGame").value = "";
     $("newCover").value = "";
+    $("newDeveloper").value = "";
     $("newTitle").value = "";
     $("newArtist").value = "";
     $("newTrackTagSuggestions").querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
@@ -1481,9 +1567,10 @@
     const trackTags = [...$("newTrackTagSuggestions").querySelectorAll('.tag-chip.active')].map(c => c.dataset.tag);
     const track = { title, artist, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: trackTags };
 
+    const developer = $("newDeveloper").value.trim();
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
     const newIndex = db.length;
-    db.push({ id: maxId + 1, game, cover, pop, year, tags, tracks: [track] });
+    db.push({ id: maxId + 1, game, cover, pop, year, tags, ...(developer ? { developer } : {}), tracks: [track] });
     const newItem = db[newIndex];
     _addToIdx(_coverIdx, newItem.cover, newIndex);
     newItem.tracks.forEach(t => _addToIdx(_audioIdx, t.mp3Url, newIndex));
@@ -1523,8 +1610,9 @@
 
   function toJs() {
     const lines = db.map(item => {
-      const coverPart = item.cover ? ` cover: "${jsString(item.cover)}",` : "";
-      const tagsPart  = item.tags?.length ? ` tags: [${item.tags.map(t => `'${jsString(t)}'`).join(', ')}],` : "";
+      const coverPart     = item.cover      ? ` cover: "${jsString(item.cover)}",`                          : "";
+      const developerPart = item.developer  ? ` developer: "${jsString(item.developer)}",`                  : "";
+      const tagsPart      = item.tags?.length ? ` tags: [${item.tags.map(t => `'${jsString(t)}'`).join(', ')}],` : "";
       const tracksPart = item.tracks.map(t => {
         const p = [];
         if (t.title)  p.push(`title: "${jsString(t.title)}"`);
@@ -1534,7 +1622,7 @@
         if (p.length === 0) p.push(`mp3Url: ""`);
         return `{ ${p.join(", ")} }`;
       }).join(", ");
-      return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0},${tagsPart} tracks: [${tracksPart}] },`;
+      return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart}${developerPart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0},${tagsPart} tracks: [${tracksPart}] },`;
     });
     return `const GAME_DB = [\n${lines.join("\n")}\n];\n`;
   }
@@ -1555,6 +1643,7 @@
   $("downloadJs").addEventListener("click", () => {
     const base = originalFilename.replace(/\.(js|txt|json)$/i, "") || "database";
     download(`${base}.js`, toJs(), "text/javascript;charset=utf-8");
+    setTabDiff('db', false);
   });
 
   $("downloadJson").addEventListener("click", () => {
@@ -1762,9 +1851,10 @@
 
   const SUPA_STORAGE_KEY = "ostquest_supabase";
   const savedSupa = JSON.parse(localStorage.getItem(SUPA_STORAGE_KEY) || "{}");
-  if (savedSupa.url)   $("supabaseUrl").value         = savedSupa.url;
-  if (savedSupa.key)   $("supabaseKey").value         = savedSupa.key;
-  if (savedSupa.table) $("supabaseTableInput").value  = savedSupa.table;
+  if (savedSupa.url)    $("supabaseUrl").value        = savedSupa.url;
+  if (savedSupa.key)    $("supabaseKey").value        = savedSupa.key;
+  if (savedSupa.table)  $("supabaseTableInput").value = savedSupa.table;
+  if (savedSupa.github) $("githubRepo").value         = savedSupa.github;
 
   $("supabaseBtn").addEventListener("click", () => {
     $("supabasePanel").classList.toggle("open");
@@ -1775,7 +1865,9 @@
     const key = $("supabaseKey").value.trim();
     if (!url || !key) throw new Error("Introduce la URL del proyecto y la clave anon");
     localStorage.setItem(SUPA_STORAGE_KEY, JSON.stringify({
-      url, key, table: $("supabaseTableInput").value.trim() || "games"
+      url, key,
+      table:  $("supabaseTableInput").value.trim() || "games",
+      github: $("githubRepo").value.trim(),
     }));
     return supabase.createClient(url, key);
   }
@@ -1807,6 +1899,9 @@
       status.textContent = `✓ ${db.length} entradas cargadas`;
       status.className = "sheets-status ok";
       $("supabasePanel").classList.remove("open");
+      $("transLoad").click();
+      $("specialsLoad").click();
+      checkDbDiff();
     } catch (err) {
       status.textContent = "Error: " + err.message;
       status.className = "sheets-status error";
@@ -1951,6 +2046,451 @@
     ];
     const base = originalFilename.replace(/\.(js|txt|json)$/i, "") || "database";
     download(`${base}.csv`, lines.join("\n"), "text/csv;charset=utf-8");
+  });
+
+  // ── Descarga sin tocar el estado dirty de la BD ─────────────────────────
+  function downloadRaw(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+  }
+
+  // ── Pestañas ─────────────────────────────────────────────────────────────
+  // ── GitHub diff indicators ────────────────────────────────────────────────
+
+  function setTabDiff(tab, hasDiff) {
+    const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+    if (btn) btn.classList.toggle('tab-diff', hasDiff);
+  }
+
+  async function getGithubRaw(filePath) {
+    const repo = $("githubRepo").value.trim();
+    if (!repo) return null;
+    try {
+      const r = await fetch(`https://raw.githubusercontent.com/${repo}/main/${filePath}`);
+      return r.ok ? r.text() : null;
+    } catch { return null; }
+  }
+
+  function generateTranslationsJson(lang) {
+    const obj = {};
+    [..._translations.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .forEach(([id, name]) => { obj[id] = { game: name }; });
+    return JSON.stringify(obj, null, 2);
+  }
+
+  function generateSpecialsJs() {
+    const lines = _specials.map(ev => {
+      const parts = [
+        `    date:    ${JSON.stringify(ev.date)},`,
+        `    label:   ${JSON.stringify(ev.label)},`,
+        `    name:    ${JSON.stringify(ev.name)},`,
+        `    color:   ${JSON.stringify(ev.color)},`,
+      ];
+      if (ev.tag)                               parts.push(`    tag:       ${JSON.stringify(ev.tag)},`);
+      if (ev.gameIds && ev.gameIds.length > 0)  parts.push(`    gameIds:   [${ev.gameIds.join(', ')}],`);
+      if (ev.developer)                         parts.push(`    developer: ${JSON.stringify(ev.developer)},`);
+      return '  {\n' + parts.join('\n') + '\n  }';
+    });
+    const funcs = [
+      '',
+      'function getSpecialForDate(dateStr) {',
+      '  const mmdd = dateStr.slice(5);',
+      "  return SPECIAL_EVENTS.find(e => e.date === dateStr || e.date === mmdd) || null;",
+      '}',
+      '',
+      '// Cuántos especiales caen entre QUEST_START (inclusive) y dateStr (exclusive).',
+      '// QUEST_START se define en daily.js — solo se llama desde el browser.',
+      'function countSpecialsBefore(dateStr) {',
+      "  const start     = typeof QUEST_START !== 'undefined' ? QUEST_START : '2026-06-08';",
+      '  const startYear = parseInt(start.slice(0, 4), 10);',
+      '  const endYear   = parseInt(dateStr.slice(0, 4), 10);',
+      '  let count = 0;',
+      '  for (const e of SPECIAL_EVENTS) {',
+      '    if (e.date.length === 10) {',
+      '      if (e.date >= start && e.date < dateStr) count++;',
+      '    } else {',
+      '      for (let y = startYear; y <= endYear; y++) {',
+      '        const full = y + \'-\' + e.date;',
+      '        if (full >= start && full < dateStr) count++;',
+      '      }',
+      '    }',
+      '  }',
+      '  return count;',
+      '}',
+      '',
+      "if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore };",
+    ].join('\n');
+    return '// OST Quest — Eventos especiales\n'
+      + "// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)\n"
+      + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'developer' (filtra por desarrollador). Mínimo ~12 juegos.\n\n"
+      + 'const SPECIAL_EVENTS = [\n'
+      + lines.join(',\n')
+      + '\n];\n'
+      + funcs;
+  }
+
+  async function checkDbDiff() {
+    if (db.length === 0) return;
+    const github = await getGithubRaw('js/database.js');
+    if (github === null) return;
+    await new Promise(r => setTimeout(r, 0));
+    const local = toJs();
+    setTabDiff('db', local.trim() !== github.trim());
+  }
+
+  async function checkTransDiff() {
+    if (!_translationsLoaded) return;
+    const lang = $("transLang").value;
+    const github = await getGithubRaw(`locales/games-${lang}.json`);
+    if (github === null) return;
+    const local = generateTranslationsJson(lang);
+    setTabDiff('traducciones', local.trim() !== github.trim());
+  }
+
+  async function checkSpecialsDiff() {
+    if (!_specialsLoaded) return;
+    const github = await getGithubRaw('js/specials.js');
+    if (github === null) return;
+    const local = generateSpecialsJs();
+    setTabDiff('especiales', local.trim() !== github.trim());
+  }
+
+  function switchTab(tab) {
+    document.body.dataset.tab = tab;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    document.querySelectorAll(".tab-pane").forEach(p => p.classList.toggle("active", p.id === `tab-${tab}`));
+    if (tab === "traducciones") renderTranslations();
+    if (tab === "especiales") renderSpecials();
+  }
+  document.querySelectorAll(".tab-btn").forEach(btn =>
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab))
+  );
+
+  // ── Traducciones ──────────────────────────────────────────────────────────
+  let _translations = new Map();  // game_id (number) → name
+  let _translationsLoaded = false;
+  let _transDirty = false;
+
+  function renderTranslations() {
+    if (db.length === 0) {
+      $("transList").innerHTML = '<p style="color:var(--muted);padding:16px 0">Carga la base de datos desde la pestaña "Base de datos" primero.</p>';
+      $("transCount").textContent = '';
+      return;
+    }
+    const q = $("transSearch").value.trim().toLowerCase();
+    const onlyWith = $("transOnlyWith").checked;
+    const items = db.map(item => {
+      const trans = _translations.get(Number(item.id)) || '';
+      const hasTrans = trans.trim() !== '';
+      if (onlyWith && !hasTrans) return null;
+      if (q && !item.game.toLowerCase().includes(q) && !trans.toLowerCase().includes(q)) return null;
+      return { id: Number(item.id), game: item.game, trans };
+    }).filter(Boolean);
+    $("transCount").textContent = `${items.length} juego${items.length !== 1 ? 's' : ''}`;
+    $("transList").innerHTML = items.map(r =>
+      `<div class="trans-row" data-id="${r.id}">
+        <span class="trans-id">${r.id}</span>
+        <span class="trans-original" title="${escapeHtml(r.game)}">${escapeHtml(r.game)}</span>
+        <input class="trans-input" data-id="${r.id}" placeholder="Traducción al español..." value="${escapeHtml(r.trans)}" />
+      </div>`
+    ).join('');
+  }
+
+  $("transSearch").addEventListener("input", renderTranslations);
+  $("transOnlyWith").addEventListener("change", renderTranslations);
+  $("transLang").addEventListener("change", () => {
+    _translations.clear();
+    _translationsLoaded = false;
+    _transDirty = false;
+    $("transDirtyPill").style.display = 'none';
+    $("transLoad").click();
+  });
+
+  $("transList").addEventListener("input", e => {
+    const input = e.target;
+    if (!input.matches(".trans-input")) return;
+    const id = Number(input.dataset.id);
+    const val = input.value.trim();
+    if (val) _translations.set(id, val);
+    else _translations.delete(id);
+    _transDirty = true;
+    $("transDirtyPill").style.display = '';
+  });
+
+  $("transLoad").addEventListener("click", async () => {
+    const status = $("transStatus");
+    status.textContent = 'Cargando...'; status.className = 'sheets-status';
+    try {
+      const client = getSupaClient();
+      const lang = $("transLang").value;
+      const { data, error } = await client.from('editor_translations').select('*').eq('lang', lang);
+      if (error) throw error;
+      _translations.clear();
+      for (const row of (data || [])) _translations.set(Number(row.game_id), row.name);
+      _translationsLoaded = true;
+      _transDirty = false;
+      $("transDirtyPill").style.display = 'none';
+      status.textContent = `✓ ${(data||[]).length} traducciones cargadas`;
+      status.className = 'sheets-status ok';
+      renderTranslations();
+      checkTransDiff();
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+      status.className = 'sheets-status error';
+      console.error(err);
+    }
+  });
+
+  $("transSave").addEventListener("click", async () => {
+    const status = $("transStatus");
+    status.textContent = 'Guardando...'; status.className = 'sheets-status';
+    try {
+      const client = getSupaClient();
+      const lang = $("transLang").value;
+    const rows = [..._translations.entries()].map(([game_id, name]) => ({ game_id, lang, name }));
+      if (rows.length) {
+        const { error } = await client.from('editor_translations').upsert(rows, { onConflict: 'game_id,lang' });
+        if (error) throw error;
+      }
+      _transDirty = false;
+      $("transDirtyPill").style.display = 'none';
+      status.textContent = `✓ ${rows.length} traducciones guardadas`;
+      status.className = 'sheets-status ok';
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+      status.className = 'sheets-status error';
+      console.error(err);
+    }
+  });
+
+  $("transDownload").addEventListener("click", () => {
+    const lang = $("transLang").value;
+    downloadRaw(`games-${lang}.json`, generateTranslationsJson(lang), 'application/json;charset=utf-8');
+    $("transStatus").textContent = `✓ games-${lang}.json descargado`;
+    $("transStatus").className = 'sheets-status ok';
+    setTabDiff('traducciones', false);
+  });
+
+  // ── Especiales ────────────────────────────────────────────────────────────
+  let _specials = [];
+  let _specialsLoadedIds = new Set();
+  let _specialsDirty = false;
+  let _specialsLoaded = false;
+
+  const GAME_TAGS_LIST = ['rpg','action','fps','platformer','strategy','racing','fighting','puzzle','horror','adventure','simulation','rhythm','roguelike','metroidvania','sandbox','mmo','stealth','indie','visual-novel'];
+
+  function parseSpecialFromRow(row) {
+    return {
+      id: row.id,
+      date: row.date || '',
+      label: row.label || '',
+      name: row.name || '',
+      color: row.color || '#888888',
+      tag: row.tag || '',
+      gameIds: Array.isArray(row.game_ids) ? row.game_ids.map(Number) : [],
+      developer: row.developer || '',
+    };
+  }
+
+  function renderGameIdPreviews(ids) {
+    if (!ids || !ids.length) return '<span style="color:var(--muted);font-size:11px">Sin juegos asignados</span>';
+    const chips = ids.slice(0, 30).map(id => {
+      const item = db.find(x => Number(x.id) === Number(id));
+      const cls = item ? 'sp-id-chip' : 'sp-id-chip field-warn';
+      const name = item ? escapeHtml(item.game) : `#${id}`;
+      return `<span class="${cls}" title="ID ${id}">${name}</span>`;
+    });
+    if (ids.length > 30) chips.push(`<span class="sp-id-chip" style="color:var(--muted)">+${ids.length - 30} más</span>`);
+    return chips.join('');
+  }
+
+  function specialCardHtml(ev, i) {
+    const gameIdsStr = (ev.gameIds || []).join(', ');
+    const tagChips = GAME_TAGS_LIST.map(t =>
+      `<span class="tag-chip${ev.tag === t ? ' active' : ''}" data-sp-tag="${t}" data-index="${i}">${t}</span>`
+    ).join('');
+    return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
+      <div class="special-card-header">
+        <input type="color" class="special-color" data-field="color" data-index="${i}" value="${escapeHtml(ev.color || '#888888')}" title="Color del evento" />
+        <input class="special-date" data-field="date" data-index="${i}" placeholder="YYYY-MM-DD o MM-DD" value="${escapeHtml(ev.date || '')}" title="Fecha exacta o anual (MM-DD)" />
+        <input class="special-name" data-field="name" data-index="${i}" placeholder="Nombre corto" value="${escapeHtml(ev.name || '')}" />
+        <input class="special-label" data-field="label" data-index="${i}" placeholder="Nombre completo" value="${escapeHtml(ev.label || '')}" />
+        <button class="small danger" data-action="removeSpecial" data-index="${i}">✕</button>
+      </div>
+      <div class="special-card-body">
+        <div class="special-field-row">
+          <span class="special-field-label">game_ids</span>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+            <input class="special-gameids" data-field="gameIds" data-index="${i}" placeholder="IDs separados por comas" value="${escapeHtml(gameIdsStr)}" />
+            <div class="special-gameid-preview">${renderGameIdPreviews(ev.gameIds)}</div>
+          </div>
+        </div>
+        <div class="special-field-row">
+          <span class="special-field-label">tag</span>
+          <div style="flex:1;min-width:0"><div class="tag-suggestions">${tagChips}</div></div>
+        </div>
+        <div class="special-field-row">
+          <span class="special-field-label">developer</span>
+          <input class="special-developer" data-field="developer" data-index="${i}" placeholder="Nombre del estudio o publisher" value="${escapeHtml(ev.developer || '')}" />
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderSpecials() {
+    const container = $("specialsList");
+    if (_specials.length === 0) {
+      container.innerHTML = '<p style="color:var(--muted);padding:16px 0">No hay eventos. Pulsa "+ Añadir evento" o carga desde Supabase.</p>';
+      return;
+    }
+    container.innerHTML = _specials.map((ev, i) => specialCardHtml(ev, i)).join('');
+  }
+
+  $("specialsList").addEventListener("input", e => {
+    const el = e.target;
+    const i = el.dataset.index !== undefined ? Number(el.dataset.index) : null;
+    if (i === null || !_specials[i]) return;
+    const field = el.dataset.field;
+    if (!field) return;
+    if (field === "gameIds") {
+      const ids = el.value.split(',').map(s => Number(s.trim())).filter(n => n > 0 && !isNaN(n));
+      _specials[i].gameIds = ids;
+      const card = el.closest('.special-card');
+      if (card) card.querySelector('.special-gameid-preview').innerHTML = renderGameIdPreviews(ids);
+    } else {
+      _specials[i][field] = el.value;
+      if (field === "color") {
+        const card = el.closest('.special-card');
+        if (card) card.style.borderLeftColor = el.value;
+      }
+    }
+    _specialsDirty = true;
+    $("specialsDirtyPill").style.display = '';
+  });
+
+  $("specialsList").addEventListener("click", e => {
+    const btn = e.target.closest("[data-action='removeSpecial']");
+    if (btn) {
+      const i = Number(btn.dataset.index);
+      customConfirm(`¿Eliminar el evento "${_specials[i]?.label || 'sin nombre'}"?`, { ok: 'Eliminar', okDanger: true }).then(ok => {
+        if (!ok) return;
+        _specials.splice(i, 1);
+        _specialsDirty = true;
+        $("specialsDirtyPill").style.display = '';
+        renderSpecials();
+      });
+      return;
+    }
+    const chip = e.target.closest('[data-sp-tag]');
+    if (chip) {
+      const tag = chip.dataset.spTag;
+      const i = Number(chip.dataset.index);
+      if (!_specials[i]) return;
+      _specials[i].tag = _specials[i].tag === tag ? '' : tag;
+      _specialsDirty = true;
+      $("specialsDirtyPill").style.display = '';
+      renderSpecials();
+    }
+  });
+
+  $("specialsAdd").addEventListener("click", () => {
+    _specials.push({ date: '', label: '', name: '', color: '#888888', tag: '', gameIds: [], developer: '' });
+    _specialsDirty = true;
+    $("specialsDirtyPill").style.display = '';
+    renderSpecials();
+    requestAnimationFrame(() => {
+      const cards = $("specialsList").querySelectorAll('.special-card');
+      if (cards.length) cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+
+  $("specialsLoad").addEventListener("click", async () => {
+    const status = $("specialsStatus");
+    status.textContent = 'Cargando...'; status.className = 'sheets-status';
+    try {
+      const client = getSupaClient();
+      const { data, error } = await client.from('editor_specials').select('*').order('date');
+      if (error) throw error;
+      _specials = (data || []).map(parseSpecialFromRow);
+      _specialsLoadedIds = new Set(_specials.map(e => e.id).filter(Boolean));
+      _specialsLoaded = true;
+      _specialsDirty = false;
+      $("specialsDirtyPill").style.display = 'none';
+      status.textContent = `✓ ${_specials.length} eventos cargados`;
+      status.className = 'sheets-status ok';
+      renderSpecials();
+      checkSpecialsDiff();
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+      status.className = 'sheets-status error';
+      console.error(err);
+    }
+  });
+
+  $("specialsSave").addEventListener("click", async () => {
+    const status = $("specialsStatus");
+    status.textContent = 'Guardando...'; status.className = 'sheets-status';
+    try {
+      const client = getSupaClient();
+      const currentIds = new Set(_specials.filter(e => e.id !== undefined).map(e => e.id));
+      const toDelete = [..._specialsLoadedIds].filter(id => !currentIds.has(id));
+      if (toDelete.length) {
+        const { error } = await client.from('editor_specials').delete().in('id', toDelete);
+        if (error) throw error;
+      }
+      const toSave = _specials.map(ev => {
+        const r = { date: ev.date, label: ev.label, name: ev.name, color: ev.color, tag: ev.tag || null, game_ids: ev.gameIds || [], developer: ev.developer || null };
+        if (ev.id !== undefined) r.id = ev.id;
+        return r;
+      });
+      if (toSave.length) {
+        const { data, error } = await client.from('editor_specials').upsert(toSave, { onConflict: 'id' }).select();
+        if (error) throw error;
+        if (data) {
+          _specials = data.map(parseSpecialFromRow);
+          _specialsLoadedIds = new Set(_specials.map(e => e.id).filter(Boolean));
+          renderSpecials();
+        }
+      }
+      _specialsDirty = false;
+      $("specialsDirtyPill").style.display = 'none';
+      status.textContent = `✓ ${_specials.length} eventos guardados`;
+      status.className = 'sheets-status ok';
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+      status.className = 'sheets-status error';
+      console.error(err);
+    }
+  });
+
+  $("specialsDownload").addEventListener("click", () => {
+    downloadRaw('specials.js', generateSpecialsJs(), 'text/javascript;charset=utf-8');
+    $("specialsStatus").textContent = '✓ specials.js descargado';
+    $("specialsStatus").className = 'sheets-status ok';
+    setTabDiff('especiales', false);
+  });
+
+  // Buscador de IDs de juegos para la pestaña de especiales
+  $("spIdSearch").addEventListener("input", () => {
+    const q = $("spIdSearch").value.trim().toLowerCase();
+    const results = $("spIdResults");
+    if (!q || db.length === 0) { results.innerHTML = ''; return; }
+    const matches = db.filter(item => item.game.toLowerCase().includes(q)).slice(0, 20);
+    results.innerHTML = matches.map(item =>
+      `<span class="sp-id-chip" title="Clic para copiar ID ${item.id}"><strong>${item.id}</strong> ${escapeHtml(item.game)}</span>`
+    ).join('');
+  });
+
+  $("spIdResults").addEventListener("click", e => {
+    const chip = e.target.closest('.sp-id-chip');
+    if (!chip) return;
+    const id = chip.querySelector('strong')?.textContent;
+    if (id) navigator.clipboard?.writeText(id);
   });
 
 })();
