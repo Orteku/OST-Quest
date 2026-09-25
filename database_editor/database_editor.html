@@ -2302,7 +2302,16 @@
   let _specialsDirty = false;
   let _specialsLoaded = false;
 
-  const GAME_TAGS_LIST = ['rpg','action','fps','platformer','strategy','racing','fighting','puzzle','horror','adventure','simulation','rhythm','roguelike','metroidvania','sandbox','mmo','stealth','indie','visual-novel'];
+  const GAME_TAGS_FALLBACK = ['rpg','action','fps','platformer','strategy','racing','fighting','puzzle','horror','adventure','simulation','rhythm','roguelike','metroidvania','sandbox','mmo','stealth','indie','visual-novel'];
+  function getGameTagList() {
+    if (db.length === 0) return GAME_TAGS_FALLBACK;
+    const tags = new Set();
+    db.forEach(item => {
+      (item.tags || []).forEach(t => tags.add(t));
+      (item.tracks || []).forEach(track => (track.tags || []).forEach(t => tags.add(t)));
+    });
+    return [...tags].sort();
+  }
 
   function parseSpecialFromRow(row) {
     return {
@@ -2331,7 +2340,7 @@
 
   function specialCardHtml(ev, i) {
     const gameIdsStr = (ev.gameIds || []).join(', ');
-    const tagChips = GAME_TAGS_LIST.map(t =>
+    const tagChips = getGameTagList().map(t =>
       `<span class="tag-chip${ev.tag === t ? ' active' : ''}" data-sp-tag="${t}" data-index="${i}">${t}</span>`
     ).join('');
     return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
@@ -2463,19 +2472,23 @@
         const { error } = await client.from('editor_specials').delete().in('id', toDelete);
         if (error) throw error;
       }
-      const toSave = _specials.map(ev => {
-        const r = { date: ev.date, label: ev.label, name: ev.name, color: ev.color, tag: ev.tag || null, game_ids: ev.gameIds || [], developer: ev.developer || null };
-        if (ev.id !== undefined) r.id = ev.id;
-        return r;
-      });
-      if (toSave.length) {
-        const { data, error } = await client.from('editor_specials').upsert(toSave, { onConflict: 'id' }).select();
+      const toRow = ev => ({ date: ev.date, label: ev.label, name: ev.name, color: ev.color, tag: ev.tag || null, game_ids: ev.gameIds || [], developer: ev.developer || null });
+      const withId    = _specials.filter(e => e.id !== undefined).map(ev => ({ ...toRow(ev), id: ev.id }));
+      const withoutId = _specials.filter(e => e.id === undefined).map(toRow);
+      if (withId.length) {
+        const { error } = await client.from('editor_specials').upsert(withId, { onConflict: 'id' });
         if (error) throw error;
-        if (data) {
-          _specials = data.map(parseSpecialFromRow);
-          _specialsLoadedIds = new Set(_specials.map(e => e.id).filter(Boolean));
-          renderSpecials();
-        }
+      }
+      if (withoutId.length) {
+        const { error } = await client.from('editor_specials').insert(withoutId);
+        if (error) throw error;
+      }
+      if (withId.length || withoutId.length) {
+        const { data: refreshed, error: refErr } = await client.from('editor_specials').select('*').order('date');
+        if (refErr) throw refErr;
+        _specials = (refreshed || []).map(parseSpecialFromRow);
+        _specialsLoadedIds = new Set(_specials.map(e => e.id).filter(Boolean));
+        renderSpecials();
       }
       _specialsDirty = false;
       $("specialsDirtyPill").style.display = 'none';
