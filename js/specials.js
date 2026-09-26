@@ -4,26 +4,32 @@
 
 const SPECIAL_EVENTS = [
   {
-    date:    '2026-09-12',
-    label:   'BlizzCon 2026',  // nombre completo (archive, compartir)
-    name:    'BlizzCon',       // nombre corto (cabecera)
-    color:   '#216EC0',
-    gameIds: [51, 140, 141, 160, 325, 663, 66, 328, 335, 336, 83, 589, 129, 142, 636],
+    date:    "10-31",
+    label:   "Halloween",
+    name:    "Halloween",
+    color:   "#E8720C",
+    tag:       "horror",
   },
   {
-    date:    '10-31',          // se repite cada año
-    label:   'Halloween',
-    name:    'Halloween',
-    color:   '#E8720C',
-    tag:     'horror',         // filtra GAME_DB por este tag
+    date:    "2026-09-12",
+    label:   "BlizzCon 2026",
+    name:    "BlizzCon",
+    color:   "#216EC0",
+    gameIds:   [51, 140, 141, 160, 325, 663, 66, 328, 335, 336, 83, 589, 129, 142, 636],
   },
   {
-    date:    '2026-12-11',     // jueves aprox. — actualizar cuando se confirme
-    label:   'The Game Awards 2026',
-    name:    'The Game Awards',
-    color:   '#C9C9C9',
-    gameIds: [],               // pendiente: añadir IDs con los nominados
+    date:    "2026-12-11",
+    label:   "The Game Awards 2026",
+    name:    "The Game Awards",
+    color:   "#C9C9C9",
   },
+  {
+    date:    "2027-02-06",
+    label:   "Chinese New Year",
+    name:    "Año Chino",
+    color:   "#a81717",
+    tag:       "asian",
+  }
 ];
 
 function getSpecialForDate(dateStr) {
@@ -43,7 +49,7 @@ function countSpecialsBefore(dateStr) {
       if (e.date >= start && e.date < dateStr) count++;
     } else {
       for (let y = startYear; y <= endYear; y++) {
-        const full = `${y}-${e.date}`;
+        const full = y + '-' + e.date;
         if (full >= start && full < dateStr) count++;
       }
     }
