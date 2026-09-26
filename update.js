@@ -131,7 +131,10 @@ function getPoolForDate(dateStr) {
   const pool = special.gameIds && special.gameIds.length
     ? GAME_DB.filter(g => special.gameIds.includes(g.id))
     : special.tag
-      ? GAME_DB.filter(g => g.tags && g.tags.includes(special.tag))
+      ? GAME_DB.filter(g =>
+          (g.tags && g.tags.includes(special.tag)) ||
+          g.tracks.some(tr => tr.tags && tr.tags.includes(special.tag))
+        )
       : special.developer
         ? GAME_DB.filter(g => g.developer === special.developer)
         : GAME_DB;

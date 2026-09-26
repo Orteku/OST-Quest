@@ -2326,6 +2326,14 @@
     };
   }
 
+  function countPoolByTag(tag) {
+    if (!tag || db.length === 0) return 0;
+    return db.filter(g =>
+      (g.tags && g.tags.includes(tag)) ||
+      (g.tracks && g.tracks.some(tr => tr.tags && tr.tags.includes(tag)))
+    ).length;
+  }
+
   function renderGameIdPreviews(ids) {
     if (!ids || !ids.length) return '<span style="color:var(--muted);font-size:11px">Sin juegos asignados</span>';
     const chips = ids.slice(0, 30).map(id => {
@@ -2361,7 +2369,10 @@
         </div>
         <div class="special-field-row">
           <span class="special-field-label">tag</span>
-          <div style="flex:1;min-width:0"><div class="tag-suggestions">${tagChips}</div></div>
+          <div style="flex:1;min-width:0">
+            <div class="tag-suggestions">${tagChips}</div>
+            ${ev.tag ? `<span style="font-size:11px;color:var(--muted)">${countPoolByTag(ev.tag)} juegos en el pool</span>` : ''}
+          </div>
         </div>
         <div class="special-field-row">
           <span class="special-field-label">developer</span>
