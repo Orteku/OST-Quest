@@ -8702,32 +8702,32 @@
   ],
   "2027-02-06": [
     {
-      "answerId": 747,
+      "answerId": 156,
       "coverIds": [
-        747,
-        591,
-        263,
-        582
+        510,
+        160,
+        156,
+        667
       ],
       "trackIndex": 0
     },
     {
-      "answerId": 574,
+      "answerId": 631,
       "coverIds": [
-        574,
-        205,
-        115,
-        357
+        724,
+        286,
+        327,
+        631
       ],
       "trackIndex": 0
     },
     {
-      "answerId": 501,
+      "answerId": 155,
       "coverIds": [
-        501,
-        419,
-        578,
-        744
+        668,
+        331,
+        154,
+        155
       ],
       "trackIndex": 0
     }

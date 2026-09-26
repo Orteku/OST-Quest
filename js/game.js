@@ -1127,7 +1127,11 @@ function openGmPanel() {
   function _getGmPool(sp) {
     if (!sp) return GAME_DB;
     if (sp.gameIds && sp.gameIds.length) return GAME_DB.filter(g => sp.gameIds.includes(g.id));
-    if (sp.tag) return GAME_DB.filter(g => g.tags && g.tags.includes(sp.tag));
+    if (sp.tag) return GAME_DB.filter(g =>
+      (g.tags && g.tags.includes(sp.tag)) ||
+      g.tracks.some(tr => tr.tags && tr.tags.includes(sp.tag))
+    );
+    if (sp.developer) return GAME_DB.filter(g => g.developer === sp.developer);
     return GAME_DB;
   }
 
