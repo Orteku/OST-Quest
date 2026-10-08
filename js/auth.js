@@ -929,18 +929,43 @@ function _renderAchievementsHTML(unlocked) {
     const isUnlocked = unlockedIds.has(a.id);
     const label      = getAchievementLabel(a, lang);
     const isHidden   = a.hidden && !isUnlocked;
-    const name       = isHidden ? '???' : _esc(label.name);
-    return `<div class="achievement-card ${isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked'}${_profile?.selected_avatar === a.image ? ' achievement-card--selected' : ''}" data-id="${_esc(a.id)}" data-img="${_esc(a.image)}" title="${name}">
+    const name = isHidden ? '???' : _esc(label.name);
+    const desc = isHidden ? '???' : _esc(label.desc || '');
+    return `<div class="achievement-card ${isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked'}${_profile?.selected_avatar === a.image ? ' achievement-card--selected' : ''}" data-id="${_esc(a.id)}" data-img="${_esc(a.image)}" data-name="${name}" data-desc="${desc}">
       ${isHidden
         ? `<div class="achievement-card__mystery">?</div>`
-        : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}" onerror="this.parentNode.querySelector('.achievement-card__img')?.remove()">`
+        : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}">`
       }
-      ${isHidden ? '' : `<div class="achievement-card__name">${name}</div>`}
     </div>`;
   }).join('');
 }
 
 function _bindAchievementEvents() {
+  // Tooltip compartido
+  let tip = document.getElementById('ach-tooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'ach-tooltip';
+    tip.className = 'ach-tooltip';
+    document.body.appendChild(tip);
+  }
+
+  document.querySelectorAll('.achievement-card').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      tip.innerHTML = `<div class="ach-tooltip__name">${card.dataset.name}</div><div class="ach-tooltip__desc">${card.dataset.desc}</div>`;
+      tip.style.display = 'block';
+      const r  = card.getBoundingClientRect();
+      const tw = tip.offsetWidth;
+      const th = tip.offsetHeight;
+      let left = r.left + window.scrollX + r.width / 2 - tw / 2;
+      left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+      const topAbove = r.top + window.scrollY - th - 8;
+      tip.style.left = left + 'px';
+      tip.style.top  = (topAbove > 0 ? topAbove : r.bottom + window.scrollY + 8) + 'px';
+    });
+    card.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+  });
+
   document.querySelectorAll('.achievement-card--unlocked').forEach(card => {
     card.addEventListener('click', async () => {
       const img = card.dataset.img;
