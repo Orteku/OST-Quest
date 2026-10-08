@@ -1,4 +1,4 @@
-import { AUTH_BASE, buildOAuthState, getLinkUserId, findOrCreateOauthUser, issueToken, oauthSuccess, oauthError } from './oauth.js';
+import { AUTH_BASE, buildOAuthState, getLinkUserId, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
 
 const TOKEN_URL    = 'https://oauth2.googleapis.com/token';
 const USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
@@ -57,7 +57,11 @@ export async function handleGoogleCallback(request, env, db) {
       return oauthSuccess(token, true);
     }
 
-    const user  = await findOrCreateOauthUser(db, 'google', gUser.id, gUser.email);
+    const user = await findExistingOauthUser(db, 'google', gUser.id, gUser.email);
+    if (!user) {
+      const token = await issuePendingToken({ provider: 'google', provider_id: gUser.id, email: gUser.email }, env);
+      return oauthSuccess(token);
+    }
     const token = await issueToken(user, env);
     return oauthSuccess(token);
   } catch (e) {

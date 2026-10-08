@@ -1,4 +1,4 @@
-import { AUTH_BASE, buildOAuthState, getLinkUserId, findOrCreateOauthUser, issueToken, oauthSuccess, oauthError } from './oauth.js';
+import { AUTH_BASE, buildOAuthState, getLinkUserId, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
 
 const TOKEN_URL    = 'https://discord.com/api/oauth2/token';
 const USERINFO_URL = 'https://discord.com/api/users/@me';
@@ -56,7 +56,11 @@ export async function handleDiscordCallback(request, env, db) {
       return oauthSuccess(token, true);
     }
 
-    const user  = await findOrCreateOauthUser(db, 'discord', dUser.id, dUser.email);
+    const user = await findExistingOauthUser(db, 'discord', dUser.id, dUser.email);
+    if (!user) {
+      const token = await issuePendingToken({ provider: 'discord', provider_id: dUser.id, email: dUser.email }, env);
+      return oauthSuccess(token);
+    }
     const token = await issueToken(user, env);
     return oauthSuccess(token);
   } catch (e) {

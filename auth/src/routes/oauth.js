@@ -36,15 +36,13 @@ export async function getLinkUserId(stateParam, env) {
   } catch { return null; }
 }
 
-// Busca o crea un usuario por proveedor OAuth.
-// Usa la columna específica del proveedor (google_id, discord_id, etc.)
-// Si hay cuenta con el mismo email, vincula el proveedor a ella.
-export async function findOrCreateOauthUser(db, provider, providerId, email) {
-  // Buscar por columna específica del proveedor
+// Busca un usuario existente por proveedor OAuth. NO crea usuarios nuevos.
+// Si hay cuenta con el mismo email, vincula el proveedor y la devuelve.
+// Devuelve null si no existe ninguna cuenta — el llamador debe emitir un token pendiente.
+export async function findExistingOauthUser(db, provider, providerId, email) {
   let user = await db.getUserByProvider(provider, providerId);
   if (user) return user;
 
-  // Buscar por email (puede tener cuenta con contraseña u otro proveedor)
   if (email) {
     user = await db.getUserByEmail(email.toLowerCase());
     if (user) {
@@ -53,13 +51,11 @@ export async function findOrCreateOauthUser(db, provider, providerId, email) {
     }
   }
 
-  // Crear usuario nuevo con la columna específica del proveedor
-  const providerCol = { google: 'google_id', discord: 'discord_id', twitch: 'twitch_id', steam: 'steam_id' };
-  return db.createUser({
-    id:                    crypto.randomUUID(),
-    email:                 email ? email.toLowerCase() : null,
-    provider,
-    provider_id:           String(providerId),
-    [providerCol[provider]]: String(providerId),
-  });
+  return null;
+}
+
+// JWT pendiente para nuevos usuarios OAuth (antes de que guarden su username).
+// El usuario NO existe aún en la BD.
+export async function issuePendingToken({ provider, provider_id, email }, env) {
+  return signJwt({ pending: true, provider, provider_id: String(provider_id), email: email || null }, env.JWT_SECRET);
 }

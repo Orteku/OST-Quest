@@ -723,6 +723,11 @@ function openEndModal(score) {
   if (!isArchiveMode) tickEndCountdown();
   openModal();
 
+  if (score === 0 && !isArchiveMode && typeof authUnlockAchievement === 'function') {
+    authUnlockAchievement('easter_wasted');
+    authUnlockAchievement('easter_both');
+  }
+
   if (score === 0) {
     const sfx     = new Audio('fx/wasted.mp3');
     const sfxVol  = (gameVolume / 100) * 0.35;
@@ -967,6 +972,11 @@ function checkFinished() {
 }
 
 function triggerLineEffect(pos) {
+  if (!isArchiveMode && typeof authUnlockAchievement === 'function') {
+    authUnlockAchievement('easter_line');
+    authUnlockAchievement('easter_both');
+  }
+
   const sfx = new Audio('fx/cash.mp3');
   sfx.currentTime = 0.5;
   sfx.play().catch(() => {});

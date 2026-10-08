@@ -163,5 +163,9 @@
   "auth_view_profile": "View profile",
   "profile_not_logged_in": "Sign in to view your profile",
   "stat_streak_short": "Streak",
+  "auth_error_provider_taken": "That account is already linked to another user",
+  "auth_linked_ok": "Account linked successfully",
+  "auth_last_used": "Last used",
+  "achievement_unlocked": "Achievement unlocked",
   "games": {}
 }

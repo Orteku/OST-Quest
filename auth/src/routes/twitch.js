@@ -1,4 +1,4 @@
-import { AUTH_BASE, buildOAuthState, getLinkUserId, findOrCreateOauthUser, issueToken, oauthSuccess, oauthError } from './oauth.js';
+import { AUTH_BASE, buildOAuthState, getLinkUserId, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
 
 const TOKEN_URL    = 'https://id.twitch.tv/oauth2/token';
 const USERINFO_URL = 'https://api.twitch.tv/helix/users';
@@ -60,7 +60,11 @@ export async function handleTwitchCallback(request, env, db) {
       return oauthSuccess(token, true);
     }
 
-    const user  = await findOrCreateOauthUser(db, 'twitch', tUser.id, tUser.email);
+    const user = await findExistingOauthUser(db, 'twitch', tUser.id, tUser.email);
+    if (!user) {
+      const token = await issuePendingToken({ provider: 'twitch', provider_id: tUser.id, email: tUser.email }, env);
+      return oauthSuccess(token);
+    }
     const token = await issueToken(user, env);
     return oauthSuccess(token);
   } catch (e) {

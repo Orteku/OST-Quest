@@ -54,7 +54,26 @@ export async function handleSubmitScore(request, env, db) {
     db.updateUser(payload.sub, { streak }),
   ]);
 
-  return json({ ok: true, streak }, 200, request);
+  // Comprobar logros de progresión
+  const newAchievements = [];
+  const [unlocked, playedCount, user] = await Promise.all([
+    db.getUserAchievements(payload.sub),
+    db.getPlayedCount(payload.sub),
+    db.getUserById(payload.sub),
+  ]);
+  const unlockedIds = new Set((unlocked || []).map(a => a.achievement_id));
+
+  if (!unlockedIds.has('streak_7') && streak >= 7)   newAchievements.push('streak_7');
+  if (!unlockedIds.has('played_30') && playedCount >= 30) newAchievements.push('played_30');
+  if (!unlockedIds.has('anniversary') && user?.created_at) {
+    const ageMs = Date.now() - new Date(user.created_at).getTime();
+    if (ageMs >= 365 * 24 * 3600 * 1000) newAchievements.push('anniversary');
+  }
+  if (newAchievements.length) {
+    await Promise.all(newAchievements.map(id => db.unlockAchievement(payload.sub, id)));
+  }
+
+  return json({ ok: true, streak, newAchievements }, 200, request);
 }
 
 // POST /scores/migrate  { played: { [date]: { score, total } } }

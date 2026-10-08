@@ -20,8 +20,10 @@ async function _apiFetch(path, method = 'GET', body = null, overrideToken = null
       method, headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-    return res.json();
-  } catch { return {}; }
+    const data = await res.json();
+    data.__status = res.status;
+    return data;
+  } catch { return { __networkError: true }; }
 }
 
 // ─── Persistencia de sesión ───────────────────────────────────────────────────
@@ -45,7 +47,9 @@ function _clearSession() {
 async function authInit() {
   document.getElementById('btn-auth')?.addEventListener('click', e => {
     e.stopPropagation();
-    _token && _profile?.username ? _openDrop() : openAuthModal();
+    if (_token && _profile?.username) _openDrop();
+    else if (_token && !_profile) openUsernameModal();  // token pendiente
+    else openAuthModal();
   });
   document.getElementById('auth-modal')?.addEventListener('click', e => {
     if (e.target.id === 'auth-modal') closeAuthModal();
@@ -69,12 +73,18 @@ async function authInit() {
   if (_token) {
     // Verificar que el token sigue siendo válido
     const data = await _apiFetch('/auth/me');
-    if (data?.id) {
+    if (data?.pending) {
+      // Token pendiente restaurado — usuario OAuth sin username
+      _renderAuthBtn();
+      openUsernameModal();
+      return;
+    } else if (data?.id) {
       _profile = data;
       localStorage.setItem(_USER_KEY, JSON.stringify(data));
       if (!data.username) { openUsernameModal(); return; }
       _migrateIfNeeded();
-    } else {
+    } else if (!data.__networkError) {
+      // Solo cerrar sesión si el servidor rechazó el token (401/403), no por error de red
       _clearSession();
     }
   }
@@ -86,6 +96,14 @@ async function authInit() {
 // Procesa un token nuevo (tras login, registro o OAuth)
 async function _handleNewToken(token) {
   const data = await _apiFetch('/auth/me', 'GET', null, token);
+  if (data?.pending) {
+    // Nuevo usuario OAuth — guardar token pendiente y pedir username
+    _token = token;
+    localStorage.setItem(_JWT_KEY, token);
+    _renderAuthBtn();
+    openUsernameModal();
+    return;
+  }
   if (!data?.id) { _showErr(t('auth_error_generic')); return; }
   _saveSession(token, data);
   if (!data.username) { openUsernameModal(); return; }
@@ -100,7 +118,12 @@ async function _handleOAuthMessage(event) {
   if (event.origin !== location.origin && event.origin !== 'https://oestiquest.com') return;
   if (event.data?.type !== 'oauth-callback') return;
   const { token, error, linked } = event.data;
-  if (error) { _showErr(t('auth_error_generic')); return; }
+  if (error) {
+    const msg = error === 'provider_already_linked' ? t('auth_error_provider_taken') : t('auth_error_generic');
+    if (typeof showToast === 'function') showToast(msg, 'error');
+    else _showErr(msg);
+    return;
+  }
   if (!token) return;
   if (linked) {
     // Vínculo de proveedor completado — actualizar sesión y refrescar perfil
@@ -114,6 +137,7 @@ async function _handleOAuthMessage(event) {
     } else {
       await openProfileModal();
     }
+    if (typeof showToast === 'function') showToast(t('auth_linked_ok'));
     return;
   }
   await _handleNewToken(token);
@@ -124,8 +148,16 @@ async function _handleOAuthMessage(event) {
 function _renderAuthBtn() {
   const btn = document.getElementById('btn-auth');
   if (!btn) return;
-  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>`;
-  btn.classList.toggle('auth-btn--in', !!(  _token && _profile?.username));
+  const loggedIn = !!(_token && _profile?.username);
+  if (loggedIn && _profile.selected_avatar) {
+    btn.innerHTML = `<img class="auth-btn__avatar-img" src="img/achievements/${_esc(_profile.selected_avatar)}" alt="">`;
+  } else if (loggedIn) {
+    const initial = _profile.username.charAt(0).toUpperCase();
+    btn.innerHTML = `<span class="auth-btn__avatar">${initial}</span>`;
+  } else {
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>`;
+  }
+  btn.classList.toggle('auth-btn--in', loggedIn);
 }
 
 // ─── Dropdown (usuario logado) ────────────────────────────────────────────────
@@ -208,6 +240,7 @@ function closeAuthModal() {
 
 function _renderAuthModal() {
   const reg = _authMode === 'register';
+  const lastProvider = localStorage.getItem('ostquest_last_provider');
   document.getElementById('auth-modal-inner').innerHTML = `
     <button class="modal__close-x" id="auth-close">&times;</button>
     <h2 class="auth-title">${t(reg ? 'auth_register' : 'auth_sign_in')}</h2>
@@ -226,21 +259,25 @@ function _renderAuthModal() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
+        ${lastProvider === 'google' ? `<span class="auth-social__last">${t('auth_last_used')}</span>` : ''}
       </button>
       <button class="auth-social__btn auth-social__btn--discord" data-provider="discord" title="Discord">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="#5865F2" aria-hidden="true">
           <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
         </svg>
+        ${lastProvider === 'discord' ? `<span class="auth-social__last">${t('auth_last_used')}</span>` : ''}
       </button>
       <button class="auth-social__btn auth-social__btn--twitch" data-provider="twitch" title="Twitch">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="#9146FF" aria-hidden="true">
           <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/>
         </svg>
+        ${lastProvider === 'twitch' ? `<span class="auth-social__last">${t('auth_last_used')}</span>` : ''}
       </button>
       <button class="auth-social__btn auth-social__btn--steam" data-provider="steam" title="Steam">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="#c7d5e0" aria-hidden="true">
           <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.497 1.009 2.455-.397.957-1.497 1.41-2.455 1.012zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.662 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/>
         </svg>
+        ${lastProvider === 'steam' ? `<span class="auth-social__last">${t('auth_last_used')}</span>` : ''}
       </button>
     </div>
     ${reg ? `<p class="auth-legal-note" id="auth-legal-note"></p>` : ''}
@@ -257,7 +294,10 @@ function _renderAuthModal() {
   document.getElementById('auth-submit').addEventListener('click', _submitEmail);
   document.getElementById('auth-pwd').addEventListener('keydown', e => { if (e.key === 'Enter') _submitEmail(); });
   document.querySelectorAll('.auth-social__btn').forEach(btn => {
-    btn.addEventListener('click', () => _signInOAuth(btn.dataset.provider));
+    btn.addEventListener('click', () => {
+      localStorage.setItem('ostquest_last_provider', btn.dataset.provider);
+      _signInOAuth(btn.dataset.provider);
+    });
   });
 }
 
@@ -292,7 +332,10 @@ async function _submitEmail() {
     return;
   }
 
-  if (data?.token) await _handleNewToken(data.token);
+  if (data?.token) {
+    localStorage.setItem('ostquest_last_provider', 'email');
+    await _handleNewToken(data.token);
+  }
 }
 
 function _showErr(msg) {
@@ -333,6 +376,12 @@ async function _saveUsername() {
   if (data?.error === 'username_taken') { setErr(t('auth_username_taken')); return; }
   if (data?.error) { setErr(t('auth_error_generic')); return; }
 
+  // Caso pendiente: el servidor devuelve un token real tras crear el usuario
+  if (data?.token) {
+    await _handleNewToken(data.token);
+    return;
+  }
+
   _profile = { ..._profile, username: uname };
   localStorage.setItem(_USER_KEY, JSON.stringify(_profile));
   _renderAuthBtn();
@@ -343,10 +392,10 @@ async function _saveUsername() {
 // ─── Sign out ─────────────────────────────────────────────────────────────────
 
 function _signOut() {
-  // Borrar clave de sync per-user antes de limpiar _profile
   if (_profile?.id) localStorage.removeItem(`ostquest_synced_${_profile.id}`);
   localStorage.removeItem(_SYNC_KEY); // legacy
   _clearSession();
+  if (window.PROFILE_PAGE) { window.location.href = 'index.html'; return; }
   _renderAuthBtn();
 }
 
@@ -436,8 +485,12 @@ async function authUpdateStatsDisplay() {
 async function submitScoreToSupabase(dateStr, score, stats) {
   if (!_token) return;
   _pendingScoreSubmit = _apiFetch('/scores', 'POST', { gameDate: dateStr, score, stats });
-  await _pendingScoreSubmit;
+  const res = await _pendingScoreSubmit;
   _pendingScoreSubmit = null;
+
+  if (res?.newAchievements?.length) {
+    for (const id of res.newAchievements) _showAchievementToast(id);
+  }
 }
 
 // ─── Migración de localStorage ────────────────────────────────────────────────
@@ -560,7 +613,7 @@ function _renderProfileHTML(forPage = false) {
   `;
 }
 
-function _renderProfileCardHTML() {
+function _renderProfileCardHTML(unlocked = []) {
   const p       = _profile || {};
   const stats   = _loadLocalStats();
   const initial = (p.username || '?')[0].toUpperCase();
@@ -569,9 +622,27 @@ function _renderProfileCardHTML() {
   const accuracy = played > 0 ? Math.round((wins / (played * 3)) * 100) : 0;
   const streak  = stats.streak || 0;
   const perfect = stats.perfectQuests || 0;
+
+  // Últimos 3 logros desbloqueados
+  let recentHtml = '';
+  if (unlocked.length && typeof ACHIEVEMENTS_DB !== 'undefined') {
+    const lang   = document.documentElement.lang || 'es';
+    const recent = unlocked.slice(-3).reverse();
+    recentHtml = `<div class="pcard__recent-achievements">${
+      recent.map(u => {
+        const a = getAchievement(u.achievement_id);
+        if (!a) return '';
+        const label = getAchievementLabel(a, lang);
+        return `<img class="pcard__achievement-icon" src="img/achievements/${_esc(a.image)}" alt="${_esc(label.name)}" title="${_esc(label.name)}">`;
+      }).join('')
+    }</div>`;
+  }
+
   return `
     <div class="pcard">
-      <div class="pcard__avatar">${initial}</div>
+      <div class="pcard__avatar">${p.selected_avatar
+        ? `<img class="pcard__avatar-img" src="img/achievements/${_esc(p.selected_avatar)}" alt="">`
+        : initial}</div>
       <div class="pcard__body">
         <div class="pcard__username">${_esc(p.username || '')}</div>
         <div class="pcard__stats">
@@ -580,6 +651,7 @@ function _renderProfileCardHTML() {
           <div class="pcard__stat"><span class="pcard__stat-value">${streak}</span><span class="pcard__stat-label">${t('stat_streak_current')}</span></div>
           <div class="pcard__stat"><span class="pcard__stat-value">${perfect}</span><span class="pcard__stat-label">${t('stat_max_streak')}</span></div>
         </div>
+        ${recentHtml}
       </div>
     </div>
   `;
@@ -603,10 +675,19 @@ async function initProfilePage() {
   const data = await _apiFetch('/auth/me');
   if (data?.id) { _profile = data; localStorage.setItem(_USER_KEY, JSON.stringify(data)); }
 
-  if (cardEl) cardEl.innerHTML = _renderProfileCardHTML();
+  // Cargar logros primero para poder mostrarlo en la tarjeta también
+  const unlocked = (typeof ACHIEVEMENTS_DB !== 'undefined') ? await authGetAchievements() : [];
+
+  if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(unlocked);
   if (settingsEl) {
     settingsEl.innerHTML = _renderProfileHTML(true);
     _bindProfilePageEvents();
+  }
+
+  const achievementsEl = document.getElementById('achievements-grid');
+  if (achievementsEl && typeof ACHIEVEMENTS_DB !== 'undefined') {
+    achievementsEl.innerHTML = _renderAchievementsHTML(unlocked);
+    _bindAchievementEvents();
   }
 }
 
@@ -774,6 +855,87 @@ async function _unlinkProvider(provider) {
   } else {
     openProfileModal();
   }
+}
+
+// ─── Logros ───────────────────────────────────────────────────────────────────
+
+async function authUnlockAchievement(id) {
+  if (!_token) return false;
+  const data = await _apiFetch('/auth/achievements/unlock', 'POST', { achievementId: id });
+  if (data?.ok && data?.isNew) _showAchievementToast(id);
+  return data?.ok === true;
+}
+
+function _showAchievementToast(achievementId) {
+  const a    = typeof getAchievement === 'function' ? getAchievement(achievementId) : null;
+  const lang = document.documentElement.lang || 'es';
+  const name = a ? _esc(getAchievementLabel(a, lang).name) : _esc(achievementId);
+  const img  = a ? `<img class="achievement-toast__img" src="img/achievements/${_esc(a.image)}" alt="">` : `<div class="achievement-toast__img-ph">🏆</div>`;
+
+  const el = document.createElement('div');
+  el.className = 'achievement-toast';
+  el.innerHTML = `${img}<div class="achievement-toast__body"><div class="achievement-toast__label">${t('achievement_unlocked')}</div><div class="achievement-toast__name">${name}</div></div>`;
+  document.body.appendChild(el);
+
+  const sfx = new Audio('fx/achievement.mp3');
+  sfx.volume = Math.min(1, (typeof gameVolume !== 'undefined' ? gameVolume : 80) / 100 * 0.6);
+  sfx.play().catch(() => {});
+
+  setTimeout(() => {
+    el.classList.add('achievement-toast--out');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }, 4500);
+}
+
+async function authGetAchievements() {
+  if (!_token) return [];
+  const data = await _apiFetch('/auth/achievements');
+  return Array.isArray(data) ? data : [];
+}
+
+async function authSetAvatar(filename) {
+  if (!_token) return false;
+  const data = await _apiFetch('/auth/avatar', 'POST', { avatar: filename });
+  if (data?.ok) {
+    _profile = { ..._profile, selected_avatar: filename };
+    localStorage.setItem(_USER_KEY, JSON.stringify(_profile));
+    _renderAuthBtn();
+  }
+  return data?.ok === true;
+}
+
+function _renderAchievementsHTML(unlocked) {
+  if (typeof ACHIEVEMENTS_DB === 'undefined') return '';
+  const unlockedIds = new Set(unlocked.map(a => a.achievement_id));
+  const lang = document.documentElement.lang || 'es';
+  return ACHIEVEMENTS_DB.map(a => {
+    const isUnlocked = unlockedIds.has(a.id);
+    const label      = getAchievementLabel(a, lang);
+    const isHidden   = a.hidden && !isUnlocked;
+    const name       = isHidden ? '???' : _esc(label.name);
+    return `<div class="achievement-card ${isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked'}${_profile?.selected_avatar === a.image ? ' achievement-card--selected' : ''}" data-id="${_esc(a.id)}" data-img="${_esc(a.image)}" title="${name}">
+      ${isHidden
+        ? `<div class="achievement-card__mystery">?</div>`
+        : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}" onerror="this.parentNode.querySelector('.achievement-card__img')?.remove()">`
+      }
+      <div class="achievement-card__name">${name}</div>
+    </div>`;
+  }).join('');
+}
+
+function _bindAchievementEvents() {
+  document.querySelectorAll('.achievement-card--unlocked').forEach(card => {
+    card.addEventListener('click', async () => {
+      const img = card.dataset.img;
+      if (!img) return;
+      const ok = await authSetAvatar(img);
+      if (ok) {
+        document.querySelectorAll('.achievement-card--selected').forEach(c => c.classList.remove('achievement-card--selected'));
+        card.classList.add('achievement-card--selected');
+        if (typeof showToast === 'function') showToast(t('auth_saved'));
+      }
+    });
+  });
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────

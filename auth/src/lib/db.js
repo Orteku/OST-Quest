@@ -139,6 +139,35 @@ export function createDb(env) {
       return streak;
     },
 
+    // ── Logros ───────────────────────────────────────────────────────────────
+    async unlockAchievement(userId, achievementId) {
+      const res = await supabase.from('user_achievements')
+        .upsert({ user_id: userId, achievement_id: achievementId }, { onConflict: 'user_id,achievement_id', ignoreDuplicates: true })
+        .select();
+      return !!(res.data?.length); // true = recién desbloqueado, false = ya tenía
+    },
+    async getUserAchievements(userId) {
+      return check(await supabase.from('user_achievements')
+        .select('achievement_id, unlocked_at')
+        .eq('user_id', userId)
+        .order('unlocked_at', { ascending: true }));
+    },
+    async hasAchievement(userId, achievementId) {
+      const res = await supabase.from('user_achievements')
+        .select('achievement_id', { count: 'exact', head: true })
+        .eq('user_id', userId).eq('achievement_id', achievementId);
+      return (res.count || 0) > 0;
+    },
+    async getPlayedCount(userId) {
+      const res = await supabase.from('scores')
+        .select('*', { count: 'exact', head: true }).eq('user_id', userId);
+      return res.count || 0;
+    },
+    async setAvatar(userId, avatarFilename) {
+      return check(await supabase.from('player_accounts')
+        .update({ selected_avatar: avatarFilename }).eq('id', userId));
+    },
+
     // ── Tokens de reset de contraseña ────────────────────────────────────────
     async createResetToken(userId, token, expiresAt) {
       return check(await supabase.from('password_reset_tokens').insert({ user_id: userId, token, expires_at: expiresAt }));

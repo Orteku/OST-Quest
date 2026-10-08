@@ -12,6 +12,7 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7677038770205132" crossorigin="anonymous"></script>
   <style>
     .score-bar { display: none !important; }
+    #btn-help { display: none !important; }
   </style>
 </head>
 <body>
@@ -26,6 +27,7 @@
 
 <div class="app-wrapper">
 
+  <div class="site-header-wrap">
   <header class="site-header">
     <div class="site-header__left">
       <a href="index.html"><img src="img/banner.png" alt="Oesti Quest" class="site-banner"></a>
@@ -55,6 +57,7 @@
       <button class="icon-btn" id="btn-auth" aria-label="Cuenta"></button>
     </div>
   </header>
+  </div><!-- /.site-header-wrap -->
 
   <button class="theme-btn" id="btn-theme" aria-label="Modo claro">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -112,10 +115,8 @@
     <!-- Logros -->
     <section>
       <p class="profile-section-heading" data-i18n="profile_achievements_section">Trofeos</p>
-      <div class="profile-achievements-wip">
-        <span class="profile-wip-icon">🚧</span>
-        <p class="profile-wip-text" data-i18n="profile_wip">En construcción</p>
-        <p class="profile-wip-desc" data-i18n="profile_wip_desc">Los logros llegarán pronto</p>
+      <div id="achievements-grid" class="achievements-grid">
+        <!-- Poblado por auth.js -->
       </div>
     </section>
 
@@ -153,6 +154,7 @@
 <script src="js/assets.js"></script>
 <script src="js/player.js"></script>
 <script src="js/specials.js"></script>
+<script src="js/achievements.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/game.js"></script>

@@ -1,5 +1,5 @@
 // Steam usa OpenID 2.0 (no OAuth 2.0) — el flujo es diferente
-import { AUTH_BASE, getLinkUserId, findOrCreateOauthUser, issueToken, oauthSuccess, oauthError } from './oauth.js';
+import { AUTH_BASE, getLinkUserId, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
 import { verifyJwt } from '../lib/jwt.js';
 
 const STEAM_OPENID = 'https://steamcommunity.com/openid/login';
@@ -63,7 +63,11 @@ export async function handleSteamCallback(request, env, db) {
       return oauthSuccess(token, true);
     }
 
-    const user  = await findOrCreateOauthUser(db, 'steam', steamId, null);
+    const user = await findExistingOauthUser(db, 'steam', steamId, null);
+    if (!user) {
+      const token = await issuePendingToken({ provider: 'steam', provider_id: steamId, email: null }, env);
+      return oauthSuccess(token);
+    }
     const token = await issueToken(user, env);
     return oauthSuccess(token);
   } catch (e) {

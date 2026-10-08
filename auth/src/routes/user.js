@@ -1,5 +1,8 @@
 import { verifyJwt } from '../lib/jwt.js';
 import { json } from '../lib/cors.js';
+import { issueToken } from './oauth.js';
+
+const CLIENT_UNLOCKABLE = ['easter_line', 'easter_wasted', 'easter_both'];
 
 // Extrae y verifica el JWT del header Authorization
 export async function requireAuth(request, env) {
@@ -18,14 +21,18 @@ export async function handleGetMe(request, env, db) {
   const [payload, err] = await requireAuth(request, env);
   if (err) return err;
 
+  // JWT pendiente: usuario OAuth nuevo, aún no existe en la BD
+  if (payload.pending) return json({ pending: true }, 200, request);
+
   const user = await db.getUserById(payload.sub);
   if (!user) return json({ error: 'user_not_found' }, 404, request);
 
   return json({
-    id:       user.id,
-    email:    user.email,
-    username: user.username,
-    provider: user.provider,
+    id:              user.id,
+    email:           user.email,
+    username:        user.username,
+    provider:        user.provider,
+    selected_avatar: user.selected_avatar || null,
     providers: {
       email:   !!user.password_hash,
       google:  !!user.google_id,
@@ -50,11 +57,33 @@ export async function handleSetUsername(request, env, db) {
   }
 
   const existing = await db.getUserByUsername(username);
+
+  // JWT pendiente: crear el usuario ahora que tenemos el username
+  if (payload.pending) {
+    if (existing) return json({ error: 'username_taken' }, 409, request);
+    const providerCol = { google: 'google_id', discord: 'discord_id', twitch: 'twitch_id', steam: 'steam_id' };
+    const newUser = await db.createUser({
+      id:                        crypto.randomUUID(),
+      email:                     payload.email || null,
+      provider:                  payload.provider,
+      provider_id:               payload.provider_id,
+      [providerCol[payload.provider]]: payload.provider_id,
+    });
+    await db.updateUser(newUser.id, { username });
+    await db.unlockAchievement(newUser.id, 'register');
+    const token = await issueToken(newUser, env);
+    return json({ ok: true, username, token }, 200, request);
+  }
+
   if (existing && existing.id !== payload.sub) {
     return json({ error: 'username_taken' }, 409, request);
   }
 
+  // Primera vez que se pone username (registro por email)
+  const currentUser = await db.getUserById(payload.sub);
+  const isFirst = !currentUser?.username;
   await db.updateUser(payload.sub, { username });
+  if (isFirst) await db.unlockAchievement(payload.sub, 'register');
   return json({ ok: true, username }, 200, request);
 }
 
@@ -98,5 +127,60 @@ export async function handleDeleteAccount(request, env, db) {
   if (err) return err;
 
   await db.deleteUser(payload.sub);
+  return json({ ok: true }, 200, request);
+}
+
+// GET /auth/achievements — logros desbloqueados del usuario
+export async function handleGetAchievements(request, env, db) {
+  const [payload, err] = await requireAuth(request, env);
+  if (err) return err;
+  if (payload.pending) return json([], 200, request);
+
+  const achievements = await db.getUserAchievements(payload.sub);
+  return json(achievements || [], 200, request);
+}
+
+// POST /auth/achievements/unlock  { achievementId }
+// Solo para logros client-side: easter_line, easter_wasted, easter_both
+export async function handleUnlockAchievement(request, env, db) {
+  const [payload, err] = await requireAuth(request, env);
+  if (err) return err;
+  if (payload.pending) return json({ error: 'pending_user' }, 403, request);
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
+
+  const { achievementId } = body;
+  if (!CLIENT_UNLOCKABLE.includes(achievementId)) {
+    return json({ error: 'not_allowed' }, 403, request);
+  }
+
+  if (achievementId === 'easter_both') {
+    const [hasLine, hasWasted] = await Promise.all([
+      db.hasAchievement(payload.sub, 'easter_line'),
+      db.hasAchievement(payload.sub, 'easter_wasted'),
+    ]);
+    if (!hasLine || !hasWasted) return json({ error: 'prerequisites_not_met' }, 403, request);
+  }
+
+  const isNew = await db.unlockAchievement(payload.sub, achievementId);
+  return json({ ok: true, isNew }, 200, request);
+}
+
+// POST /auth/avatar  { avatar: 'filename.png' }
+export async function handleSetAvatar(request, env, db) {
+  const [payload, err] = await requireAuth(request, env);
+  if (err) return err;
+  if (payload.pending) return json({ error: 'pending_user' }, 403, request);
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
+
+  const { avatar } = body;
+  if (!avatar || typeof avatar !== 'string' || avatar.includes('/') || avatar.includes('..') || !/^[\w-]+\.(png|webp)$/i.test(avatar)) {
+    return json({ error: 'invalid_avatar' }, 400, request);
+  }
+
+  await db.setAvatar(payload.sub, avatar);
   return json({ ok: true }, 200, request);
 }

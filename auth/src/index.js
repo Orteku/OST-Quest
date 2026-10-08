@@ -5,7 +5,7 @@ import { handleGoogleStart, handleGoogleCallback } from './routes/google.js';
 import { handleDiscordStart, handleDiscordCallback } from './routes/discord.js';
 import { handleTwitchStart, handleTwitchCallback } from './routes/twitch.js';
 import { handleSteamStart, handleSteamCallback } from './routes/steam.js';
-import { handleGetMe, handleSetUsername, handleUnlink, handleDeleteAccount } from './routes/user.js';
+import { handleGetMe, handleSetUsername, handleUnlink, handleDeleteAccount, handleGetAchievements, handleUnlockAchievement, handleSetAvatar } from './routes/user.js';
 import { handleSubmitScore, handleMigrateScores, handleGetStats } from './routes/scores.js';
 
 export default {
@@ -47,6 +47,9 @@ export default {
       if (path === '/auth/set-username'    && method === 'POST')   return handleSetUsername(request, env, db);
       if (path === '/auth/unlink'          && method === 'POST')   return handleUnlink(request, env, db);
       if (path === '/auth/account'         && method === 'DELETE') return handleDeleteAccount(request, env, db);
+      if (path === '/auth/achievements'        && method === 'GET')  return handleGetAchievements(request, env, db);
+      if (path === '/auth/achievements/unlock' && method === 'POST') return handleUnlockAchievement(request, env, db);
+      if (path === '/auth/avatar'              && method === 'POST') return handleSetAvatar(request, env, db);
 
       // ── Scores ──────────────────────────────────────────────────────────
       if (path === '/scores/stats'   && method === 'GET')  return handleGetStats(request, env, db);
