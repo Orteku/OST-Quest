@@ -1678,8 +1678,9 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 21px; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  flex-shrink: 0; overflow: hidden;
 }
+.auth-drop__avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .auth-drop__body {
   flex: 1; min-width: 0; min-height: 46px;
   display: flex; flex-direction: column; justify-content: space-between;

@@ -183,7 +183,7 @@ function _openDrop() {
 
   drop.innerHTML = `
     <div class="auth-drop__top">
-      <div class="auth-drop__avatar">${initial}</div>
+      <div class="auth-drop__avatar">${_profile.selected_avatar ? `<img class="auth-drop__avatar-img" src="img/achievements/${_esc(_profile.selected_avatar)}" alt="">` : initial}</div>
       <div class="auth-drop__body">
         <div class="auth-drop__body-top">
           <div class="auth-drop__name">${_esc(_profile.username)}</div>
@@ -884,19 +884,22 @@ async function _unlinkProvider(provider) {
 // ─── Logros ───────────────────────────────────────────────────────────────────
 
 async function _backfillAchievements() {
-  if (!_token || sessionStorage.getItem('ach_backfilled')) return;
-  sessionStorage.setItem('ach_backfilled', '1');
+  if (!_token || sessionStorage.getItem('ach_backfilled_v2')) return;
+  sessionStorage.setItem('ach_backfilled_v2', '1');
 
   const data = await _apiFetch('/auth/achievements/backfill', 'POST');
   const granted = data?.granted || [];
 
-  // Especiales retroactivos: intentar desbloquear los que aún no tienen logro
-  if (typeof SPECIAL_EVENTS !== 'undefined' && typeof ACHIEVEMENTS_DB !== 'undefined') {
-    const existing = await authGetAchievements();
-    const haveIds  = new Set(existing.map(a => a.achievement_id));
+  // Especiales retroactivos: verificar localStorage (incluye Quest Log/archivo)
+  if (typeof SPECIAL_EVENTS !== 'undefined' && typeof loadPlayedDays === 'function') {
+    const playedDays = loadPlayedDays();
+    const existing   = granted.length ? await authGetAchievements() : (data?.granted ? [] : await authGetAchievements());
+    const haveIds    = new Set(existing.map(a => a.achievement_id));
     for (const sp of SPECIAL_EVENTS) {
       const achId = 'special_' + sp.date;
       if (haveIds.has(achId)) continue;
+      const played = Object.keys(playedDays).some(d => d === sp.date || d.endsWith('-' + sp.date));
+      if (!played) continue;
       const res = await _apiFetch('/auth/achievements/unlock', 'POST', { achievementId: achId });
       if (res?.ok && res?.isNew) granted.push(achId);
     }

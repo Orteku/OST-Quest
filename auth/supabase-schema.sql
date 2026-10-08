@@ -55,3 +55,32 @@ CREATE INDEX IF NOT EXISTS users_email_idx       ON public.users (email);
 CREATE INDEX IF NOT EXISTS users_provider_idx    ON public.users (provider, provider_id);
 CREATE INDEX IF NOT EXISTS users_username_idx    ON public.users (username);
 CREATE INDEX IF NOT EXISTS reset_token_token_idx ON public.password_reset_tokens (token);
+
+-- ── Vistas del ranking ───────────────────────────────────────────────────────
+-- La tabla scores almacena: score (0-3), points (33/66/100), streak_bonus (0/10),
+-- total_points (points + streak_bonus). Las vistas agregan total_points por jugador.
+-- Ejecutar también si se añaden columnas nuevas (CREATE OR REPLACE es seguro).
+
+CREATE OR REPLACE VIEW public.ranking_weekly AS
+SELECT
+  pa.username,
+  pa.streak,
+  COALESCE(SUM(s.total_points), 0) AS pts,
+  pa.selected_avatar
+FROM public.player_accounts pa
+JOIN public.scores s ON s.user_id = pa.id
+WHERE
+  pa.username IS NOT NULL
+  AND s.game_date >= date_trunc('week', CURRENT_DATE)::date
+GROUP BY pa.username, pa.streak, pa.selected_avatar;
+
+CREATE OR REPLACE VIEW public.ranking_global AS
+SELECT
+  pa.username,
+  pa.streak,
+  COALESCE(SUM(s.total_points), 0) AS pts,
+  pa.selected_avatar
+FROM public.player_accounts pa
+JOIN public.scores s ON s.user_id = pa.id
+WHERE pa.username IS NOT NULL
+GROUP BY pa.username, pa.streak, pa.selected_avatar;

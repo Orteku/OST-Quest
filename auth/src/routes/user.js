@@ -152,18 +152,12 @@ export async function handleUnlockAchievement(request, env, db) {
 
   const { achievementId } = body;
 
-  // Logros de especiales: verificar que el usuario jugó ese día
+  // Logros de especiales: el cliente verifica desde localStorage (incluye archivo)
   if (achievementId.startsWith('special_')) {
     const datePart = achievementId.slice('special_'.length);
-    let played;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
-      played = await db.hasScoreForDate(payload.sub, datePart);
-    } else if (/^\d{2}-\d{2}$/.test(datePart)) {
-      played = await db.hasScoreForMonthDay(payload.sub, datePart);
-    } else {
+    if (!/^(\d{4}-\d{2}-\d{2}|\d{2}-\d{2})$/.test(datePart)) {
       return json({ error: 'invalid_achievement' }, 400, request);
     }
-    if (!played) return json({ ok: false, isNew: false }, 200, request);
     const isNew = await db.unlockAchievement(payload.sub, achievementId);
     return json({ ok: true, isNew }, 200, request);
   }
