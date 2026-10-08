@@ -83,6 +83,7 @@ async function authInit() {
       localStorage.setItem(_USER_KEY, JSON.stringify(data));
       if (!data.username) { openUsernameModal(); return; }
       _migrateIfNeeded();
+      _backfillAchievements();
     } else if (!data.__networkError) {
       // Solo cerrar sesión si el servidor rechazó el token (401/403), no por error de red
       _clearSession();
@@ -110,6 +111,7 @@ async function _handleNewToken(token) {
   _renderAuthBtn();
   closeAuthModal();
   _migrateIfNeeded();
+  _backfillAchievements();
   if (window.PROFILE_PAGE) initProfilePage();
 }
 
@@ -875,6 +877,22 @@ async function _unlinkProvider(provider) {
 }
 
 // ─── Logros ───────────────────────────────────────────────────────────────────
+
+async function _backfillAchievements() {
+  if (!_token || sessionStorage.getItem('ach_backfilled')) return;
+  sessionStorage.setItem('ach_backfilled', '1');
+  const data = await _apiFetch('/auth/achievements/backfill', 'POST');
+  if (data?.granted?.length) {
+    for (const id of data.granted) _showAchievementToast(id);
+    // Recargar grid si estamos en el perfil
+    const achievementsEl = document.getElementById('achievements-grid');
+    if (achievementsEl && typeof ACHIEVEMENTS_DB !== 'undefined') {
+      const unlocked = await authGetAchievements();
+      achievementsEl.innerHTML = _renderAchievementsHTML(unlocked);
+      _bindAchievementEvents();
+    }
+  }
+}
 
 async function authUnlockAchievement(id) {
   if (!_token) return false;

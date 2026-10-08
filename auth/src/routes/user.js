@@ -167,6 +167,49 @@ export async function handleUnlockAchievement(request, env, db) {
   return json({ ok: true, isNew }, 200, request);
 }
 
+// POST /auth/achievements/backfill — concede retroactivamente los logros ya ganados
+export async function handleBackfillAchievements(request, env, db) {
+  const [payload, err] = await requireAuth(request, env);
+  if (err) return err;
+  if (payload.pending) return json({ granted: [] }, 200, request);
+
+  const userId = payload.sub;
+  const [user, existing, playedCount] = await Promise.all([
+    db.getUserById(userId),
+    db.getUserAchievements(userId),
+    db.getPlayedCount(userId),
+  ]);
+  if (!user) return json({ error: 'user_not_found' }, 404, request);
+
+  const have   = new Set(existing.map(a => a.achievement_id));
+  const granted = [];
+
+  async function tryGrant(id) {
+    if (have.has(id)) return;
+    const isNew = await db.unlockAchievement(userId, id);
+    if (isNew) granted.push(id);
+  }
+
+  // register — cualquier cuenta existente ya lo cumple
+  await tryGrant('register');
+
+  // streak_7 — racha actual >= 7
+  if ((user.streak || 0) >= 7) await tryGrant('streak_7');
+
+  // played_30 — quests totales >= 30
+  if (playedCount >= 30) await tryGrant('played_30');
+
+  // anniversary — cuenta creada hace >= 1 año
+  if (user.created_at) {
+    const created    = new Date(user.created_at);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    if (created <= oneYearAgo) await tryGrant('anniversary');
+  }
+
+  return json({ granted }, 200, request);
+}
+
 // POST /auth/avatar  { avatar: 'filename.png' }
 export async function handleSetAvatar(request, env, db) {
   const [payload, err] = await requireAuth(request, env);
