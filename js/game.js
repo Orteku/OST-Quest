@@ -1129,6 +1129,7 @@ function openGmPanel() {
       <div class="gm-panel__footer">
         <p class="gm-error" id="gm-error"></p>
         <button class="btn btn--guess" id="gm-start">${t('gm_start')}</button>
+        ${typeof _showAchievementToast === 'function' ? `<button class="btn" id="gm-test-ach" style="margin-top:8px;opacity:.6;font-size:12px">🏆 Test logro</button>` : ''}
       </div>
     </div>`;
 
@@ -1229,6 +1230,10 @@ function openGmPanel() {
         _gmStyle(this);
       });
     });
+  });
+
+  document.getElementById('gm-test-ach')?.addEventListener('click', () => {
+    if (typeof _showAchievementToast === 'function') _showAchievementToast('register');
   });
 
   document.getElementById('gm-start').addEventListener('click', () => {

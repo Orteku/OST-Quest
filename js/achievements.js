@@ -9,7 +9,7 @@ const ACHIEVEMENTS_DB = [
   {
     id:     'register',
     hidden: false,
-    image:  'register.png',
+    image:  'register.webp',
     es: { name: '¡Un jugador salvaje apareció!',  desc: 'Has hecho una misión muy difícil: registrarte' },
     en: { name: 'A wild player appeared!',       desc: "You've completed a very difficult mission: creating an account" },
   },
@@ -18,21 +18,21 @@ const ACHIEVEMENTS_DB = [
   {
     id:     'streak_7',
     hidden: false,
-    image:  'streak_7.png',
+    image:  'streak_7.webp',
     es: { name: 'Ah shit, here we go again',   desc: 'Has pasado por aquí 7 días seguidos' },
     en: { name: 'Ah shit, here we go again',      desc: "You've been here 7 days in a row" },
   },
   {
     id:     'played_30',
     hidden: false,
-    image:  'played_30.png',
+    image:  'played_30.webp',
     es: { name: 'Hey! Listen!',          desc: 'Completa 30 quests en total, no hacen falta que sean seguidas' },
     en: { name: 'Hey! Listen!',           desc: "Complete 30 quests in total — they don't have to be consecutive" },
   },
   {
     id:     'anniversary',
     hidden: false,
-    image:  'anniversary.png',
+    image:  'anniversary.webp',
     es: { name: 'The cake is a lie',  desc: 'No hay tarta, pero tu cuenta cumple un año' },
     en: { name: 'The cake is a lie', desc: 'There is no cake, but your account turns one year old' },
   },
@@ -41,21 +41,21 @@ const ACHIEVEMENTS_DB = [
   {
     id:     'easter_line',
     hidden: true,
-    image:  'easter_line.png',
+    image:  'easter_line.webp',
     es: { name: 'Jackpot!', desc: '¡Has encontrado un secreto!' },
     en: { name: 'Jackpot!', desc: 'You found a secret!' },
   },
   {
     id:     'easter_wasted',
     hidden: true,
-    image:  'easter_wasted.png',
+    image:  'easter_wasted.webp',
     es: { name: '¡No estás preparado!', desc: 'Al menos has encontrado un secreto, algo es algo.' },
     en: { name: 'You are not prepared!', desc: 'At least you found a secret — something is something.' },
   },
   {
     id:     'easter_both',
     hidden: true,
-    image:  'easter_both.png',
+    image:  'easter_both.webp',
     es: { name: 'Wheee! Whooo!', desc: 'Has encontrado el secreto y el "secreto".' },
     en: { name: 'Wheee! Whooo!', desc: 'You found the secret and the "secret".' },
   },
@@ -71,7 +71,7 @@ if (typeof SPECIAL_EVENTS !== 'undefined') {
     ACHIEVEMENTS_DB.push({
       id:     'special_' + sp.date,
       hidden: false,
-      image:  'special_' + sp.date.replace(/-/g, '') + '.png',
+      image:  'special_' + sp.date.replace(/-/g, '') + '.webp',
       es: { name: label, desc: 'Completa el evento especial de ' + label + ' en su día' },
       en: { name: label, desc: 'Complete the ' + label + ' special event on its day' },
     });
