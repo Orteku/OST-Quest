@@ -1599,7 +1599,8 @@ body.theme--light .auth-btn__avatar { background: #4a6c10; color: #fff; }
 .achievement-card__name {
   font-size: 10px; font-weight: 600; color: #5a5a64;
   text-align: center; line-height: 1.2; max-width: 70px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .achievement-card--unlocked .achievement-card__name { color: #b8b6c0; }
 .achievement-card--selected .achievement-card__img {
@@ -1712,7 +1713,8 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
   text-transform: uppercase; color: #555960;
   margin-bottom: 4px;
 }
-.auth-drop__trofeos-wip { font-size: 13px; color: #555960; text-align: center; }
+.auth-drop__trofeos-icons { display: flex; gap: 6px; align-items: center; min-height: 32px; }
+.auth-drop__ach-icon { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #2c2c34; }
 
 body.theme--light .auth-drop__avatar { background: #4a6c10; color: #fff; }
 body.theme--light .auth-drop--card .auth-drop__name { color: #1e1d28; }
@@ -1724,7 +1726,7 @@ body.theme--light .auth-drop__drop-stat { color: #7a7a88; }
 body.theme--light .auth-drop__drop-stat strong { color: #1e1d28; }
 body.theme--light .auth-drop__trofeos { border-color: #d0cec6; }
 body.theme--light .auth-drop__trofeos-title { color: #9898a8; }
-body.theme--light .auth-drop__trofeos-wip { color: #9898a8; }
+body.theme--light .auth-drop__ach-icon { border-color: #c6c4bc; }
 
 /* ─── Auth modal ────────────────────────────────────────────────────────────── */
 #auth-modal {

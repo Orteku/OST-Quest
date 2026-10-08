@@ -202,10 +202,27 @@ function _openDrop() {
     </div>
     <div class="auth-drop__trofeos">
       <div class="auth-drop__trofeos-title">${t('profile_achievements_section')}</div>
-      <div class="auth-drop__trofeos-wip">🚧 ${t('profile_wip')} 🚧</div>
+      <div class="auth-drop__trofeos-icons" id="auth-drop-achievements"></div>
     </div>
   `;
   document.body.appendChild(drop);
+
+  // Cargar logros recientes en segundo plano
+  if (_token && typeof ACHIEVEMENTS_DB !== 'undefined') {
+    authGetAchievements().then(unlocked => {
+      const el = document.getElementById('auth-drop-achievements');
+      if (!el) return;
+      const lang   = document.documentElement.lang || 'es';
+      const recent = unlocked.slice(-5).reverse();
+      if (!recent.length) { el.textContent = '—'; return; }
+      el.innerHTML = recent.map(u => {
+        const a = getAchievement(u.achievement_id);
+        if (!a) return '';
+        const label = getAchievementLabel(a, lang);
+        return `<img class="auth-drop__ach-icon" src="img/achievements/${_esc(a.image)}" alt="" title="${_esc(label.name)}">`;
+      }).join('');
+    });
+  }
 
   const rect = btn.getBoundingClientRect();
   drop.style.top   = (rect.bottom + window.scrollY + 6) + 'px';
@@ -918,7 +935,7 @@ function _renderAchievementsHTML(unlocked) {
         ? `<div class="achievement-card__mystery">?</div>`
         : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}" onerror="this.parentNode.querySelector('.achievement-card__img')?.remove()">`
       }
-      <div class="achievement-card__name">${name}</div>
+      ${isHidden ? '' : `<div class="achievement-card__name">${name}</div>`}
     </div>`;
   }).join('');
 }
