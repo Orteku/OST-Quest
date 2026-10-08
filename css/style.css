@@ -1575,7 +1575,7 @@ body.theme--light .auth-btn__avatar { background: #4a6c10; color: #fff; }
 /* ─── Logros ────────────────────────────────────────────────────────────────── */
 .achievements-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
   gap: 14px 10px;
   padding: 8px 0 16px;
 }
@@ -1603,12 +1603,12 @@ body.theme--light .ach-tooltip__desc { color: #7a7a88; }
 .achievement-card--unlocked { cursor: pointer; }
 .achievement-card--unlocked:hover .achievement-card__img { transform: scale(1.07); }
 .achievement-card__img {
-  width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+  width: 68px; height: 68px; border-radius: 50%; object-fit: cover;
   border: 2px solid #2c2c34; transition: transform 0.14s, border-color 0.14s;
 }
 .achievement-card--locked .achievement-card__img { filter: grayscale(1) opacity(.3); }
 .achievement-card__mystery {
-  width: 56px; height: 56px; border-radius: 50%;
+  width: 68px; height: 68px; border-radius: 50%;
   border: 2px dashed #2c2c34;
   display: flex; align-items: center; justify-content: center;
   font-size: 22px; color: #3a3a44; background: #18191e;
@@ -1717,16 +1717,25 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
 
 .auth-drop__trofeos {
   border-top: 1px solid #2c2c34;
-  padding: 8px 12px 14px;
+  padding: 10px 12px 14px;
+}
+.auth-drop__trofeos-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
 }
 .auth-drop__trofeos-title {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px; font-weight: 700; letter-spacing: 2px;
-  text-transform: uppercase; color: #555960;
-  margin-bottom: 4px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #9898a8;
 }
-.auth-drop__trofeos-icons { display: flex; gap: 6px; align-items: center; min-height: 32px; }
-.auth-drop__ach-icon { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #2c2c34; }
+.auth-drop__trofeos-link {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  color: #b8e030; text-decoration: none;
+}
+.auth-drop__trofeos-link:hover { text-decoration: underline; }
+.auth-drop__trofeos-icons { display: flex; gap: 8px; align-items: center; min-height: 36px; }
+.auth-drop__ach-icon { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #2c2c34; }
 
 body.theme--light .auth-drop__avatar { background: #4a6c10; color: #fff; }
 body.theme--light .auth-drop--card .auth-drop__name { color: #1e1d28; }
@@ -2197,6 +2206,37 @@ body.theme--light .rank-streak { color: #9898a8; }
 }
 
 /* Tarjeta de perfil */
+.pcard-group { display: flex; flex-direction: column; }
+.pcard-group .pcard { border-radius: 16px 16px 0 0; }
+
+.pcard-drawer {
+  background: #14141e;
+  border: 1px solid #1e1e2e;
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  overflow: hidden;
+}
+.pcard-drawer__panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+.pcard-drawer__panel.is-open { max-height: 1400px; padding: 16px 24px 4px; }
+.pcard-drawer__toggle {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  padding: 11px 24px;
+  background: transparent; cursor: pointer;
+  border: none; border-top: 1px solid #1e1e2e;
+  color: #9898a8;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; text-align: left;
+  transition: color 0.15s;
+}
+.pcard-drawer__toggle:hover { color: #ddd9cf; }
+.pcard-drawer__chevron { margin-left: auto; transition: transform 0.3s ease; }
+.pcard-drawer--open .pcard-drawer__chevron { transform: rotate(180deg); }
+
 .pcard {
   background: #14141e;
   border: 1px solid #1e1e2e;
@@ -2265,17 +2305,13 @@ body.theme--light .pcard__achievement-icon { border-color: #c6c4bc; }
 }
 .profile-wip-desc { font-size: 13px; color: #555960; margin: 0; }
 
-/* Contenedor de ajustes de cuenta en la página */
-.profile-settings-box {
-  background: #14141e;
-  border: 1px solid #1e1e2e;
-  border-radius: 12px;
-  padding: 20px 20px 0;
-}
 
 /* Light theme — página de perfil */
 body.theme--light .profile-section-heading { color: #5a5870; }
 body.theme--light .profile-section-sub { color: #9898a8; }
+body.theme--light .pcard-drawer { background: #f4f4ec; border-color: #d0ccc4; }
+body.theme--light .pcard-drawer__toggle { border-color: #d0ccc4; color: #9898a8; }
+body.theme--light .pcard-drawer__toggle:hover { color: #1e1d28; }
 body.theme--light .pcard { background: #f4f4ec; border-color: #d0ccc4; }
 body.theme--light .pcard__avatar { background: #4a6c10; color: #fff; }
 body.theme--light .pcard__username { color: #1e1d28; }
@@ -2286,6 +2322,67 @@ body.theme--light .profile-achievements-wip { background: #f4f4ec; border-color:
 body.theme--light .profile-wip-text { color: #1e1d28; }
 body.theme--light .profile-wip-desc { color: #9898a8; }
 body.theme--light .profile-settings-box { background: #f4f4ec; border-color: #d0ccc4; }
+
+/* Bottom sheet de logros (táctil) */
+.ach-sheet-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 800;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.ach-sheet-overlay.is-open { opacity: 1; pointer-events: auto; }
+.ach-sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #18191e;
+  border: 1px solid #2c2c34; border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding: 0 24px 36px;
+  z-index: 801;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; text-align: center;
+}
+.ach-sheet.is-open { transform: translateY(0); }
+.ach-sheet__handle {
+  width: 40px; height: 4px;
+  background: #3a3a48; border-radius: 2px;
+  margin: 14px auto 12px; flex-shrink: 0; align-self: center;
+}
+.ach-sheet__img {
+  width: 80px; height: 80px; border-radius: 50%;
+  object-fit: cover; border: 3px solid #2c2c34;
+}
+.ach-sheet__img-placeholder {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: #1e1e2e; border: 3px dashed #2c2c34;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; color: #555960;
+}
+.ach-sheet__name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 800;
+  color: #ddd9cf; letter-spacing: 0.5px; margin: 0;
+}
+.ach-sheet__desc { font-size: 13px; color: #9898a8; line-height: 1.5; max-width: 300px; margin: 0; }
+.ach-sheet__avatar-btn {
+  margin-top: 8px; padding: 11px 28px;
+  background: #b8e030; color: #0e0e14;
+  border: none; border-radius: 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+}
+.ach-sheet__avatar-btn:active { opacity: 0.75; }
+
+body.theme--light .ach-sheet { background: #f4f4ec; border-color: #d0ccc4; }
+body.theme--light .ach-sheet__handle { background: #d0ccc4; }
+body.theme--light .ach-sheet__img { border-color: #c6c4bc; }
+body.theme--light .ach-sheet__img-placeholder { background: #ececе4; border-color: #c6c4bc; color: #9898a8; }
+body.theme--light .ach-sheet__name { color: #1e1d28; }
+body.theme--light .ach-sheet__desc { color: #7a7a88; }
+body.theme--light .ach-sheet__avatar-btn { background: #4a6c10; color: #fff; }
 
 @media (max-width: 520px) {
   .pcard { flex-direction: column; align-items: flex-start; gap: 16px; }

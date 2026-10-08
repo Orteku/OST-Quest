@@ -204,7 +204,10 @@ function _openDrop() {
       </div>
     </div>
     <div class="auth-drop__trofeos">
-      <div class="auth-drop__trofeos-title">${t('profile_achievements_section')}</div>
+      <div class="auth-drop__trofeos-head">
+        <span class="auth-drop__trofeos-title">${t('drop_recent_trophies')}</span>
+        <a class="auth-drop__trofeos-link" href="profile.html">${t('drop_see_all')}</a>
+      </div>
       <div class="auth-drop__trofeos-icons" id="auth-drop-achievements"></div>
     </div>
   `;
@@ -683,7 +686,7 @@ function _renderProfileCardHTML(unlocked = []) {
 async function initProfilePage() {
   const cardEl     = document.getElementById('profile-card');
   const settingsEl = document.getElementById('profile-settings');
-  const sectionEl  = document.getElementById('profile-settings-section');
+  const drawerEl   = document.getElementById('pcard-drawer');
 
   if (!_token || !_profile) {
     if (cardEl) cardEl.innerHTML = `
@@ -691,7 +694,7 @@ async function initProfilePage() {
         <p class="pcard__guest-msg">${t('profile_not_logged_in')}</p>
         <button class="btn" onclick="openAuthModal('signin')">${t('auth_sign_in_btn')}</button>
       </div>`;
-    if (sectionEl) sectionEl.hidden = true;
+    if (drawerEl) drawerEl.hidden = true;
     return;
   }
 
@@ -706,6 +709,16 @@ async function initProfilePage() {
   if (settingsEl) {
     settingsEl.innerHTML = _renderProfileHTML(true);
     _bindProfilePageEvents();
+  }
+
+  // Toggle de ajustes
+  const toggle = document.getElementById('profile-settings-toggle');
+  const panel  = document.getElementById('profile-settings-panel');
+  if (toggle && panel && drawerEl) {
+    toggle.addEventListener('click', () => {
+      const open = panel.classList.toggle('is-open');
+      drawerEl.classList.toggle('pcard-drawer--open', open);
+    });
   }
 
   const achievementsEl = document.getElementById('achievements-grid');
@@ -991,7 +1004,16 @@ function _renderAchievementsHTML(unlocked) {
 }
 
 function _bindAchievementEvents() {
-  // Tooltip compartido
+  const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+  if (isTouch) {
+    _bindAchievementSheet();
+  } else {
+    _bindAchievementTooltip();
+  }
+}
+
+function _bindAchievementTooltip() {
   let tip = document.getElementById('ach-tooltip');
   if (!tip) {
     tip = document.createElement('div');
@@ -1028,6 +1050,77 @@ function _bindAchievementEvents() {
         if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(_cachedAchievements);
         if (typeof showToast === 'function') showToast(t('auth_saved'));
       }
+    });
+  });
+}
+
+function _bindAchievementSheet() {
+  let overlay = document.getElementById('ach-sheet-overlay');
+  let sheet   = document.getElementById('ach-sheet');
+
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'ach-sheet-overlay';
+    overlay.className = 'ach-sheet-overlay';
+    document.body.appendChild(overlay);
+  }
+  if (!sheet) {
+    sheet = document.createElement('div');
+    sheet.id = 'ach-sheet';
+    sheet.className = 'ach-sheet';
+    sheet.innerHTML = `
+      <div class="ach-sheet__handle"></div>
+      <div id="ach-sheet-media"></div>
+      <p class="ach-sheet__name" id="ach-sheet-name"></p>
+      <p class="ach-sheet__desc" id="ach-sheet-desc"></p>
+      <button class="ach-sheet__avatar-btn" id="ach-sheet-btn"></button>
+    `;
+    document.body.appendChild(sheet);
+  }
+
+  const closeSheet = () => {
+    overlay.classList.remove('is-open');
+    sheet.classList.remove('is-open');
+  };
+
+  overlay.onclick = closeSheet;
+
+  document.getElementById('ach-sheet-btn').onclick = async () => {
+    const btn = document.getElementById('ach-sheet-btn');
+    const img = btn.dataset.img;
+    if (!img) return;
+    const ok = await authSetAvatar(img);
+    if (ok) {
+      document.querySelectorAll('.achievement-card--selected').forEach(c => c.classList.remove('achievement-card--selected'));
+      document.querySelectorAll('.achievement-card--unlocked').forEach(c => {
+        if (c.dataset.img === img) c.classList.add('achievement-card--selected');
+      });
+      const cardEl = document.getElementById('profile-card');
+      if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(_cachedAchievements);
+      closeSheet();
+      if (typeof showToast === 'function') showToast(t('auth_saved'));
+    }
+  };
+
+  document.querySelectorAll('.achievement-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const img      = card.dataset.img || '';
+      const unlocked = card.classList.contains('achievement-card--unlocked');
+
+      document.getElementById('ach-sheet-media').innerHTML = img
+        ? `<img class="ach-sheet__img" src="img/achievements/${_esc(img)}" alt="">`
+        : `<div class="ach-sheet__img-placeholder">?</div>`;
+
+      document.getElementById('ach-sheet-name').textContent = card.dataset.name || '?';
+      document.getElementById('ach-sheet-desc').textContent = card.dataset.desc || '';
+
+      const btn = document.getElementById('ach-sheet-btn');
+      btn.textContent  = t('ach_set_avatar');
+      btn.dataset.img  = img;
+      btn.style.display = (unlocked && img) ? '' : 'none';
+
+      overlay.classList.add('is-open');
+      sheet.classList.add('is-open');
     });
   });
 }

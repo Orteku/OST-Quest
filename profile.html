@@ -107,9 +107,23 @@
   <!-- Contenido -->
   <div class="profile-wrap">
 
-    <!-- Tarjeta de perfil -->
-    <div id="profile-card">
-      <!-- Poblado por auth.js -->
+    <!-- Tarjeta de perfil + cajón de ajustes -->
+    <div class="pcard-group">
+      <div id="profile-card">
+        <!-- Poblado por auth.js -->
+      </div>
+      <div class="pcard-drawer" id="pcard-drawer">
+        <div class="pcard-drawer__panel" id="profile-settings-panel">
+          <div id="profile-settings">
+            <!-- Poblado por auth.js -->
+          </div>
+        </div>
+        <button class="pcard-drawer__toggle" id="profile-settings-toggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span data-i18n="profile_settings_section">Ajustes de la cuenta</span>
+          <svg class="pcard-drawer__chevron" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="12" height="12"><path d="M1 1l4 4 4-4"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- Logros -->
@@ -118,16 +132,6 @@
       <p class="profile-section-sub" data-i18n="profile_achievements_sub">Selecciona qué trofeo lucir en tu avatar</p>
       <div id="achievements-grid" class="achievements-grid">
         <!-- Poblado por auth.js -->
-      </div>
-    </section>
-
-    <!-- Ajustes de cuenta -->
-    <section id="profile-settings-section">
-      <p class="profile-section-heading" data-i18n="profile_settings_section">Ajustes de cuenta</p>
-      <div class="profile-settings-box">
-        <div id="profile-settings">
-          <!-- Poblado por auth.js -->
-        </div>
       </div>
     </section>
 
