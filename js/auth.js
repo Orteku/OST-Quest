@@ -6,8 +6,9 @@ const _USER_KEY = 'ostquest_user';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
-let _token   = null;   // JWT string
-let _profile = null;   // { id, username, email, provider }
+let _token              = null;   // JWT string
+let _profile            = null;   // { id, username, email, provider }
+let _cachedAchievements = [];     // último fetch de logros del usuario
 
 // ─── API helper ───────────────────────────────────────────────────────────────
 
@@ -429,7 +430,7 @@ async function loadRankingInto(containerId, tab) {
 
   const view = tab === 'weekly' ? 'ranking_weekly' : 'ranking_global';
   const { data, error } = await _supabase
-    .from(view).select('username, streak, pts').order('pts', { ascending: false }).limit(25);
+    .from(view).select('username, streak, pts, selected_avatar').order('pts', { ascending: false }).limit(25);
 
   if (error || !data?.length) {
     el.innerHTML = `<p class="rank-empty">${t('ranking_empty')}</p>`;
@@ -447,9 +448,12 @@ async function loadRankingInto(containerId, tab) {
     <tbody>${data.map((r, i) => {
       const medal = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : '';
       const isMe  = r.username === me;
+      const avatarHtml = r.selected_avatar
+        ? `<img class="rank-avatar rank-avatar--img" src="img/achievements/${_esc(r.selected_avatar)}" alt="">`
+        : `<span class="rank-avatar">${_esc(r.username.charAt(0).toUpperCase())}</span>`;
       return `<tr class="${[medal, isMe ? 'rank-row--me' : ''].filter(Boolean).join(' ')}">
         <td class="rank-pos">${i + 1}</td>
-        <td class="rank-name">${_esc(r.username)}${isMe ? ' ★' : ''}</td>
+        <td class="rank-name">${avatarHtml}${_esc(r.username)}${isMe ? ' ★' : ''}</td>
         <td class="rank-pts">${r.pts}</td>
         <td class="rank-streak">${r.streak || '—'}</td>
       </tr>`;
@@ -696,6 +700,7 @@ async function initProfilePage() {
 
   // Cargar logros primero para poder mostrarlo en la tarjeta también
   const unlocked = (typeof ACHIEVEMENTS_DB !== 'undefined') ? await authGetAchievements() : [];
+  _cachedAchievements = unlocked;
 
   if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(unlocked);
   if (settingsEl) {
@@ -881,13 +886,28 @@ async function _unlinkProvider(provider) {
 async function _backfillAchievements() {
   if (!_token || sessionStorage.getItem('ach_backfilled')) return;
   sessionStorage.setItem('ach_backfilled', '1');
+
   const data = await _apiFetch('/auth/achievements/backfill', 'POST');
-  if (data?.granted?.length) {
-    for (const id of data.granted) _showAchievementToast(id);
-    // Recargar grid si estamos en el perfil
+  const granted = data?.granted || [];
+
+  // Especiales retroactivos: intentar desbloquear los que aún no tienen logro
+  if (typeof SPECIAL_EVENTS !== 'undefined' && typeof ACHIEVEMENTS_DB !== 'undefined') {
+    const existing = await authGetAchievements();
+    const haveIds  = new Set(existing.map(a => a.achievement_id));
+    for (const sp of SPECIAL_EVENTS) {
+      const achId = 'special_' + sp.date;
+      if (haveIds.has(achId)) continue;
+      const res = await _apiFetch('/auth/achievements/unlock', 'POST', { achievementId: achId });
+      if (res?.ok && res?.isNew) granted.push(achId);
+    }
+  }
+
+  if (granted.length) {
+    for (const id of granted) _showAchievementToast(id);
     const achievementsEl = document.getElementById('achievements-grid');
     if (achievementsEl && typeof ACHIEVEMENTS_DB !== 'undefined') {
       const unlocked = await authGetAchievements();
+      _cachedAchievements = unlocked;
       achievementsEl.innerHTML = _renderAchievementsHTML(unlocked);
       _bindAchievementEvents();
     }
@@ -943,7 +963,8 @@ function _renderAchievementsHTML(unlocked) {
   if (typeof ACHIEVEMENTS_DB === 'undefined') return '';
   const unlockedIds = new Set(unlocked.map(a => a.achievement_id));
   const lang = document.documentElement.lang || 'es';
-  return ACHIEVEMENTS_DB.map(a => {
+
+  function _card(a) {
     const isUnlocked = unlockedIds.has(a.id);
     const label      = getAchievementLabel(a, lang);
     const isHidden   = a.hidden && !isUnlocked;
@@ -955,7 +976,15 @@ function _renderAchievementsHTML(unlocked) {
         : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}">`
       }
     </div>`;
-  }).join('');
+  }
+
+  const visible = ACHIEVEMENTS_DB.filter(a => !a.hidden);
+  const secrets = ACHIEVEMENTS_DB.filter(a => a.hidden);
+
+  return visible.map(_card).join('')
+    + (secrets.length
+        ? `<div class="achievements-grid__sep"></div>${secrets.map(_card).join('')}`
+        : '');
 }
 
 function _bindAchievementEvents() {
@@ -992,6 +1021,8 @@ function _bindAchievementEvents() {
       if (ok) {
         document.querySelectorAll('.achievement-card--selected').forEach(c => c.classList.remove('achievement-card--selected'));
         card.classList.add('achievement-card--selected');
+        const cardEl = document.getElementById('profile-card');
+        if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(_cachedAchievements);
         if (typeof showToast === 'function') showToast(t('auth_saved'));
       }
     });

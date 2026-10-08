@@ -967,6 +967,14 @@ function checkFinished() {
 
   setTimeout(() => {
     recordDailyResult(currentDateStr, score, 3);
+    if (!isArchiveMode && currentDateStr !== '__gm__'
+        && typeof authUnlockAchievement === 'function'
+        && typeof SPECIAL_EVENTS !== 'undefined') {
+      const sp = SPECIAL_EVENTS.find(e =>
+        currentDateStr === e.date || currentDateStr.endsWith('-' + e.date)
+      );
+      if (sp) authUnlockAchievement('special_' + sp.date);
+    }
     openEndModal(score);
   }, isLine ? 1800 : 400);
 }
@@ -1360,9 +1368,32 @@ async function initGmGame(gmGroups) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
+function _showAchievementAnnouncement() {
+  const KEY = 'ostquest_seen_ach_v1';
+  if (localStorage.getItem(KEY)) return;
+  setTimeout(() => {
+    const el = document.createElement('div');
+    el.className = 'news-banner';
+    el.innerHTML = `
+      <div class="news-banner__icon">🏆</div>
+      <div class="news-banner__body">
+        <div class="news-banner__title">${t('news_ach_title')}</div>
+        <div class="news-banner__text">${t('news_ach_body')}</div>
+      </div>
+      <button class="news-banner__close" id="news-banner-close">&times;</button>`;
+    document.body.appendChild(el);
+    document.getElementById('news-banner-close').addEventListener('click', () => {
+      el.classList.add('news-banner--out');
+      el.addEventListener('animationend', () => el.remove(), { once: true });
+      localStorage.setItem(KEY, '1');
+    });
+  }, 1800);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await initI18n();
   authInit();
+  _showAchievementAnnouncement();
 
   const langDropdown = document.getElementById('lang-dropdown');
   document.getElementById('lang-dropdown-btn').addEventListener('click', e => {

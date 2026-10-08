@@ -157,6 +157,7 @@
   "ranking_no_score": "You haven't scored this week yet",
   "profile_page_title": "Profile — Oesti Quest",
   "profile_achievements_section": "Trophies",
+  "profile_achievements_sub": "Select which trophy to show on your avatar",
   "profile_wip": "Under construction",
   "profile_wip_desc": "Achievements coming soon",
   "profile_settings_section": "Account settings",
@@ -167,5 +168,7 @@
   "auth_linked_ok": "Account linked successfully",
   "auth_last_used": "Last used",
   "achievement_unlocked": "Achievement unlocked",
+  "news_ach_title": "NEW!",
+  "news_ach_body": "Earn trophies and unlock avatars for your profile. There are only a few for now, but more are on the way.",
   "games": {}
 }

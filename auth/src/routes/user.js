@@ -151,6 +151,23 @@ export async function handleUnlockAchievement(request, env, db) {
   try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
 
   const { achievementId } = body;
+
+  // Logros de especiales: verificar que el usuario jugó ese día
+  if (achievementId.startsWith('special_')) {
+    const datePart = achievementId.slice('special_'.length);
+    let played;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+      played = await db.hasScoreForDate(payload.sub, datePart);
+    } else if (/^\d{2}-\d{2}$/.test(datePart)) {
+      played = await db.hasScoreForMonthDay(payload.sub, datePart);
+    } else {
+      return json({ error: 'invalid_achievement' }, 400, request);
+    }
+    if (!played) return json({ ok: false, isNew: false }, 200, request);
+    const isNew = await db.unlockAchievement(payload.sub, achievementId);
+    return json({ ok: true, isNew }, 200, request);
+  }
+
   if (!CLIENT_UNLOCKABLE.includes(achievementId)) {
     return json({ error: 'not_allowed' }, 403, request);
   }

@@ -158,6 +158,19 @@ export function createDb(env) {
         .eq('user_id', userId).eq('achievement_id', achievementId);
       return (res.count || 0) > 0;
     },
+    async hasScoreForDate(userId, gameDate) {
+      const res = await supabase.from('scores')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId).eq('game_date', gameDate);
+      return (res.count || 0) > 0;
+    },
+    async hasScoreForMonthDay(userId, monthDay) {
+      // monthDay = 'MM-DD', gameDate = 'YYYY-MM-DD'
+      const res = await supabase.from('scores')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId).like('game_date', `%-${monthDay}`);
+      return (res.count || 0) > 0;
+    },
     async getPlayedCount(userId) {
       const res = await supabase.from('scores')
         .select('*', { count: 'exact', head: true }).eq('user_id', userId);
