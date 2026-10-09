@@ -986,7 +986,7 @@ function _renderAchievementsHTML(unlocked) {
     const isHidden   = a.hidden && !isUnlocked;
     const name = isHidden ? '???' : _esc(label.name);
     const desc = isHidden ? '???' : _esc(label.desc || '');
-    return `<div class="achievement-card ${isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked'}${_profile?.selected_avatar === a.image ? ' achievement-card--selected' : ''}" data-id="${_esc(a.id)}" data-img="${_esc(a.image)}" data-name="${name}" data-desc="${desc}">
+    return `<div class="achievement-card ${isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked'}${_profile?.selected_avatar === a.image ? ' achievement-card--selected' : ''}" data-id="${_esc(a.id)}" data-img="${isHidden ? '' : _esc(a.image)}" data-name="${name}" data-desc="${desc}">
       ${isHidden
         ? `<div class="achievement-card__mystery">?</div>`
         : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}">`
