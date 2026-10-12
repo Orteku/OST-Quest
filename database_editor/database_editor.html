@@ -190,6 +190,11 @@
       padding: 0 2px;
     }
     .search-stats strong { color: var(--text); }
+    .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line); font-size:13px; position:sticky; top:0; z-index:10; }
+    .pagination-bar button { padding:4px 10px; font-size:12px; }
+    .pagination-bar button:disabled { opacity:0.35; cursor:default; pointer-events:none; }
+    #pageInfo { color:var(--muted); white-space:nowrap; }
+    #pageRange { color:var(--muted); margin-left:auto; white-space:nowrap; }
     .list {
       display: grid;
       gap: 10px;
@@ -614,6 +619,12 @@
 
 <main>
   <div id="tab-db" class="tab-pane active">
+  <div id="paginationBar" class="pagination-bar" style="display:none">
+    <button id="prevPage" disabled>← Anterior</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage" disabled>Siguiente →</button>
+    <span id="pageRange"></span>
+  </div>
   <div id="list" class="list"></div>
 
   <section id="addPanel" class="add-panel">
@@ -1046,9 +1057,9 @@
   }
 
   function updateStats() {
-    const total = db.length;
-    const q = $("search").value.trim();
-    const visible = q ? [...document.querySelectorAll(".row")].filter(r => !r.classList.contains("hidden")).length : total;
+    const total   = db.length;
+    const q       = $("search").value.trim();
+    const visible = _filteredIndices !== null ? _filteredIndices.length : total;
     $("searchStats").textContent = total === 0 ? "" : q ? `${visible} de ${total}` : `${total} entradas`;
     updatePillRow();
   }
@@ -1103,8 +1114,47 @@
     };
   }
 
+  // ── Paginación ───────────────────────────────────────────────────────────
+  const PAGE_SIZE = 50;
+  let _page = 0;
+  let _filteredIndices = null; // null = sin filtro (todos)
+  let _searchIndex = [];       // rowSearchAttrs pre-computado por índice de db
+
+  function updatePaginationBar(totalVisible, totalPages) {
+    const bar = $("paginationBar");
+    bar.style.display = db.length === 0 ? 'none' : '';
+    $("prevPage").disabled = _page === 0;
+    $("nextPage").disabled = _page >= totalPages - 1;
+    $("pageInfo").textContent = totalPages > 1 ? `Página ${_page + 1} de ${totalPages}` : '';
+    const start = _page * PAGE_SIZE + 1;
+    const end   = Math.min((_page + 1) * PAGE_SIZE, totalVisible);
+    $("pageRange").textContent = totalVisible === 0 ? 'Sin resultados'
+      : totalVisible <= PAGE_SIZE    ? `${totalVisible} entradas`
+      : `${start}–${end} de ${totalVisible}`;
+  }
+
+  function renderPage() {
+    if (_rowObserver) { _rowObserver.disconnect(); _rowObserver = null; }
+    const all   = _filteredIndices !== null ? _filteredIndices : db.map((_, i) => i);
+    const total = all.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    _page = Math.min(_page, pages - 1);
+    const slice = all.slice(_page * PAGE_SIZE, (_page + 1) * PAGE_SIZE);
+    list.innerHTML = slice.map(index => {
+      const a = _searchIndex[index] || rowSearchAttrs(db[index]);
+      return `<article class="row" data-index="${index}" data-search="${escapeHtml(a['data-search'])}" data-sg="${escapeHtml(a['data-sg'])}" data-st="${escapeHtml(a['data-st'])}" data-stag="${escapeHtml(a['data-stag'])}" data-sy="${escapeHtml(a['data-sy'])}" data-su="${escapeHtml(a['data-su'])}" data-sar="${escapeHtml(a['data-sar'])}"></article>`;
+    }).join('');
+    _rowObserver = new IntersectionObserver(
+      (entries) => { entries.forEach(e => { if (e.isIntersecting) fillRow(e.target); }); },
+      { rootMargin: '500px 0px' }
+    );
+    list.querySelectorAll('.row').forEach(row => _rowObserver.observe(row));
+    updatePaginationBar(total, pages);
+  }
+
   function updateRowSearch(row, index) {
     const attrs = rowSearchAttrs(db[index]);
+    _searchIndex[index] = attrs;
     for (const [k, v] of Object.entries(attrs)) row.setAttribute(k, v);
   }
 
@@ -1125,19 +1175,11 @@
 
   function render() {
     document.body.classList.toggle("compact", compact);
-    if (_rowObserver) { _rowObserver.disconnect(); _rowObserver = null; }
-
-    list.innerHTML = db.map((item, index) => {
-      const a = rowSearchAttrs(item);
-      return `<article class="row" data-index="${index}" data-search="${escapeHtml(a['data-search'])}" data-sg="${escapeHtml(a['data-sg'])}" data-st="${escapeHtml(a['data-st'])}" data-stag="${escapeHtml(a['data-stag'])}" data-sy="${escapeHtml(a['data-sy'])}" data-su="${escapeHtml(a['data-su'])}" data-sar="${escapeHtml(a['data-sar'])}"></article>`;
-    }).join("");
-
-    _rowObserver = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) fillRow(e.target); });
-    }, { rootMargin: "500px 0px" });
-
-    list.querySelectorAll(".row").forEach(row => _rowObserver.observe(row));
-
+    _page = 0;
+    _filteredIndices = null;
+    list.classList.remove("filtering");
+    _searchIndex = db.map(item => rowSearchAttrs(item));
+    renderPage();
     rebuildIndexes();
     applySearch();
     updateStats();
@@ -1439,18 +1481,21 @@
   function applySearch() {
     const q = $("search").value.trim().toLowerCase();
     if (!q) {
+      _filteredIndices = null;
       list.classList.remove("filtering");
-      updateStats();
-      return;
+    } else {
+      const attr      = SEARCH_ATTR[$("searchField").value] || 'data-search';
+      const emptyMode = q === '<empty>';
+      list.classList.add("filtering");
+      _filteredIndices = db.reduce((acc, _, i) => {
+        const hay   = (_searchIndex[i]?.[attr] || '').trim();
+        const match = emptyMode ? hay === '' : q.split(/\s+/).every(w => hay.includes(w));
+        if (match) acc.push(i);
+        return acc;
+      }, []);
     }
-    const attr = SEARCH_ATTR[$("searchField").value] || 'data-search';
-    const emptyMode = q === '<empty>';
-    list.classList.add("filtering");
-    document.querySelectorAll(".row").forEach(row => {
-      const hay = (row.getAttribute(attr) || '').trim();
-      const hidden = emptyMode ? hay !== '' : !q.split(/\s+/).every(w => hay.includes(w));
-      row.classList.toggle("hidden", hidden);
-    });
+    _page = 0;
+    renderPage();
     updateStats();
   }
 
@@ -1574,25 +1619,23 @@
     _addToIdx(_coverIdx, newItem.cover, newIndex);
     newItem.tracks.forEach(t => _addToIdx(_audioIdx, t.mp3Url, newIndex));
     _addToIdx(_gyIdx, _gyKey(newItem.game, newItem.year), newIndex);
-    const sa = rowSearchAttrs(newItem);
-    const article = document.createElement('article');
-    article.className = 'row';
-    article.dataset.index = String(newIndex);
-    for (const [attr, val] of Object.entries(sa)) article.setAttribute(attr, val);
-    list.appendChild(article);
-    const q = $("search").value.trim().toLowerCase();
-    if (q) {
-      const sAttr = SEARCH_ATTR[$("searchField").value] || 'data-search';
-      const hay = (article.getAttribute(sAttr) || '').trim();
-      const hidden = q === '<empty>' ? hay !== '' : !q.split(/\s+/).every(w => hay.includes(w));
-      article.classList.toggle("hidden", hidden);
-    }
-    fillRow(article);
+    _searchIndex[newIndex] = rowSearchAttrs(newItem);
+    // ir a la última página (sin filtro) para ver la entrada recién añadida
+    _filteredIndices = null;
+    list.classList.remove("filtering");
+    $("search").value = "";
+    $("searchClear").style.display = "none";
+    const lastPage = Math.max(0, Math.ceil(db.length / PAGE_SIZE) - 1);
+    _page = lastPage;
+    renderPage();
     setDirty(true);
     updateStats();
     $("clearNew").click();
     $("addPanel").classList.remove("open");
-    requestAnimationFrame(() => article.scrollIntoView({ behavior: "smooth", block: "end" }));
+    requestAnimationFrame(() => {
+      const last = list.querySelector('.row:last-child');
+      if (last) { fillRow(last); last.scrollIntoView({ behavior: "smooth", block: "end" }); }
+    });
   });
 
   function loadText(text, filename) {
@@ -1713,6 +1756,14 @@
     if (!row) return;
     fillRow(row);
     row.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  $("prevPage").addEventListener("click", () => {
+    if (_page > 0) { _page--; renderPage(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  });
+  $("nextPage").addEventListener("click", () => {
+    const total = _filteredIndices !== null ? _filteredIndices.length : db.length;
+    if (_page < Math.ceil(total / PAGE_SIZE) - 1) { _page++; renderPage(); window.scrollTo({ top: 0, behavior: "smooth" }); }
   });
 
   $("scrollTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
