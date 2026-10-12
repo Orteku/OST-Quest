@@ -1150,7 +1150,14 @@ function openGmPanel() {
       (g.tags && g.tags.includes(sp.tag)) ||
       g.tracks.some(tr => tr.tags && tr.tags.includes(sp.tag))
     );
-    if (sp.developer) return GAME_DB.filter(g => g.developer === sp.developer);
+    if (sp.search) {
+      const terms = sp.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+      return GAME_DB.filter(g => terms.some(term =>
+        (g.game      && g.game.toLowerCase().includes(term)) ||
+        (g.developer && g.developer.toLowerCase().includes(term)) ||
+        (g.tags      && g.tags.some(tag => tag.toLowerCase().includes(term)))
+      ));
+    }
     return GAME_DB;
   }
 

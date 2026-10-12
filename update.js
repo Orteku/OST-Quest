@@ -135,8 +135,15 @@ function getPoolForDate(dateStr) {
           (g.tags && g.tags.includes(special.tag)) ||
           g.tracks.some(tr => tr.tags && tr.tags.includes(special.tag))
         )
-      : special.developer
-        ? GAME_DB.filter(g => g.developer === special.developer)
+      : special.search
+        ? (() => {
+            const terms = special.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+            return GAME_DB.filter(g => terms.some(term =>
+              (g.game      && g.game.toLowerCase().includes(term)) ||
+              (g.developer && g.developer.toLowerCase().includes(term)) ||
+              (g.tags      && g.tags.some(tag => tag.toLowerCase().includes(term)))
+            ));
+          })()
         : GAME_DB;
   if (pool.length < 4) {
     console.warn(`⚠️  Especial "${special.label}" (${dateStr}): solo ${pool.length} juegos en DB, se usará DB completa`);
