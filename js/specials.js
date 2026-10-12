@@ -1,8 +1,15 @@
 // OST Quest — Eventos especiales
 // date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
-// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (términos separados por coma, busca en nombre, developer y tags del juego). Mínimo ~12 juegos.
+// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.
 
 const SPECIAL_EVENTS = [
+  {
+    date:    "05-04",
+    label:   "Star Wars",
+    name:    "Star Wars",
+    color:   "#888888",
+    search:    "Star Wars",
+  },
   {
     date:    "10-31",
     label:   "Halloween",

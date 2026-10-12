@@ -11486,32 +11486,22 @@
   ],
   "2027-05-04": [
     {
-      "answerId": 207,
+      "answerId": 722,
       "coverIds": [
-        94,
-        567,
-        207,
-        92
+        311,
+        722,
+        309,
+        312
       ],
       "trackIndex": 0
     },
     {
-      "answerId": 248,
+      "answerId": 198,
       "coverIds": [
-        248,
-        588,
-        495,
-        183
-      ],
-      "trackIndex": 0
-    },
-    {
-      "answerId": 477,
-      "coverIds": [
-        494,
-        202,
-        477,
-        674
+        198,
+        310,
+        313,
+        314
       ],
       "trackIndex": 0
     }
@@ -16504,6 +16494,134 @@
         513,
         298,
         497
+      ],
+      "trackIndex": 0
+    }
+  ],
+  "2027-10-08": [
+    {
+      "answerId": 699,
+      "coverIds": [
+        699,
+        279,
+        503,
+        703
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 189,
+      "coverIds": [
+        262,
+        71,
+        189,
+        153
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 68,
+      "coverIds": [
+        193,
+        723,
+        68,
+        476
+      ],
+      "trackIndex": 1
+    }
+  ],
+  "2027-10-09": [
+    {
+      "answerId": 140,
+      "coverIds": [
+        140,
+        83,
+        582,
+        136
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 194,
+      "coverIds": [
+        260,
+        25,
+        194,
+        175
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 166,
+      "coverIds": [
+        699,
+        166,
+        477,
+        553
+      ],
+      "trackIndex": 0
+    }
+  ],
+  "2027-10-10": [
+    {
+      "answerId": 285,
+      "coverIds": [
+        285,
+        271,
+        620,
+        294
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 212,
+      "coverIds": [
+        373,
+        507,
+        212,
+        290
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 346,
+      "coverIds": [
+        242,
+        346,
+        457,
+        370
+      ],
+      "trackIndex": 0
+    }
+  ],
+  "2027-10-11": [
+    {
+      "answerId": 567,
+      "coverIds": [
+        374,
+        567,
+        158,
+        334
+      ],
+      "trackIndex": 0
+    },
+    {
+      "answerId": 50,
+      "coverIds": [
+        50,
+        250,
+        562,
+        305
+      ],
+      "trackIndex": 1
+    },
+    {
+      "answerId": 401,
+      "coverIds": [
+        543,
+        517,
+        570,
+        401
       ],
       "trackIndex": 0
     }
