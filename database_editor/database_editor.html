@@ -193,8 +193,8 @@
     .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line); font-size:13px; position:sticky; top:0; z-index:10; }
     .pagination-bar button { padding:4px 10px; font-size:12px; }
     .pagination-bar button:disabled { opacity:0.35; cursor:default; pointer-events:none; }
-    #pageInfo { color:var(--muted); white-space:nowrap; }
-    #pageRange { color:var(--muted); margin-left:auto; white-space:nowrap; }
+    #pageInfo, #pageInfo2 { color:var(--muted); white-space:nowrap; }
+    #pageRange, #pageRange2 { color:var(--muted); margin-left:auto; white-space:nowrap; }
     .list {
       display: grid;
       gap: 10px;
@@ -626,6 +626,12 @@
     <span id="pageRange"></span>
   </div>
   <div id="list" class="list"></div>
+  <div id="paginationBar2" class="pagination-bar" style="display:none">
+    <button id="prevPage2" disabled>← Anterior</button>
+    <span id="pageInfo2"></span>
+    <button id="nextPage2" disabled>Siguiente →</button>
+    <span id="pageRange2"></span>
+  </div>
 
   <section id="addPanel" class="add-panel">
     <h2 style="margin:0 0 10px;font-size:17px;">Añadir nueva entrada</h2>
@@ -1121,16 +1127,22 @@
   let _searchIndex = [];       // rowSearchAttrs pre-computado por índice de db
 
   function updatePaginationBar(totalVisible, totalPages) {
-    const bar = $("paginationBar");
-    bar.style.display = db.length === 0 ? 'none' : '';
-    $("prevPage").disabled = _page === 0;
-    $("nextPage").disabled = _page >= totalPages - 1;
-    $("pageInfo").textContent = totalPages > 1 ? `Página ${_page + 1} de ${totalPages}` : '';
-    const start = _page * PAGE_SIZE + 1;
-    const end   = Math.min((_page + 1) * PAGE_SIZE, totalVisible);
-    $("pageRange").textContent = totalVisible === 0 ? 'Sin resultados'
-      : totalVisible <= PAGE_SIZE    ? `${totalVisible} entradas`
+    const display  = db.length === 0 ? 'none' : '';
+    const prevDis  = _page === 0;
+    const nextDis  = _page >= totalPages - 1;
+    const infoText = totalPages > 1 ? `Página ${_page + 1} de ${totalPages}` : '';
+    const start    = _page * PAGE_SIZE + 1;
+    const end      = Math.min((_page + 1) * PAGE_SIZE, totalVisible);
+    const rangeText = totalVisible === 0 ? 'Sin resultados'
+      : totalVisible <= PAGE_SIZE ? `${totalVisible} entradas`
       : `${start}–${end} de ${totalVisible}`;
+    for (const s of ['', '2']) {
+      $("paginationBar" + s).style.display = display;
+      $("prevPage"      + s).disabled      = prevDis;
+      $("nextPage"      + s).disabled      = nextDis;
+      $("pageInfo"      + s).textContent   = infoText;
+      $("pageRange"     + s).textContent   = rangeText;
+    }
   }
 
   function renderPage() {
@@ -1764,6 +1776,13 @@
   $("nextPage").addEventListener("click", () => {
     const total = _filteredIndices !== null ? _filteredIndices.length : db.length;
     if (_page < Math.ceil(total / PAGE_SIZE) - 1) { _page++; renderPage(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  });
+  $("prevPage2").addEventListener("click", () => {
+    if (_page > 0) { _page--; renderPage(); $("paginationBar").scrollIntoView({ behavior: "smooth" }); }
+  });
+  $("nextPage2").addEventListener("click", () => {
+    const total = _filteredIndices !== null ? _filteredIndices.length : db.length;
+    if (_page < Math.ceil(total / PAGE_SIZE) - 1) { _page++; renderPage(); $("paginationBar").scrollIntoView({ behavior: "smooth" }); }
   });
 
   $("scrollTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
