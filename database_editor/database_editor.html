@@ -2090,7 +2090,7 @@
       ];
       if (ev.tag)                               parts.push(`    tag:       ${JSON.stringify(ev.tag)},`);
       if (ev.gameIds && ev.gameIds.length > 0)  parts.push(`    gameIds:   [${ev.gameIds.join(', ')}],`);
-      if (ev.developer)                         parts.push(`    developer: ${JSON.stringify(ev.developer)},`);
+      if (ev.search)                            parts.push(`    search:    ${JSON.stringify(ev.search)},`);
       return '  {\n' + parts.join('\n') + '\n  }';
     });
     const funcs = [
@@ -2124,7 +2124,7 @@
     ].join('\n');
     return '// OST Quest — Eventos especiales\n'
       + "// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)\n"
-      + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'developer' (filtra por desarrollador). Mínimo ~12 juegos.\n\n"
+      + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.\n\n"
       + 'const SPECIAL_EVENTS = [\n'
       + lines.join(',\n')
       + '\n];\n'
@@ -2170,7 +2170,7 @@
       )();
       const canon = e => JSON.stringify({
         date: e.date || '', label: e.label || '', name: e.name || '', color: e.color || '',
-        tag: e.tag || '', gameIds: (e.gameIds || []).map(Number), developer: e.developer || '',
+        tag: e.tag || '', gameIds: (e.gameIds || []).map(Number), search: e.search || '',
       });
       const byDate = arr => [...arr].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
       hasDiff = JSON.stringify(byDate(_specials).map(canon)) !== JSON.stringify(byDate(ghEvents || []).map(canon));
@@ -2322,7 +2322,7 @@
       color: row.color || '#888888',
       tag: row.tag || '',
       gameIds: Array.isArray(row.game_ids) ? row.game_ids.map(Number) : [],
-      developer: row.developer || '',
+      search: row.search || '',
     };
   }
 
@@ -2375,8 +2375,8 @@
           </div>
         </div>
         <div class="special-field-row">
-          <span class="special-field-label">match</span>
-          <input class="special-match" data-field="developer" data-index="${i}" placeholder="Desarrollador, compositor, serie..." value="${escapeHtml(ev.developer || '')}" style="width:100%" />
+          <span class="special-field-label">search</span>
+          <input class="special-search" data-field="search" data-index="${i}" placeholder="Desarrollador, compositor, serie..." value="${escapeHtml(ev.search || '')}" style="width:100%" />
         </div>
       </div>
     </div>`;
@@ -2439,7 +2439,7 @@
   });
 
   $("specialsAdd").addEventListener("click", () => {
-    _specials.push({ date: '', label: '', name: '', color: '#888888', tag: '', gameIds: [], developer: '' });
+    _specials.push({ date: '', label: '', name: '', color: '#888888', tag: '', gameIds: [], search: '' });
     _specialsDirty = true;
     $("specialsDirtyPill").style.display = '';
     renderSpecials();
@@ -2483,7 +2483,7 @@
         const { error } = await client.from('editor_specials').delete().in('id', toDelete);
         if (error) throw error;
       }
-      const toRow = ev => ({ date: ev.date, label: ev.label, name: ev.name, color: ev.color, tag: ev.tag || null, game_ids: ev.gameIds || [], developer: ev.developer || null });
+      const toRow = ev => ({ date: ev.date, label: ev.label, name: ev.name, color: ev.color, tag: ev.tag || null, game_ids: ev.gameIds || [], search: ev.search || null });
       const withId    = _specials.filter(e => e.id !== undefined).map(ev => ({ ...toRow(ev), id: ev.id }));
       const withoutId = _specials.filter(e => e.id === undefined).map(toRow);
       if (withId.length) {
