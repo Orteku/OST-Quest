@@ -190,7 +190,7 @@
       padding: 0 2px;
     }
     .search-stats strong { color: var(--text); }
-    .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line); font-size:13px; position:sticky; top:0; z-index:10; }
+    .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line); font-size:13px; position:sticky; top:var(--header-h, 0px); z-index:9; }
     .pagination-bar button { padding:4px 10px; font-size:12px; }
     .pagination-bar button:disabled { opacity:0.35; cursor:default; pointer-events:none; }
     #pageInfo, #pageInfo2 { color:var(--muted); white-space:nowrap; }
@@ -1646,7 +1646,12 @@
     $("addPanel").classList.remove("open");
     requestAnimationFrame(() => {
       const last = list.querySelector('.row:last-child');
-      if (last) { fillRow(last); last.scrollIntoView({ behavior: "smooth", block: "end" }); }
+      if (last) {
+        fillRow(last);
+        requestAnimationFrame(() => last.scrollIntoView({ behavior: "smooth", block: "center" }));
+      } else {
+        $("paginationBar2").scrollIntoView({ behavior: "smooth", block: "end" });
+      }
     });
   });
 
@@ -1793,6 +1798,12 @@
 
   $("newYear").value = new Date().getFullYear();
 
+  function syncHeaderHeight() {
+    const h = document.querySelector('header');
+    if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
+  }
+  syncHeaderHeight();
+  new ResizeObserver(syncHeaderHeight).observe(document.querySelector('header'));
 
   // ── Google Sheets import ────────────────────────────────────────────────────
 

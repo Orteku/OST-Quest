@@ -15,12 +15,16 @@ function loadSavedVolume() {
 
 // ─── Preview: 30 s con fade out en los últimos 3 s ───────────────────────────
 
-const PREVIEW_MS = 30000;
-const FADE_MS    = 3000;
-const FADE_STEPS = 20;
+const PREVIEW_MS   = 30000;
+const FADE_MS      = 3000;
+const FADE_STEPS   = 20;
+const LOOP_DELAY_MS = 2000;
 
 let _previewStopTimer    = null;
 let _previewFadeInterval = null;
+let _previewActive       = false;
+let _loopTimer           = null;
+let _audioStartSeconds   = 0;
 
 function _applyFadeRatio(ratio) {
   if (_audioEl) _audioEl.volume = (gameVolume * ratio) / 100;
@@ -28,7 +32,11 @@ function _applyFadeRatio(ratio) {
 
 function _startPreview(onEnd) {
   _cleanupPreview();
+  _previewActive    = true;
   _previewStopTimer = setTimeout(() => {
+    _previewActive = false;
+    clearTimeout(_loopTimer);
+    _loopTimer = null;
     let step = 0;
     _previewFadeInterval = setInterval(() => {
       step++;
@@ -47,8 +55,11 @@ function _startPreview(onEnd) {
 function _cleanupPreview() {
   clearTimeout(_previewStopTimer);
   clearInterval(_previewFadeInterval);
+  clearTimeout(_loopTimer);
   _previewStopTimer    = null;
   _previewFadeInterval = null;
+  _previewActive       = false;
+  _loopTimer           = null;
   _applyFadeRatio(1);
 }
 
@@ -75,9 +86,21 @@ function _cleanupAudioListeners() {
 function _makeAudioEl() {
   const el = new Audio();
   el.addEventListener('ended', () => {
-    const cb = _audioOnEnd; _audioOnEnd = null;
-    _cleanupPreview();
-    if (cb) cb();
+    if (_previewActive) {
+      // Pista corta: loop con delay de 2 s
+      _loopTimer = setTimeout(() => {
+        _loopTimer = null;
+        if (_audioEl && _previewActive) {
+          _audioEl.currentTime = _audioStartSeconds;
+          _audioEl.volume = gameVolume / 100;
+          _audioEl.play().catch(() => {});
+        }
+      }, LOOP_DELAY_MS);
+    } else {
+      const cb = _audioOnEnd; _audioOnEnd = null;
+      _cleanupPreview();
+      if (cb) cb();
+    }
   });
   return el;
 }
@@ -104,6 +127,7 @@ function prewarmDirectAudio(url, _attempt = 0) {
 }
 
 function _playDirectAudio(url, startSeconds, onEnd, onWaiting, onPlaying, onError) {
+  _audioStartSeconds = startSeconds || 0;
   _audioOnEnd = null;
   if (_audioEl) _audioEl.pause();
 
