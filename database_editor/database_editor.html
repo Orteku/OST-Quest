@@ -193,6 +193,7 @@
     .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line); font-size:13px; position:sticky; top:var(--header-h, 0px); z-index:9; }
     .pagination-bar button { padding:4px 10px; font-size:12px; }
     .pagination-bar button:disabled { opacity:0.35; cursor:default; pointer-events:none; }
+    .pg-icon { width:28px; height:28px; padding:0; font-size:16px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
     #pageInfo, #pageInfo2 { color:var(--muted); white-space:nowrap; }
     #pageRange, #pageRange2 { color:var(--muted); margin-left:auto; white-space:nowrap; }
     .list {
@@ -620,16 +621,20 @@
 <main>
   <div id="tab-db" class="tab-pane active">
   <div id="paginationBar" class="pagination-bar" style="display:none">
-    <button id="prevPage" disabled>← Anterior</button>
+    <button id="firstPage"  class="pg-icon" title="Primera página" disabled>«</button>
+    <button id="prevPage"   class="pg-icon" title="Anterior"        disabled>‹</button>
     <span id="pageInfo"></span>
-    <button id="nextPage" disabled>Siguiente →</button>
+    <button id="nextPage"   class="pg-icon" title="Siguiente"       disabled>›</button>
+    <button id="lastPage"   class="pg-icon" title="Última página"   disabled>»</button>
     <span id="pageRange"></span>
   </div>
   <div id="list" class="list"></div>
   <div id="paginationBar2" class="pagination-bar" style="display:none">
-    <button id="prevPage2" disabled>← Anterior</button>
+    <button id="firstPage2" class="pg-icon" title="Primera página" disabled>«</button>
+    <button id="prevPage2"  class="pg-icon" title="Anterior"       disabled>‹</button>
     <span id="pageInfo2"></span>
-    <button id="nextPage2" disabled>Siguiente →</button>
+    <button id="nextPage2"  class="pg-icon" title="Siguiente"      disabled>›</button>
+    <button id="lastPage2"  class="pg-icon" title="Última página"  disabled>»</button>
     <span id="pageRange2"></span>
   </div>
 
@@ -1138,8 +1143,10 @@
       : `${start}–${end} de ${totalVisible}`;
     for (const s of ['', '2']) {
       $("paginationBar" + s).style.display = display;
+      $("firstPage"     + s).disabled      = prevDis;
       $("prevPage"      + s).disabled      = prevDis;
       $("nextPage"      + s).disabled      = nextDis;
+      $("lastPage"      + s).disabled      = nextDis;
       $("pageInfo"      + s).textContent   = infoText;
       $("pageRange"     + s).textContent   = rangeText;
     }
@@ -1775,20 +1782,25 @@
     row.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
-  $("prevPage").addEventListener("click", () => {
-    if (_page > 0) { _page--; renderPage(); window.scrollTo({ top: 0, behavior: "smooth" }); }
-  });
-  $("nextPage").addEventListener("click", () => {
+  function goToPage(newPage, scrollToTop) {
     const total = _filteredIndices !== null ? _filteredIndices.length : db.length;
-    if (_page < Math.ceil(total / PAGE_SIZE) - 1) { _page++; renderPage(); window.scrollTo({ top: 0, behavior: "smooth" }); }
-  });
-  $("prevPage2").addEventListener("click", () => {
-    if (_page > 0) { _page--; renderPage(); $("paginationBar").scrollIntoView({ behavior: "smooth" }); }
-  });
-  $("nextPage2").addEventListener("click", () => {
-    const total = _filteredIndices !== null ? _filteredIndices.length : db.length;
-    if (_page < Math.ceil(total / PAGE_SIZE) - 1) { _page++; renderPage(); $("paginationBar").scrollIntoView({ behavior: "smooth" }); }
-  });
+    const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    newPage = Math.max(0, Math.min(newPage, pages - 1));
+    if (newPage === _page) return;
+    _page = newPage;
+    renderPage();
+    if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+    else $("paginationBar").scrollIntoView({ behavior: "smooth" });
+  }
+
+  $("firstPage").addEventListener("click",  () => goToPage(0, true));
+  $("prevPage") .addEventListener("click",  () => goToPage(_page - 1, true));
+  $("nextPage") .addEventListener("click",  () => goToPage(_page + 1, true));
+  $("lastPage") .addEventListener("click",  () => goToPage(Infinity, true));
+  $("firstPage2").addEventListener("click", () => goToPage(0, false));
+  $("prevPage2") .addEventListener("click", () => goToPage(_page - 1, false));
+  $("nextPage2") .addEventListener("click", () => goToPage(_page + 1, false));
+  $("lastPage2") .addEventListener("click", () => goToPage(Infinity, false));
 
   $("scrollTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   $("scrollBottom").addEventListener("click", () => {
