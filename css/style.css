@@ -675,6 +675,11 @@ body.is-special .play-btn:hover { background: var(--special-color); filter: brig
   color: #a0a090;
   background: rgba(255,255,255,0.05);
 }
+.tutorial-btn-item:nth-child(3) .tutorial-step__icon {
+  color: #ffc400;
+  background: rgba(255, 196, 0, 0.1);
+  box-shadow: 0 0 10px rgba(255, 196, 0, 0.35), inset 0 0 6px rgba(255, 196, 0, 0.08);
+}
 
 /* Custom audio player */
 .modal-player {
@@ -1515,6 +1520,7 @@ body.theme--light .tutorial-btn-item p { color: #525060; }
 body.theme--light .tutorial-step__icon { background: rgba(0,0,0,0.07); color: #6a6878; }
 body.theme--light .tutorial-steps li:nth-child(1) .tutorial-step__icon { color: #4a6c10; background: rgba(74,108,16,0.12); }
 body.theme--light .tutorial-btn-item .tutorial-step__icon { color: #787888; background: rgba(0,0,0,0.07); }
+body.theme--light .tutorial-btn-item:nth-child(3) .tutorial-step__icon { color: #c89000; background: rgba(200,144,0,0.1); box-shadow: 0 0 8px rgba(200,144,0,0.3), inset 0 0 4px rgba(200,144,0,0.08); }
 body.theme--light .tutorial-divider { border-top-color: rgba(0,0,0,0.1); }
 body.theme--light .tutorial-panel .tutorial-btns { border-left-color: rgba(0,0,0,0.08); }
 

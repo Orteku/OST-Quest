@@ -1179,17 +1179,42 @@ function openGmPanel() {
     const _sel = _availSpecials.find(e => e.date === this.value) || null;
     _gmPool = _getGmPool(_sel);
     _rebuildGmSelects(_gmPool);
+
+    // Tema visual: is-special + color del evento
+    document.body.classList.toggle('is-special', !!_sel);
+    if (_sel) {
+      document.documentElement.style.setProperty('--special-color', _sel.color);
+    } else {
+      document.documentElement.style.removeProperty('--special-color');
+    }
+
+    // Label izquierdo (especial-event-label)
+    const _lbl = document.getElementById('special-event-label');
+    if (_lbl) {
+      if (_sel) {
+        const _sp = t('special_prefix');
+        _lbl.innerHTML = t('special_order') === 'suffix'
+          ? `<span class="special-label__name">${_sel.label}</span><span class="special-label__prefix">${_sp}</span>`
+          : `<span class="special-label__prefix">${_sp}</span><span class="special-label__name">${_sel.label}</span>`;
+        _lbl.hidden = false;
+      } else {
+        _lbl.hidden = true;
+        _lbl.innerHTML = '';
+      }
+    }
+
+    // Tagline: romper en líneas en desktop (CSS oculta en móvil vía is-special)
     const _tgl = document.querySelector('.site-tagline');
     if (_tgl) {
       if (_sel) {
         if (!_tgl.dataset.origText) _tgl.dataset.origText = _tgl.textContent;
         _tgl.innerHTML = _tgl.dataset.origText.trim().split(/\s+/).join('<br>');
-        _tgl.style.fontSize = '9px';
       } else if (_tgl.dataset.origText) {
         _tgl.textContent = _tgl.dataset.origText;
-        _tgl.style.fontSize = '';
       }
     }
+
+    // Archive banner derecho (solo en desktop; CSS lo oculta en móvil vía is-special)
     const _banner = document.getElementById('archive-banner');
     if (_banner) {
       if (_sel) {

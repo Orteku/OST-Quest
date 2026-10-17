@@ -92,6 +92,7 @@ async function authInit() {
   }
 
   _renderAuthBtn();
+  document.addEventListener('langchange', _renderAuthBtn);
   if (window.PROFILE_PAGE) initProfilePage();
 }
 
