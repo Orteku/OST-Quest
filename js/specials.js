@@ -2,6 +2,7 @@
 // date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
 // dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas
 // Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.
+// Imágenes opcionales en img/specials/ con la fecha sin guiones: banner_1031.png (header) y logo_1031.png (favicon)
 
 const SPECIAL_EVENTS = [
   {

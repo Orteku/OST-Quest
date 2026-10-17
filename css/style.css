@@ -100,19 +100,6 @@ ul, li { list-style: none; }
 body.theme--light .site-tagline { color: #9898a8; }
 body.has-special-label .site-tagline { font-size: 9px; }
 
-.has-special-banner .site-header-wrap {
-  position: relative;
-  overflow: hidden;
-}
-.has-special-banner .site-header-wrap::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--special-banner-url) right center / auto 100% no-repeat;
-  opacity: 0.2;
-  pointer-events: none;
-}
-
 .site-header__right { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 
 .site-header .icon-btn {

@@ -1020,28 +1020,28 @@ function updateScoreDisplay() {
   document.getElementById('score-miss').textContent = colStates.filter(s => s.solved && !s.correct).length;
 }
 
-// Logo y banner opcionales de img/specials/; con null restaura los por defecto
+// Imágenes opcionales de img/specials/: banner_ → header, logo_ → favicon. Con null restaura las normales.
 let _specialAssetsToken = 0;
 function applySpecialAssets(sp) {
   const token = ++_specialAssetsToken;
-  const logoEl = document.querySelector('.site-banner');
-  if (logoEl && !logoEl.dataset.defaultSrc) logoEl.dataset.defaultSrc = logoEl.getAttribute('src');
-  if (logoEl) logoEl.src = logoEl.dataset.defaultSrc;
-  document.body.classList.remove('has-special-banner');
-  document.documentElement.style.removeProperty('--special-banner-url');
+  const targets = [
+    { el: document.querySelector('.site-banner'),   attr: 'src',  prefix: 'banner_' },
+    { el: document.querySelector('link[rel="icon"]'), attr: 'href', prefix: 'logo_' },
+  ].filter(x => x.el);
+
+  for (const { el, attr } of targets) {
+    if (!el.dataset.defaultAsset) el.dataset.defaultAsset = el.getAttribute(attr);
+    el.setAttribute(attr, el.dataset.defaultAsset);
+  }
   if (!sp) return;
 
   const d = sp.date.replace(/-/g, '');
-  const logo = new Image();
-  logo.onload = () => { if (token === _specialAssetsToken && logoEl) logoEl.src = logo.src; };
-  logo.src = `img/specials/logo_${d}.png`;
-  const banner = new Image();
-  banner.onload = () => {
-    if (token !== _specialAssetsToken) return;
-    document.documentElement.style.setProperty('--special-banner-url', `url('${banner.src}')`);
-    document.body.classList.add('has-special-banner');
-  };
-  banner.src = `img/specials/banner_${d}.png`;
+  for (const { el, attr, prefix } of targets) {
+    const url = `img/specials/${prefix}${d}.png`;
+    const probe = new Image();
+    probe.onload = () => { if (token === _specialAssetsToken) el.setAttribute(attr, url); };
+    probe.src = url;
+  }
 }
 
 // Aplica (o revierte con null) todo el tema de un especial. Lo usan el día real y el modo GM.

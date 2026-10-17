@@ -2262,7 +2262,8 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     return '// OST Quest — Eventos especiales\n'
       + "// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)\n"
       + "// dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas\n"
-      + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.\n\n"
+      + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.\n"
+      + "// Imágenes opcionales en img/specials/ con la fecha sin guiones: banner_1031.png (header) y logo_1031.png (favicon)\n\n"
       + 'const SPECIAL_EVENTS = [\n'
       + lines.join(',\n')
       + '\n];\n'
