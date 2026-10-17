@@ -35,7 +35,7 @@ console.log(`📦 Base de datos cargada: ${GAME_DB.length} juegos`);
 
 // ── Cargar eventos especiales ─────────────────────────────────────────────────
 
-const { getSpecialForDate } = require('./specials.js');
+const { getSpecialForDate, hasGameData } = require('./specials.js');
 
 // ── Cargar algoritmo compartido ───────────────────────────────────────────────
 
@@ -127,7 +127,7 @@ function generateGameForDate(dateStr, pool = GAME_DB) {
 
 function getPoolForDate(dateStr) {
   const special = getSpecialForDate(dateStr);
-  if (!special) return GAME_DB;
+  if (!special || !hasGameData(special)) return GAME_DB;
   const pool = special.gameIds && special.gameIds.length
     ? GAME_DB.filter(g => special.gameIds.includes(g.id))
     : special.tag
@@ -190,16 +190,18 @@ const result = {};
 let preserved = 0;
 let generated = 0;
 
-// 1. Preservar días pasados. Hoy se preserva solo si NO es especial.
+const _todayGameSpecial = (() => { const s = getSpecialForDate(today); return s && hasGameData(s) ? s : null; })();
+
+// 1. Preservar días pasados. Hoy se preserva solo si NO es especial con pool de juego.
 for (const [dateStr, game] of Object.entries(existing)) {
-  if (dateStr < today || (dateStr === today && !getSpecialForDate(today))) {
+  if (dateStr < today || (dateStr === today && !_todayGameSpecial)) {
     result[dateStr] = game;
     preserved++;
   }
 }
 
-// 2. Regenerar hoy si es especial
-if (getSpecialForDate(today)) {
+// 2. Regenerar hoy si es especial con pool de juego
+if (_todayGameSpecial) {
   result[today] = generateGameForDate(today, getPoolForDate(today));
   generated++;
 }

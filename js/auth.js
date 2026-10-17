@@ -152,15 +152,19 @@ function _renderAuthBtn() {
   const btn = document.getElementById('btn-auth');
   if (!btn) return;
   const loggedIn = !!(_token && _profile?.username);
-  if (loggedIn && _profile.selected_avatar) {
-    btn.innerHTML = `<img class="auth-btn__avatar-img" src="img/achievements/${_esc(_profile.selected_avatar)}" alt="">`;
-  } else if (loggedIn) {
-    const initial = _profile.username.charAt(0).toUpperCase();
-    btn.innerHTML = `<span class="auth-btn__avatar">${initial}</span>`;
-  } else {
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>`;
-  }
   btn.classList.toggle('auth-btn--in', loggedIn);
+  btn.classList.add('auth-btn--text');
+  if (loggedIn && _profile.selected_avatar) {
+    btn.title = _profile.username;
+    btn.innerHTML = `<img class="auth-btn__avatar-img" src="img/achievements/${_esc(_profile.selected_avatar)}" alt=""><span class="auth-btn__username">${_esc(_profile.username)}</span>`;
+  } else if (loggedIn) {
+    btn.title = _profile.username;
+    const initial = _profile.username.charAt(0).toUpperCase();
+    btn.innerHTML = `<span class="auth-btn__avatar">${initial}</span><span class="auth-btn__username">${_esc(_profile.username)}</span>`;
+  } else {
+    btn.title = t('auth_sign_in');
+    btn.innerHTML = `<span class="auth-btn__signin-label">${t('auth_sign_in')}</span>`;
+  }
 }
 
 // ─── Dropdown (usuario logado) ────────────────────────────────────────────────

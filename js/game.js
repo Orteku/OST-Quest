@@ -1028,7 +1028,7 @@ function startCountdownTicker() {
   const _td = new Date(getGameDay() + 'T12:00:00Z');
   _td.setUTCDate(_td.getUTCDate() + 1);
   const _nextSpecial = getSpecialForDate(_td.toISOString().slice(0, 10));
-  if (_nextSpecial) {
+  if (_nextSpecial && hasGameData(_nextSpecial)) {
     const _lbl = el.parentElement.querySelector('[data-i18n]');
     if (_lbl) {
       const _prefix = t('special_prefix');
@@ -1117,7 +1117,7 @@ function openGmPanel() {
 
   let _gmPool = [...GAME_DB];
 
-  const _availSpecials = SPECIAL_EVENTS;
+  const _availSpecials = SPECIAL_EVENTS.filter(hasGameData);
   const _specialOptHtml = _availSpecials.map(e => `<option value="${e.date}">${e.label}</option>`).join('');
 
   panel.innerHTML = `
@@ -1423,16 +1423,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (_todaySpecial) {
     document.documentElement.style.setProperty('--special-color', _todaySpecial.color);
     document.body.classList.add('is-special');
-    const _lbl = document.getElementById('special-event-label');
-    if (_lbl) {
-      _lbl.textContent = t('special_order') === 'suffix'
-        ? `${_todaySpecial.name} ${t('special_prefix')}`
-        : `${t('special_prefix')} ${_todaySpecial.name}`;
-      _lbl.hidden = false;
-    }
-    const _tagline = document.querySelector('.site-tagline');
-    if (_tagline) {
-      _tagline.innerHTML = _tagline.textContent.trim().split(/\s+/).join('<br>');
+
+    // Assets opcionales: logo y banner de img/specials/
+    const _assetDate = _todaySpecial.date;
+    const _logoImg = new Image();
+    _logoImg.onload = () => { const b = document.querySelector('.site-banner'); if (b) b.src = _logoImg.src; };
+    _logoImg.src = `img/specials/logo_${_assetDate}.png`;
+    const _bannerImg = new Image();
+    _bannerImg.onload = () => {
+      document.documentElement.style.setProperty('--special-banner-url', `url('img/specials/banner_${_assetDate}.png')`);
+      document.body.classList.add('has-special-banner');
+    };
+    _bannerImg.src = `img/specials/banner_${_assetDate}.png`;
+
+    // Label y archive-banner solo para especiales con pool de juego
+    if (hasGameData(_todaySpecial)) {
+      const _lbl = document.getElementById('special-event-label');
+      if (_lbl) {
+        const _sp = t('special_prefix');
+        _lbl.innerHTML = t('special_order') === 'suffix'
+          ? `<span class="special-label__name">${_todaySpecial.label}</span><span class="special-label__prefix">${_sp}</span>`
+          : `<span class="special-label__prefix">${_sp}</span><span class="special-label__name">${_todaySpecial.label}</span>`;
+        _lbl.hidden = false;
+      }
+      const _tagline = document.querySelector('.site-tagline');
+      if (_tagline) {
+        _tagline.innerHTML = _tagline.textContent.trim().split(/\s+/).join('<br>');
+      }
     }
   }
 

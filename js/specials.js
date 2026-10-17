@@ -1,6 +1,8 @@
 // OST Quest — Eventos especiales
-// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
-// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.
+// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (anual)
+// dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas
+// Pool (opcional): 'gameIds', 'tag' o 'search'. Sin pool → evento puramente visual (no altera quests).
+// Assets opcionales: img/specials/logo_{date}.png  img/specials/banner_{date}.png
 
 const SPECIAL_EVENTS = [
   {
@@ -39,29 +41,65 @@ const SPECIAL_EVENTS = [
   }
 ];
 
-function getSpecialForDate(dateStr) {
-  const mmdd = dateStr.slice(5);
-  return SPECIAL_EVENTS.find(e => e.date === dateStr || e.date === mmdd) || null;
+function hasGameData(e) {
+  return !!(e.gameIds?.length || e.search || e.tag);
 }
 
-// Cuántos especiales caen entre QUEST_START (inclusive) y dateStr (exclusive).
-// QUEST_START se define en daily.js — solo se llama desde el browser.
+function getSpecialForDate(dateStr) {
+  const year = parseInt(dateStr.slice(0, 4), 10);
+  const mmdd = dateStr.slice(5);
+  return SPECIAL_EVENTS.find(e => {
+    if (!e.dateTo) return e.date === dateStr || e.date === mmdd;
+    // Rango: normalizar start y end al año de la consulta
+    if (e.date.length === 10) {
+      // Fecha exacta con rango
+      return dateStr >= e.date && dateStr <= e.dateTo;
+    }
+    // Rango anual (MM-DD a MM-DD), revisar año actual y anterior por si cruza año
+    for (const y of [year - 1, year]) {
+      const start = y + '-' + e.date;
+      const end = e.dateTo < e.date
+        ? (y + 1) + '-' + e.dateTo   // cruza año (ej. 12-28 → 01-02)
+        : y + '-' + e.dateTo;
+      if (dateStr >= start && dateStr <= end) return true;
+    }
+    return false;
+  }) || null;
+}
+
+// Cuántos días de especiales CON pool de juego caen entre QUEST_START (inclusive) y dateStr (exclusive).
+// Eventos visuales (sin gameIds/search/tag) no afectan la numeración de quests.
 function countSpecialsBefore(dateStr) {
   const start     = typeof QUEST_START !== 'undefined' ? QUEST_START : '2026-06-08';
   const startYear = parseInt(start.slice(0, 4), 10);
   const endYear   = parseInt(dateStr.slice(0, 4), 10);
   let count = 0;
   for (const e of SPECIAL_EVENTS) {
+    if (!hasGameData(e)) continue;
     if (e.date.length === 10) {
-      if (e.date >= start && e.date < dateStr) count++;
+      // Evento de año exacto: contar cada día del rango [date, dateTo] dentro de [start, dateStr)
+      const eEnd = e.dateTo || e.date;
+      for (let d = new Date(e.date + 'T12:00:00Z'); ; d.setUTCDate(d.getUTCDate() + 1)) {
+        const ds = d.toISOString().slice(0, 10);
+        if (ds >= dateStr || ds > eEnd) break;
+        if (ds >= start) count++;
+      }
     } else {
+      // Evento anual: iterar años posibles
       for (let y = startYear; y <= endYear; y++) {
-        const full = y + '-' + e.date;
-        if (full >= start && full < dateStr) count++;
+        const yStart = y + '-' + e.date;
+        const yEnd = e.dateTo
+          ? (e.dateTo < e.date ? (y + 1) + '-' + e.dateTo : y + '-' + e.dateTo)
+          : yStart;
+        for (let d = new Date(yStart + 'T12:00:00Z'); ; d.setUTCDate(d.getUTCDate() + 1)) {
+          const ds = d.toISOString().slice(0, 10);
+          if (ds >= dateStr || ds > yEnd) break;
+          if (ds >= start) count++;
+        }
       }
     }
   }
   return count;
 }
 
-if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore };
+if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore, hasGameData };

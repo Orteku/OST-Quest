@@ -30,7 +30,7 @@ function _applyDOM() {
   });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => {
     const v = _t[el.dataset.i18nAria];
-    if (typeof v === 'string') el.setAttribute('aria-label', v);
+    if (typeof v === 'string') { el.setAttribute('aria-label', v); el.title = v; }
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const v = _t[el.dataset.i18nPlaceholder];

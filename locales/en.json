@@ -58,7 +58,9 @@
   "tutorial_archive_h": "Quest Log",
   "tutorial_archive_b": "Replay all past quests.",
   "tutorial_stats_h": "Stats",
-  "tutorial_stats_b": "Your consecutive quest chain, accuracy, and perfect quests.",
+  "tutorial_stats_b": "Check your score and ranking position.",
+  "tutorial_ach_h": "Achievements",
+  "tutorial_ach_b": "Earn achievements and unlock avatars to customize your profile.",
   "msg_fail": [
     "Bad luck",
     "Next time",

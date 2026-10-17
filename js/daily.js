@@ -5,7 +5,8 @@
 const QUEST_START = '2026-06-08';
 
 function getQuestNumber(dateStr) {
-  if (getSpecialForDate(dateStr)) return null;
+  const _sp = getSpecialForDate(dateStr);
+  if (_sp && hasGameData(_sp)) return null;
   const start = new Date(QUEST_START + 'T12:00:00Z');
   const date  = new Date(dateStr  + 'T12:00:00Z');
   const total = Math.round((date - start) / 86400000) + 1;
