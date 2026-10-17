@@ -1,8 +1,9 @@
 import { verifyJwt } from '../lib/jwt.js';
 import { json } from '../lib/cors.js';
 import { issueToken } from './oauth.js';
+import { TAG_ACHIEVEMENT_IDS, checkServerAchievements } from '../lib/achievements.js';
 
-const CLIENT_UNLOCKABLE = ['easter_line', 'easter_wasted', 'easter_both'];
+const CLIENT_UNLOCKABLE = ['easter_line', 'easter_wasted', 'easter_both', 'share'];
 
 // Extrae y verifica el JWT del header Authorization
 export async function requireAuth(request, env) {
@@ -162,6 +163,12 @@ export async function handleUnlockAchievement(request, env, db) {
     return json({ ok: true, isNew }, 200, request);
   }
 
+  // Logros de tag: el cliente cuenta los aciertos con /scores/results y games.json
+  if (TAG_ACHIEVEMENT_IDS.has(achievementId)) {
+    const isNew = await db.unlockAchievement(payload.sub, achievementId);
+    return json({ ok: true, isNew }, 200, request);
+  }
+
   if (!CLIENT_UNLOCKABLE.includes(achievementId)) {
     return json({ error: 'not_allowed' }, 403, request);
   }
@@ -217,6 +224,9 @@ export async function handleBackfillAchievements(request, env, db) {
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     if (created <= oneYearAgo) await tryGrant('anniversary');
   }
+
+  // Quests perfectas y ranking semanal
+  for (const id of await checkServerAchievements(db, userId, have)) await tryGrant(id);
 
   return json({ granted }, 200, request);
 }

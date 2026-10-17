@@ -171,6 +171,35 @@ export function createDb(env) {
         .eq('user_id', userId).like('game_date', `%-${monthDay}`);
       return (res.count || 0) > 0;
     },
+    // Quests con 3/3 jugadas en su propio día (las del Quest Log no cuentan)
+    async getPerfectOnTimeCount(userId) {
+      const rows = await check(await supabase.from('scores')
+        .select('game_date, played_at').eq('user_id', userId).eq('score', 3));
+      return (rows || []).filter(r => this._isOnTime(r.game_date, r.played_at)).length;
+    },
+    // Puesto final del usuario en cada semana cerrada desde `fromWeek` (vista ranking_weekly_history, empates con RANK)
+    async getClosedWeekRanks(userId, fromWeek) {
+      const rows = await check(await supabase.from('ranking_weekly_history')
+        .select('rank').eq('user_id', userId).gte('week_start', fromWeek));
+      return (rows || []).map(r => Number(r.rank));
+    },
+    // Columnas acertadas ('101') de las quests jugadas en su propio día
+    async getOnTimeResults(userId) {
+      const rows = await check(await supabase.from('scores')
+        .select('game_date, played_at, results').eq('user_id', userId));
+      return (rows || [])
+        .filter(r => this._isOnTime(r.game_date, r.played_at))
+        .map(r => ({ game_date: r.game_date, results: r.results || null }));
+    },
+    async getScoresWithResults(userId) {
+      return check(await supabase.from('scores')
+        .select('game_date, score, results').eq('user_id', userId)) || [];
+    },
+    // Rellena results solo en filas que aún no lo tienen
+    async fillMissingResults(userId, gameDate, results) {
+      return check(await supabase.from('scores').update({ results })
+        .eq('user_id', userId).eq('game_date', gameDate).is('results', null));
+    },
     async getPlayedCount(userId) {
       const res = await supabase.from('scores')
         .select('*', { count: 'exact', head: true }).eq('user_id', userId);

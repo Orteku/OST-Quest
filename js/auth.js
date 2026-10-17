@@ -513,14 +513,58 @@ async function authUpdateStatsDisplay() {
 
 // ─── Score sync ───────────────────────────────────────────────────────────────
 
-async function submitScoreToSupabase(dateStr, score, stats) {
+async function submitScoreToSupabase(dateStr, score, stats, results) {
   if (!_token) return;
-  _pendingScoreSubmit = _apiFetch('/scores', 'POST', { gameDate: dateStr, score, stats });
+  _pendingScoreSubmit = _apiFetch('/scores', 'POST', { gameDate: dateStr, score, stats, results });
   const res = await _pendingScoreSubmit;
   _pendingScoreSubmit = null;
 
   if (res?.newAchievements?.length) {
     for (const id of res.newAchievements) _showAchievementToast(id);
+  }
+  checkTagAchievements();
+}
+
+// Logros de tag: cuenta los aciertos por tag de las quests jugadas en su día
+// (columnas acertadas guardadas en el servidor + composición de cada quest en games.json)
+async function checkTagAchievements() {
+  if (!_token || typeof TAG_ACHIEVEMENT_TAGS === 'undefined'
+      || typeof loadGamesJson !== 'function' || typeof GAME_DB === 'undefined') return;
+
+  const history = await _apiFetch('/scores/results');
+  const games   = Array.isArray(history) ? await loadGamesJson() : null;
+  if (!games) return;
+
+  // Partidas anteriores a que se guardaran las columnas: completar con el progreso de este navegador
+  const toFill = {};
+  for (const row of history) {
+    if (row.results) continue;
+    const prog = typeof loadDayProgress === 'function' ? loadDayProgress(row.game_date) : null;
+    if (!Array.isArray(prog) || prog.length !== 3) continue;
+    row.results = prog.map(s => s?.correct ? '1' : '0').join('');
+    toFill[row.game_date] = row.results;
+  }
+  if (Object.keys(toFill).length) _apiFetch('/scores/results', 'POST', { results: toFill });
+
+  const counts = { game: {}, track: {} };
+  for (const { game_date, results } of history) {
+    if (!results || !games[game_date]) continue;
+    const groups = reconstructFromIds(games[game_date]);
+    groups.forEach((g, i) => {
+      if (results[i] !== '1') return;
+      for (const tag of g.answer.tags || []) counts.game[tag] = (counts.game[tag] || 0) + 1;
+      for (const tag of g.answer.tracks[g.trackIndex]?.tags || []) counts.track[tag] = (counts.track[tag] || 0) + 1;
+    });
+  }
+
+  const have = new Set((await authGetAchievements()).map(a => a.achievement_id));
+  for (const kind of ['game', 'track']) {
+    for (const tag of Object.keys(TAG_ACHIEVEMENT_TAGS[kind])) {
+      for (const n of TAG_ACHIEVEMENT_LEVELS) {
+        const id = `${kind === 'game' ? 'tag' : 'track'}_${tag}_${n}`;
+        if ((counts[kind][tag] || 0) >= n && !have.has(id)) await authUnlockAchievement(id);
+      }
+    }
   }
 }
 
@@ -728,7 +772,7 @@ async function initProfilePage() {
 
   const achievementsEl = document.getElementById('achievements-grid');
   if (achievementsEl && typeof ACHIEVEMENTS_DB !== 'undefined') {
-    achievementsEl.innerHTML = _renderAchievementsHTML(unlocked);
+    achievementsEl.innerHTML = _renderAchievementsHTML(unlocked, await getAvailableAchievements());
     _bindAchievementEvents();
   }
 }
@@ -913,9 +957,10 @@ async function _backfillAchievements() {
     const playedDays = loadPlayedDays();
     const existing   = granted.length ? await authGetAchievements() : (data?.granted ? [] : await authGetAchievements());
     const haveIds    = new Set(existing.map(a => a.achievement_id));
-    for (const sp of SPECIAL_EVENTS) {
+    for (const sp of SPECIAL_EVENTS.filter(hasGameData)) {
       const achId = 'special_' + sp.date;
       if (haveIds.has(achId)) continue;
+      if (typeof getAchievement === 'function' && !await achievementHasImage(getAchievement(achId))) continue;
       const played = Object.keys(playedDays).some(d => d === sp.date || d.endsWith('-' + sp.date));
       if (!played) continue;
       const res = await _apiFetch('/auth/achievements/unlock', 'POST', { achievementId: achId });
@@ -923,13 +968,15 @@ async function _backfillAchievements() {
     }
   }
 
+  await checkTagAchievements();
+
   if (granted.length) {
     for (const id of granted) _showAchievementToast(id);
     const achievementsEl = document.getElementById('achievements-grid');
     if (achievementsEl && typeof ACHIEVEMENTS_DB !== 'undefined') {
       const unlocked = await authGetAchievements();
       _cachedAchievements = unlocked;
-      achievementsEl.innerHTML = _renderAchievementsHTML(unlocked);
+      achievementsEl.innerHTML = _renderAchievementsHTML(unlocked, await getAvailableAchievements());
       _bindAchievementEvents();
     }
   }
@@ -937,13 +984,15 @@ async function _backfillAchievements() {
 
 async function authUnlockAchievement(id) {
   if (!_token) return false;
+  if (typeof getAchievement === 'function' && !await achievementHasImage(getAchievement(id))) return false;
   const data = await _apiFetch('/auth/achievements/unlock', 'POST', { achievementId: id });
   if (data?.ok && data?.isNew) _showAchievementToast(id);
   return data?.ok === true;
 }
 
-function _showAchievementToast(achievementId) {
+async function _showAchievementToast(achievementId) {
   const a    = typeof getAchievement === 'function' ? getAchievement(achievementId) : null;
+  if (a && !await achievementHasImage(a)) return;  // provisional: se concede en silencio
   const lang = document.documentElement.lang || 'es';
   const name = a ? _esc(getAchievementLabel(a, lang).name) : _esc(achievementId);
   const img  = a ? `<img class="achievement-toast__img" src="img/achievements/${_esc(a.image)}" alt="">` : `<div class="achievement-toast__img-ph">🏆</div>`;
@@ -980,7 +1029,7 @@ async function authSetAvatar(filename) {
   return data?.ok === true;
 }
 
-function _renderAchievementsHTML(unlocked) {
+function _renderAchievementsHTML(unlocked, available) {
   if (typeof ACHIEVEMENTS_DB === 'undefined') return '';
   const unlockedIds = new Set(unlocked.map(a => a.achievement_id));
   const lang = document.documentElement.lang || 'es';
@@ -999,12 +1048,14 @@ function _renderAchievementsHTML(unlocked) {
     </div>`;
   }
 
-  const visible = ACHIEVEMENTS_DB.filter(a => !a.hidden);
-  const secrets = ACHIEVEMENTS_DB.filter(a => a.hidden);
+  const isSpecial = a => a.id.startsWith('special_');
+  const regular   = available.filter(a => !isSpecial(a) && !a.hidden);
+  const secrets   = available.filter(a => !isSpecial(a) && a.hidden);
+  const specials  = available.filter(isSpecial);
 
-  return visible.map(_card).join('')
-    + (secrets.length
-        ? `<div class="achievements-grid__sep"></div>${secrets.map(_card).join('')}`
+  return [...regular, ...secrets].map(_card).join('')
+    + (specials.length
+        ? `<div class="achievements-grid__sep"></div>${specials.map(_card).join('')}`
         : '');
 }
 

@@ -193,7 +193,7 @@ function loadDayProgress(dateStr) {
   } catch { return null; }
 }
 
-function recordDailyResult(dateStr, score, total) {
+function recordDailyResult(dateStr, score, total, results) {
   const played = loadPlayedDays();
   const today  = getGameDay();
 
@@ -212,7 +212,7 @@ function recordDailyResult(dateStr, score, total) {
     if (score === total) stats.perfectQuests = (stats.perfectQuests || 0) + 1;
     stats.lastPlayedDay = today;
     saveStats(stats);
-    if (typeof submitScoreToSupabase === 'function') submitScoreToSupabase(dateStr, score, stats);
+    if (typeof submitScoreToSupabase === 'function') submitScoreToSupabase(dateStr, score, stats, results);
   }
 
   savePlayedDay(dateStr, { score, total, ts: Date.now() });

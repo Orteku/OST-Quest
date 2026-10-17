@@ -710,6 +710,7 @@ function openEndModal(score) {
       const shareSpecial = questN === null ? getSpecialForDate(currentDateStr) : null;
       const shareLabel   = shareSpecial ? `⭐ ${shareSpecial.label}` : `Quest #${questN}`;
       const text = `🎮 ${shareLabel} ${d}/${m}/${y}\n${emojis} - ${pct}%\nhttps://oestiquest.com`;
+      if (typeof authUnlockAchievement === 'function') authUnlockAchievement('share');
       navigator.clipboard.writeText(text).then(() => {
         showToast(t('share_copied'));
       }).catch(() => {
@@ -966,12 +967,12 @@ function checkFinished() {
   }
 
   setTimeout(() => {
-    recordDailyResult(currentDateStr, score, 3);
+    recordDailyResult(currentDateStr, score, 3, colStates.map(s => s.correct ? '1' : '0').join(''));
     if (!isArchiveMode && currentDateStr !== '__gm__'
         && typeof authUnlockAchievement === 'function'
         && typeof SPECIAL_EVENTS !== 'undefined') {
-      const sp = SPECIAL_EVENTS.find(e =>
-        currentDateStr === e.date || currentDateStr.endsWith('-' + e.date)
+      const sp = SPECIAL_EVENTS.find(e => hasGameData(e) &&
+        (currentDateStr === e.date || currentDateStr.endsWith('-' + e.date))
       );
       if (sp) authUnlockAchievement('special_' + sp.date);
     }

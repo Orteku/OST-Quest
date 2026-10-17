@@ -84,3 +84,26 @@ FROM public.player_accounts pa
 JOIN public.scores s ON s.user_id = pa.id
 WHERE pa.username IS NOT NULL
 GROUP BY pa.username, pa.streak, pa.selected_avatar;
+
+-- ── Logros: columnas acertadas y ranking semanal histórico ──────────────────
+-- results: qué columnas se acertaron en la quest ('101' = 1ª y 3ª). Para los logros de tag.
+ALTER TABLE public.scores ADD COLUMN IF NOT EXISTS results TEXT;
+
+-- Puesto final de cada jugador en cada semana ya cerrada (lunes a domingo, igual que ranking_weekly).
+-- RANK() hace que los empates compartan puesto. Solo la usa el worker (service key).
+CREATE OR REPLACE VIEW public.ranking_weekly_history AS
+SELECT week_start, user_id, pts,
+       RANK() OVER (PARTITION BY week_start ORDER BY pts DESC) AS rank
+FROM (
+  SELECT date_trunc('week', s.game_date)::date AS week_start,
+         s.user_id,
+         SUM(s.total_points) AS pts
+  FROM public.scores s
+  JOIN public.player_accounts pa ON pa.id = s.user_id
+  WHERE pa.username IS NOT NULL
+  GROUP BY 1, 2
+) w
+WHERE week_start < date_trunc('week', CURRENT_DATE)::date;
+
+-- Contiene user_id: no exponerla a la API pública
+REVOKE ALL ON public.ranking_weekly_history FROM anon, authenticated;
