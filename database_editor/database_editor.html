@@ -512,7 +512,8 @@
     .special-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
     .special-card-header { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
     .special-color { width: 38px; height: 34px; padding: 2px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
-    .special-date { width: 160px; font-family: ui-monospace, monospace; font-size: 13px; }
+    .special-date { width: 130px; font-family: ui-monospace, monospace; font-size: 13px; }
+    .special-date-sep { color: var(--muted); }
     .special-name { width: 140px; }
     .special-label { flex: 1; min-width: 120px; }
     .special-card-body { display: flex; flex-direction: column; gap: 10px; }
@@ -2173,10 +2174,81 @@
     return JSON.stringify(obj, null, 2);
   }
 
+  let _specialsGithubSrc = null;
+  const SPECIALS_FUNCS_FALLBACK = `function hasGameData(e) {
+  return !!(e.gameIds?.length || e.search || e.tag);
+}
+
+function getSpecialForDate(dateStr) {
+  const year = parseInt(dateStr.slice(0, 4), 10);
+  const mmdd = dateStr.slice(5);
+  return SPECIAL_EVENTS.find(e => {
+    if (!e.dateTo) return e.date === dateStr || e.date === mmdd;
+    // Rango: normalizar start y end al año de la consulta
+    if (e.date.length === 10) {
+      // Fecha exacta con rango
+      return dateStr >= e.date && dateStr <= e.dateTo;
+    }
+    // Rango anual (MM-DD a MM-DD), revisar año actual y anterior por si cruza año
+    for (const y of [year - 1, year]) {
+      const start = y + '-' + e.date;
+      const end = e.dateTo < e.date
+        ? (y + 1) + '-' + e.dateTo   // cruza año (ej. 12-28 → 01-02)
+        : y + '-' + e.dateTo;
+      if (dateStr >= start && dateStr <= end) return true;
+    }
+    return false;
+  }) || null;
+}
+
+// Cuántos días de especiales CON pool de juego caen entre QUEST_START (inclusive) y dateStr (exclusive).
+// Eventos visuales (sin gameIds/search/tag) no afectan la numeración de quests.
+function countSpecialsBefore(dateStr) {
+  const start     = typeof QUEST_START !== 'undefined' ? QUEST_START : '2026-06-08';
+  const startYear = parseInt(start.slice(0, 4), 10);
+  const endYear   = parseInt(dateStr.slice(0, 4), 10);
+  let count = 0;
+  for (const e of SPECIAL_EVENTS) {
+    if (!hasGameData(e)) continue;
+    if (e.date.length === 10) {
+      // Evento de año exacto: contar cada día del rango [date, dateTo] dentro de [start, dateStr)
+      const eEnd = e.dateTo || e.date;
+      for (let d = new Date(e.date + 'T12:00:00Z'); ; d.setUTCDate(d.getUTCDate() + 1)) {
+        const ds = d.toISOString().slice(0, 10);
+        if (ds >= dateStr || ds > eEnd) break;
+        if (ds >= start) count++;
+      }
+    } else {
+      // Evento anual: iterar años posibles
+      for (let y = startYear; y <= endYear; y++) {
+        const yStart = y + '-' + e.date;
+        const yEnd = e.dateTo
+          ? (e.dateTo < e.date ? (y + 1) + '-' + e.dateTo : y + '-' + e.dateTo)
+          : yStart;
+        for (let d = new Date(yStart + 'T12:00:00Z'); ; d.setUTCDate(d.getUTCDate() + 1)) {
+          const ds = d.toISOString().slice(0, 10);
+          if (ds >= dateStr || ds > yEnd) break;
+          if (ds >= start) count++;
+        }
+      }
+    }
+  }
+  return count;
+}
+
+if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore, hasGameData };
+`;
+  function specialsFuncsTail() {
+    const src = _specialsGithubSrc ? normalizeEol(_specialsGithubSrc) : null;
+    const at = src ? src.indexOf('\n];', src.indexOf('const SPECIAL_EVENTS')) : -1;
+    return '\n' + (at >= 0 ? src.slice(at + 3) : SPECIALS_FUNCS_FALLBACK).trim() + '\n';
+  }
+
   function generateSpecialsJs() {
     const lines = _specials.map(ev => {
       const parts = [
         `    date:    ${JSON.stringify(ev.date)},`,
+        ...(ev.dateTo ? [`    dateTo:  ${JSON.stringify(ev.dateTo)},`] : []),
         `    label:   ${JSON.stringify(ev.label)},`,
         `    name:    ${JSON.stringify(ev.name)},`,
         `    color:   ${JSON.stringify(ev.color)},`,
@@ -2186,37 +2258,10 @@
       if (ev.search)                            parts.push(`    search:    ${JSON.stringify(ev.search)},`);
       return '  {\n' + parts.join('\n') + '\n  }';
     });
-    const funcs = [
-      '',
-      'function getSpecialForDate(dateStr) {',
-      '  const mmdd = dateStr.slice(5);',
-      "  return SPECIAL_EVENTS.find(e => e.date === dateStr || e.date === mmdd) || null;",
-      '}',
-      '',
-      '// Cuántos especiales caen entre QUEST_START (inclusive) y dateStr (exclusive).',
-      '// QUEST_START se define en daily.js — solo se llama desde el browser.',
-      'function countSpecialsBefore(dateStr) {',
-      "  const start     = typeof QUEST_START !== 'undefined' ? QUEST_START : '2026-06-08';",
-      '  const startYear = parseInt(start.slice(0, 4), 10);',
-      '  const endYear   = parseInt(dateStr.slice(0, 4), 10);',
-      '  let count = 0;',
-      '  for (const e of SPECIAL_EVENTS) {',
-      '    if (e.date.length === 10) {',
-      '      if (e.date >= start && e.date < dateStr) count++;',
-      '    } else {',
-      '      for (let y = startYear; y <= endYear; y++) {',
-      '        const full = y + \'-\' + e.date;',
-      '        if (full >= start && full < dateStr) count++;',
-      '      }',
-      '    }',
-      '  }',
-      '  return count;',
-      '}',
-      '',
-      "if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore };",
-    ].join('\n');
+    const funcs = specialsFuncsTail();
     return '// OST Quest — Eventos especiales\n'
       + "// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)\n"
+      + "// dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas\n"
       + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.\n\n"
       + 'const SPECIAL_EVENTS = [\n'
       + lines.join(',\n')
@@ -2254,6 +2299,7 @@
     if (!_specialsLoaded) return;
     const github = await getGithubRaw('js/specials.js');
     if (github === null) return;
+    _specialsGithubSrc = github;
     let hasDiff;
     try {
       // Comparación semántica: ejecutar el JS del repo y comparar datos, ignorando formato
@@ -2262,7 +2308,7 @@
         github.replace(/if\s*\(typeof\s+module[^\n]*/g, '') + '; return SPECIAL_EVENTS;'
       )();
       const canon = e => JSON.stringify({
-        date: e.date || '', label: e.label || '', name: e.name || '', color: e.color || '',
+        date: e.date || '', dateTo: e.dateTo || '', label: e.label || '', name: e.name || '', color: e.color || '',
         tag: e.tag || '', gameIds: (e.gameIds || []).map(Number), search: e.search || '',
       });
       const byDate = arr => [...arr].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -2410,6 +2456,7 @@
     return {
       id: row.id,
       date: row.date || '',
+      dateTo: row.date_to || '',
       label: row.label || '',
       name: row.name || '',
       color: row.color || '#888888',
@@ -2447,7 +2494,9 @@
     return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
       <div class="special-card-header">
         <input type="color" class="special-color" data-field="color" data-index="${i}" value="${escapeHtml(ev.color || '#888888')}" title="Color del evento" />
-        <input class="special-date" data-field="date" data-index="${i}" placeholder="YYYY-MM-DD o MM-DD" value="${escapeHtml(ev.date || '')}" title="Fecha exacta o anual (MM-DD)" />
+        <input class="special-date" data-field="date" data-index="${i}" placeholder="YYYY-MM-DD o MM-DD" value="${escapeHtml(ev.date || '')}" title="Fecha de inicio: exacta o anual (MM-DD)" />
+        <span class="special-date-sep">→</span>
+        <input class="special-date" data-field="dateTo" data-index="${i}" placeholder="Fin (opcional)" value="${escapeHtml(ev.dateTo || '')}" title="Fecha de fin opcional, mismo formato que la de inicio. Vacío = solo un día" />
         <input class="special-name" data-field="name" data-index="${i}" placeholder="Nombre corto" value="${escapeHtml(ev.name || '')}" />
         <input class="special-label" data-field="label" data-index="${i}" placeholder="Nombre completo" value="${escapeHtml(ev.label || '')}" />
         <button class="small danger" data-action="removeSpecial" data-index="${i}">✕</button>
@@ -2576,7 +2625,7 @@
         const { error } = await client.from('editor_specials').delete().in('id', toDelete);
         if (error) throw error;
       }
-      const toRow = ev => ({ date: ev.date, label: ev.label, name: ev.name, color: ev.color, tag: ev.tag || null, game_ids: ev.gameIds || [], search: ev.search || null });
+      const toRow = ev => ({ date: ev.date, date_to: ev.dateTo || null, label: ev.label, name: ev.name, color: ev.color, tag: ev.tag || null, game_ids: ev.gameIds || [], search: ev.search || null });
       const withId    = _specials.filter(e => e.id !== undefined).map(ev => ({ ...toRow(ev), id: ev.id }));
       const withoutId = _specials.filter(e => e.id === undefined).map(toRow);
       if (withId.length) {
