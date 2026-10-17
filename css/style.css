@@ -74,6 +74,7 @@ ul, li { list-style: none; }
 }
 
 #special-event-label {
+  display: none;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 15px;
   font-weight: 900;
@@ -1106,7 +1107,7 @@ body.theme--light .site-footer a:hover { color: #4a6c10; }
   }
 
   /* Special events: hide right banner, show left label stacked */
-  body.is-special .archive-banner--special { display: none; }
+  body.is-special .archive-banner--special { display: none !important; }
   body.is-special .site-tagline { display: none; }
   body.is-special #special-event-label {
     display: flex;
