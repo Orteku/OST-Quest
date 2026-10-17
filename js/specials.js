@@ -1,15 +1,21 @@
 // OST Quest — Eventos especiales
-// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (anual)
+// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
 // dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas
-// Pool (opcional): 'gameIds', 'tag' o 'search'. Sin pool → evento puramente visual (no altera quests).
-// Assets opcionales: img/specials/logo_{date sin guiones}.png y banner_{...}.png (ej. logo_1031.png, logo_20261211.png)
+// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.
 
 const SPECIAL_EVENTS = [
+  {
+    date:    "02-27",
+    label:   "Pokémon Day",
+    name:    "pokemon",
+    color:   "#888888",
+    search:    "pokémon",
+  },
   {
     date:    "05-04",
     label:   "Star Wars",
     name:    "Star Wars",
-    color:   "#888888",
+    color:   "#cacaca",
     search:    "Star Wars",
   },
   {
@@ -18,6 +24,13 @@ const SPECIAL_EVENTS = [
     name:    "Halloween",
     color:   "#E8720C",
     tag:       "horror",
+  },
+  {
+    date:    "12-20",
+    dateTo:  "12-26",
+    label:   "Navidad",
+    name:    "Navidad",
+    color:   "#1e823f",
   },
   {
     date:    "2026-09-12",
