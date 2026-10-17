@@ -98,7 +98,7 @@ ul, li { list-style: none; }
   white-space: nowrap;
 }
 body.theme--light .site-tagline { color: #9898a8; }
-body.is-special .site-tagline { font-size: 9px; }
+body.has-special-label .site-tagline { font-size: 9px; }
 
 .has-special-banner .site-header-wrap {
   position: relative;
@@ -236,6 +236,8 @@ body.is-special .site-tagline { font-size: 9px; }
   transition: background 0.15s, border-color 0.15s;
 }
 .today-btn:hover { background: #1c2614; border-color: #3a4828; }
+body:not(.is-archive) .header-countdown ~ .today-btn { display: none; }
+body.is-archive .header-countdown { display: none; }
 body.is-special .today-btn       { color: var(--special-color); border-color: var(--special-color); background: rgba(0,0,0,0.2); }
 body.is-special .today-btn:hover { background: rgba(0,0,0,0.32); }
 body.theme--light.is-special .today-btn       { color: var(--special-color); border-color: var(--special-color); background: rgba(0,0,0,0.05); }
@@ -1107,19 +1109,19 @@ body.theme--light .site-footer a:hover { color: #4a6c10; }
   }
 
   /* Special events: hide right banner, show left label stacked */
-  body.is-special .archive-banner--special { display: none !important; }
-  body.is-special .site-tagline { display: none; }
-  body.is-special #special-event-label {
+  body.has-special-label:not(.is-archive) .archive-banner--special { display: none !important; }
+  body.has-special-label .site-tagline { display: none; }
+  body.has-special-label #special-event-label {
     display: flex;
     flex-direction: column;
     gap: 1px;
   }
-  body.is-special #special-event-label .special-label__prefix {
+  body.has-special-label #special-event-label .special-label__prefix {
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 1.5px;
   }
-  body.is-special #special-event-label .special-label__name {
+  body.has-special-label #special-event-label .special-label__name {
     font-size: 20px;
     line-height: 1;
   }
@@ -1137,7 +1139,6 @@ body.theme--light .site-footer a:hover { color: #4a6c10; }
     border: none;
     order: -1;
   }
-  body.is-archive .header-countdown { display: none; }
 
   /* Archive banner: una sola línea en móvil */
   .archive-banner br { display: none; }

@@ -1020,6 +1020,78 @@ function updateScoreDisplay() {
   document.getElementById('score-miss').textContent = colStates.filter(s => s.solved && !s.correct).length;
 }
 
+// Logo y banner opcionales de img/specials/; con null restaura los por defecto
+let _specialAssetsToken = 0;
+function applySpecialAssets(sp) {
+  const token = ++_specialAssetsToken;
+  const logoEl = document.querySelector('.site-banner');
+  if (logoEl && !logoEl.dataset.defaultSrc) logoEl.dataset.defaultSrc = logoEl.getAttribute('src');
+  if (logoEl) logoEl.src = logoEl.dataset.defaultSrc;
+  document.body.classList.remove('has-special-banner');
+  document.documentElement.style.removeProperty('--special-banner-url');
+  if (!sp) return;
+
+  const d = sp.date.replace(/-/g, '');
+  const logo = new Image();
+  logo.onload = () => { if (token === _specialAssetsToken && logoEl) logoEl.src = logo.src; };
+  logo.src = `img/specials/logo_${d}.png`;
+  const banner = new Image();
+  banner.onload = () => {
+    if (token !== _specialAssetsToken) return;
+    document.documentElement.style.setProperty('--special-banner-url', `url('${banner.src}')`);
+    document.body.classList.add('has-special-banner');
+  };
+  banner.src = `img/specials/banner_${d}.png`;
+}
+
+// Aplica (o revierte con null) todo el tema de un especial. Lo usan el día real y el modo GM.
+let _themeSpecial = null;
+function applySpecialTheme(sp) {
+  if (sp !== _themeSpecial) applySpecialAssets(sp);
+  _themeSpecial = sp;
+
+  document.body.classList.toggle('is-special', !!sp);
+  if (sp) document.documentElement.style.setProperty('--special-color', sp.color);
+  else document.documentElement.style.removeProperty('--special-color');
+
+  // Texto "Especial", tagline y recuadro derecho solo en especiales con pool
+  const withPool = !!sp && hasGameData(sp);
+  document.body.classList.toggle('has-special-label', withPool);
+  const prefix = t('special_prefix');
+
+  const lbl = document.getElementById('special-event-label');
+  if (lbl) {
+    lbl.innerHTML = !withPool ? '' : t('special_order') === 'suffix'
+      ? `<span class="special-label__name">${sp.label}</span><span class="special-label__prefix">${prefix}</span>`
+      : `<span class="special-label__prefix">${prefix}</span><span class="special-label__name">${sp.label}</span>`;
+    lbl.hidden = !withPool;
+  }
+
+  const tgl = document.querySelector('.site-tagline');
+  if (tgl) {
+    if (withPool) tgl.innerHTML = t('tagline').trim().split(/\s+/).join('<br>');
+    else tgl.textContent = t('tagline');
+  }
+
+  // El recuadro se comparte con el Quest Log: en modo archivo no se toca
+  const banner = document.getElementById('archive-banner');
+  if (banner && !document.body.classList.contains('is-archive')) {
+    if (withPool) {
+      banner.innerHTML = `<span class="archive-banner__special-prefix">${prefix}</span><span class="archive-banner__special-name">${sp.label}</span>`;
+      banner.style.setProperty('--archive-banner-color', sp.color);
+      banner.classList.add('archive-banner--special');
+      banner.classList.remove('archive-banner--gm');
+      banner.style.display = 'block';
+    } else {
+      banner.innerHTML = '';
+      banner.style.display = 'none';
+      banner.classList.remove('archive-banner--special');
+      banner.style.removeProperty('--archive-banner-color');
+    }
+  }
+}
+document.addEventListener('langchange', () => { if (_themeSpecial) applySpecialTheme(_themeSpecial); });
+
 function startCountdownTicker() {
   const el = document.getElementById('header-countdown');
   if (!el) return;
@@ -1074,6 +1146,7 @@ function hideToast() {
 // ─── GM Mode ──────────────────────────────────────────────────────────────────
 
 function openGmPanel() {
+  applySpecialTheme(null);  // el selector se reconstruye en "sin especial"
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('game-area').style.display = 'none';
   const panel = document.getElementById('gm-panel');
@@ -1117,7 +1190,7 @@ function openGmPanel() {
 
   let _gmPool = [...GAME_DB];
 
-  const _availSpecials = SPECIAL_EVENTS.filter(hasGameData);
+  const _availSpecials = SPECIAL_EVENTS;
   const _specialOptHtml = _availSpecials.map(e => `<option value="${e.date}">${e.label}</option>`).join('');
 
   panel.innerHTML = `
@@ -1179,56 +1252,7 @@ function openGmPanel() {
     const _sel = _availSpecials.find(e => e.date === this.value) || null;
     _gmPool = _getGmPool(_sel);
     _rebuildGmSelects(_gmPool);
-
-    // Tema visual: is-special + color del evento
-    document.body.classList.toggle('is-special', !!_sel);
-    if (_sel) {
-      document.documentElement.style.setProperty('--special-color', _sel.color);
-    } else {
-      document.documentElement.style.removeProperty('--special-color');
-    }
-
-    // Label izquierdo (especial-event-label)
-    const _lbl = document.getElementById('special-event-label');
-    if (_lbl) {
-      if (_sel) {
-        const _sp = t('special_prefix');
-        _lbl.innerHTML = t('special_order') === 'suffix'
-          ? `<span class="special-label__name">${_sel.label}</span><span class="special-label__prefix">${_sp}</span>`
-          : `<span class="special-label__prefix">${_sp}</span><span class="special-label__name">${_sel.label}</span>`;
-        _lbl.hidden = false;
-      } else {
-        _lbl.hidden = true;
-        _lbl.innerHTML = '';
-      }
-    }
-
-    // Tagline: romper en líneas en desktop (CSS oculta en móvil vía is-special)
-    const _tgl = document.querySelector('.site-tagline');
-    if (_tgl) {
-      if (_sel) {
-        if (!_tgl.dataset.origText) _tgl.dataset.origText = _tgl.textContent;
-        _tgl.innerHTML = _tgl.dataset.origText.trim().split(/\s+/).join('<br>');
-      } else if (_tgl.dataset.origText) {
-        _tgl.textContent = _tgl.dataset.origText;
-      }
-    }
-
-    // Archive banner derecho (solo en desktop; CSS lo oculta en móvil vía is-special)
-    const _banner = document.getElementById('archive-banner');
-    if (_banner) {
-      if (_sel) {
-        _banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span><span class="archive-banner__special-name">${_sel.label}</span>`;
-        _banner.style.setProperty('--archive-banner-color', _sel.color);
-        _banner.classList.add('archive-banner--special');
-        _banner.classList.remove('archive-banner--gm');
-        _banner.style.display = 'block';
-      } else {
-        _banner.style.display = 'none';
-        _banner.classList.remove('archive-banner--special');
-        _banner.style.removeProperty('--archive-banner-color');
-      }
-    }
+    applySpecialTheme(_sel);
   });
 
   function _gmStyle(el) {
@@ -1445,38 +1469,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Tema de evento especial (solo para el día de hoy, no en modo archivo)
   const _todaySpecial = getSpecialForDate(today);
-  if (_todaySpecial) {
-    document.documentElement.style.setProperty('--special-color', _todaySpecial.color);
-    document.body.classList.add('is-special');
-
-    // Assets opcionales: logo y banner de img/specials/
-    const _assetDate = _todaySpecial.date;
-    const _logoImg = new Image();
-    _logoImg.onload = () => { const b = document.querySelector('.site-banner'); if (b) b.src = _logoImg.src; };
-    _logoImg.src = `img/specials/logo_${_assetDate}.png`;
-    const _bannerImg = new Image();
-    _bannerImg.onload = () => {
-      document.documentElement.style.setProperty('--special-banner-url', `url('img/specials/banner_${_assetDate}.png')`);
-      document.body.classList.add('has-special-banner');
-    };
-    _bannerImg.src = `img/specials/banner_${_assetDate}.png`;
-
-    // Label y archive-banner solo para especiales con pool de juego
-    if (hasGameData(_todaySpecial)) {
-      const _lbl = document.getElementById('special-event-label');
-      if (_lbl) {
-        const _sp = t('special_prefix');
-        _lbl.innerHTML = t('special_order') === 'suffix'
-          ? `<span class="special-label__name">${_todaySpecial.label}</span><span class="special-label__prefix">${_sp}</span>`
-          : `<span class="special-label__prefix">${_sp}</span><span class="special-label__name">${_todaySpecial.label}</span>`;
-        _lbl.hidden = false;
-      }
-      const _tagline = document.querySelector('.site-tagline');
-      if (_tagline) {
-        _tagline.innerHTML = _tagline.textContent.trim().split(/\s+/).join('<br>');
-      }
-    }
-  }
+  if (_todaySpecial) applySpecialTheme(_todaySpecial);
 
   // Clic fuera del modal cierra siempre (incluyendo el modal final)
   document.getElementById('modal').addEventListener('click', e => {
@@ -1507,6 +1500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const banner = document.getElementById('archive-banner');
     if (banner) banner.style.display = 'none';
     document.body.classList.remove('is-archive');
+    applySpecialTheme(getSpecialForDate(today));
     initGame(today, false);
   });
 
@@ -1611,8 +1605,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         track:   document.getElementById(`gm-track-${gi}`)?.value   ?? '0',
         decoys:  [0, 1, 2].map(di => document.getElementById(`gm-decoy-${gi}-${di}`)?.value ?? '-1'),
       }));
+      const savedSpecial = document.getElementById('gm-special')?.value ?? '';
 
       openGmPanel();
+
+      const spEl = document.getElementById('gm-special');
+      if (spEl && savedSpecial) { spEl.value = savedSpecial; spEl.dispatchEvent(new Event('change')); }
 
       saved.forEach((s, gi) => {
         const ansEl = document.getElementById(`gm-answer-${gi}`);

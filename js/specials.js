@@ -2,7 +2,7 @@
 // date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (anual)
 // dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas
 // Pool (opcional): 'gameIds', 'tag' o 'search'. Sin pool → evento puramente visual (no altera quests).
-// Assets opcionales: img/specials/logo_{date}.png  img/specials/banner_{date}.png
+// Assets opcionales: img/specials/logo_{date sin guiones}.png y banner_{...}.png (ej. logo_1031.png, logo_20261211.png)
 
 const SPECIAL_EVENTS = [
   {
