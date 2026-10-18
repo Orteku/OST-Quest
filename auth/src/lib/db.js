@@ -171,10 +171,10 @@ export function createDb(env) {
         .eq('user_id', userId).like('game_date', `%-${monthDay}`);
       return (res.count || 0) > 0;
     },
-    // Quests con 3/3 jugadas en su propio día (las del Quest Log no cuentan)
-    async getPerfectOnTimeCount(userId) {
+    // Quests con 3/3 jugadas en su propio día desde `fromDate` (las del Quest Log no cuentan)
+    async getPerfectOnTimeCount(userId, fromDate) {
       const rows = await check(await supabase.from('scores')
-        .select('game_date, played_at').eq('user_id', userId).eq('score', 3));
+        .select('game_date, played_at').eq('user_id', userId).eq('score', 3).gte('game_date', fromDate));
       return (rows || []).filter(r => this._isOnTime(r.game_date, r.played_at)).length;
     },
     // Puesto final del usuario en cada semana cerrada desde `fromWeek` (vista ranking_weekly_history, empates con RANK)

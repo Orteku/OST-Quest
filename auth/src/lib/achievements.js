@@ -13,9 +13,10 @@ export const TAG_ACHIEVEMENT_IDS = new Set([
 
 const PERFECT_LEVELS = [1, 10, 30, 50];
 
-// Primer lunes que cuenta para los logros de ranking semanal. No son retroactivos:
-// las semanas anteriores se jugaron sin saber que había logro en juego.
-const WEEKLY_ACHIEVEMENTS_FROM = '2026-10-19';
+// Fechas desde las que cuentan estos logros. No son retroactivos:
+// lo anterior se jugó sin saber que había logro en juego.
+const PERFECT_ACHIEVEMENTS_FROM = '2026-10-19';  // primera quest que cuenta para los plenos
+const WEEKLY_ACHIEVEMENTS_FROM  = '2026-10-19';  // primer lunes que cuenta para el ranking semanal
 
 // Devuelve los IDs que el usuario cumple y aún no tiene. `have` = Set de IDs ya desbloqueados.
 // Cada bloque va protegido: si falta la vista o la columna en Supabase, no rompe el envío de la puntuación.
@@ -23,7 +24,7 @@ export async function checkServerAchievements(db, userId, have) {
   const earned = [];
 
   try {
-    const perfect = await db.getPerfectOnTimeCount(userId);
+    const perfect = await db.getPerfectOnTimeCount(userId, PERFECT_ACHIEVEMENTS_FROM);
     for (const n of PERFECT_LEVELS) if (perfect >= n) earned.push(`perfect_${n}`);
   } catch (e) { console.error('perfect achievements:', e.message); }
 

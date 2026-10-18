@@ -220,11 +220,13 @@ function _openDrop() {
 
   // Cargar logros recientes en segundo plano
   if (_token && typeof ACHIEVEMENTS_DB !== 'undefined') {
-    authGetAchievements().then(unlocked => {
+    authGetAchievements().then(async unlocked => {
       const el = document.getElementById('auth-drop-achievements');
       if (!el) return;
-      const lang   = document.documentElement.lang || 'es';
-      const recent = unlocked.slice(-5).reverse();
+      const lang    = document.documentElement.lang || 'es';
+      const visible = (await Promise.all(unlocked.map(u => achievementHasImage(getAchievement(u.achievement_id)))))
+        .reduce((acc, ok, i) => ok ? [...acc, unlocked[i]] : acc, []);
+      const recent  = visible.slice(-5).reverse();
       if (!recent.length) { el.textContent = '—'; return; }
       el.innerHTML = recent.map(u => {
         const a = getAchievement(u.achievement_id);
@@ -698,11 +700,11 @@ function _renderProfileCardHTML(unlocked = []) {
   const streak  = stats.streak || 0;
   const perfect = stats.perfectQuests || 0;
 
-  // Últimos 3 logros desbloqueados
+  // Últimos 3 logros desbloqueados (sin los provisionales)
   let recentHtml = '';
   if (unlocked.length && typeof ACHIEVEMENTS_DB !== 'undefined') {
     const lang   = document.documentElement.lang || 'es';
-    const recent = unlocked.slice(-3).reverse();
+    const recent = unlocked.filter(u => achievementImageReady(getAchievement(u.achievement_id))).slice(-3).reverse();
     recentHtml = `<div class="pcard__recent-achievements">${
       recent.map(u => {
         const a = getAchievement(u.achievement_id);
@@ -753,6 +755,7 @@ async function initProfilePage() {
   // Cargar logros primero para poder mostrarlo en la tarjeta también
   const unlocked = (typeof ACHIEVEMENTS_DB !== 'undefined') ? await authGetAchievements() : [];
   _cachedAchievements = unlocked;
+  if (typeof getAvailableAchievements === 'function') await getAvailableAchievements();  // para achievementImageReady
 
   if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(unlocked);
   if (settingsEl) {

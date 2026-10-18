@@ -9,7 +9,7 @@ const SPECIAL_EVENTS = [
     date:    "02-27",
     label:   "Pokémon Day",
     name:    "pokemon",
-    color:   "#888888",
+    color:   "#ffca02",
     search:    "pokémon",
   },
   {

@@ -40,8 +40,8 @@ const ACHIEVEMENTS_DB = [
     id:     'share',
     hidden: false,
     image:  'share.webp',
-    es: { name: 'Corre la voz', desc: 'Comparte tu resultado' },
-    en: { name: 'Spread the word', desc: 'Share your result' },
+    es: { name: 'For those who come after', desc: 'Corre la voz y comparte tu resultado, por los que vendrán después' },
+    en: { name: 'For those who come after', desc: 'Spread the word and share your result, for those who come after' },
   },
 
   // ─── Quests perfectas (las 3 canciones acertadas en la quest del día) ────────
@@ -49,29 +49,29 @@ const ACHIEVEMENTS_DB = [
     id:     'perfect_1',
     hidden: false,
     image:  'perfect_1.webp',
-    es: { name: 'Pleno', desc: 'Acierta las 3 canciones de una quest en su día' },
-    en: { name: 'Perfect', desc: 'Guess all 3 songs of a quest on its day' },
+    es: { name: 'Another epic victory!', desc: 'Consigue tu primer pleno de aciertos' },
+    en: { name: 'Another epic victory!', desc: 'Achieve your first perfect score' },
   },
   {
     id:     'perfect_10',
     hidden: false,
     image:  'perfect_10.webp',
-    es: { name: 'Pleno x10', desc: 'Acierta las 3 canciones de 10 quests en su día' },
-    en: { name: 'Perfect x10', desc: 'Guess all 3 songs of 10 quests on their day' },
+    es: { name: 'You\'re pretty good', desc: 'Consigue 10 plenos de aciertos' },
+    en: { name: 'You\'re pretty good', desc: 'Achieve 10 perfect scores' },
   },
   {
     id:     'perfect_30',
     hidden: false,
     image:  'perfect_30.webp',
-    es: { name: 'Pleno x30', desc: 'Acierta las 3 canciones de 30 quests en su día' },
-    en: { name: 'Perfect x30', desc: 'Guess all 3 songs of 30 quests on their day' },
+    es: { name: 'Praise the Sun!', desc: 'Consigue 30 plenos de aciertos' },
+    en: { name: 'Praise the Sun!', desc: 'Achieve 30 perfect scores' },
   },
   {
     id:     'perfect_50',
     hidden: false,
     image:  'perfect_50.webp',
-    es: { name: 'Pleno x50', desc: 'Acierta las 3 canciones de 50 quests en su día' },
-    en: { name: 'Perfect x50', desc: 'Guess all 3 songs of 50 quests on their day' },
+    es: { name: 'And I Have Never Known Defeat', desc: 'Consigue 50 plenos de aciertos' },
+    en: { name: 'And I Have Never Known Defeat', desc: 'Achieve 50 perfect scores' },
   },
 
   // ─── Ranking semanal (semanas ya cerradas; los empates comparten puesto) ─────
@@ -79,22 +79,22 @@ const ACHIEVEMENTS_DB = [
     id:     'week_top1',
     hidden: false,
     image:  'week_top1.webp',
-    es: { name: 'Campeón semanal', desc: 'Termina una semana en el primer puesto del ranking' },
-    en: { name: 'Weekly champion', desc: 'Finish a week in first place in the ranking' },
+    es: { name: 'Dominating!', desc: 'Termina una semana en el primer puesto del ranking' },
+    en: { name: 'Dominating!', desc: 'Finish a week in first place in the ranking' },
   },
   {
     id:     'week_top3',
     hidden: false,
     image:  'week_top3.webp',
-    es: { name: 'Podio', desc: 'Termina una semana entre los 3 primeros del ranking' },
-    en: { name: 'Podium', desc: 'Finish a week in the top 3 of the ranking' },
+    es: { name: 'Legendary!', desc: 'Termina una semana entre los 3 primeros del ranking' },
+    en: { name: 'Legendary!', desc: 'Finish a week in the top 3 of the ranking' },
   },
   {
     id:     'week_top3_x3',
     hidden: false,
     image:  'week_top3_x3.webp',
-    es: { name: 'Habitual del podio', desc: 'Termina 3 semanas entre los 3 primeros del ranking' },
-    en: { name: 'Podium regular', desc: 'Finish 3 weeks in the top 3 of the ranking' },
+    es: { name: 'Rampage!', desc: 'Termina 3 semanas entre los 3 primeros del ranking' },
+    en: { name: 'Rampage!', desc: 'Finish 3 weeks in the top 3 of the ranking' },
   },
 
   // ─── Easter eggs (ocultos hasta desbloquear) ─────────────────────────────────
@@ -183,14 +183,20 @@ for (const kind of ['game', 'track']) {
 
 // Un logro sin imagen en img/achievements/ es provisional: no se muestra ni se desbloquea desde el cliente
 const _achImageChecks = {};
+const _achImageOk     = {};
 function achievementHasImage(a) {
   if (!a?.image || typeof Image === 'undefined') return Promise.resolve(false);
   return _achImageChecks[a.id] ??= new Promise(resolve => {
     const img = new Image();
-    img.onload  = () => resolve(true);
-    img.onerror = () => resolve(false);
+    img.onload  = () => { _achImageOk[a.id] = true;  resolve(true); };
+    img.onerror = () => { _achImageOk[a.id] = false; resolve(false); };
     img.src = 'img/achievements/' + a.image;
   });
+}
+
+// Versión síncrona: true solo si ya se comprobó que tiene imagen (llamar antes a getAvailableAchievements)
+function achievementImageReady(a) {
+  return _achImageOk[a?.id] === true;
 }
 
 async function getAvailableAchievements() {

@@ -6,8 +6,9 @@ const _LANGS    = ['es', 'en'];
 const _FLAG_ES = `<svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg>`;
 const _FLAG_EN = `<svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#012169"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="white" stroke-width="4"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="#c8102e" stroke-width="2"/><rect x="8.5" y="0" width="3" height="14" fill="white"/><rect x="0" y="5.5" width="20" height="3" fill="white"/><rect x="9.25" y="0" width="1.5" height="14" fill="#c8102e"/><rect x="0" y="6.25" width="20" height="1.5" fill="#c8102e"/></svg>`;
 
-let _t    = {};
-let _lang = 'es';
+let _t     = {};
+let _games = {};  // traducciones de nombres de juegos (locales/games-{lang}.json, opcional)
+let _lang  = 'es';
 
 function t(key) {
   return typeof _t[key] === 'string' ? _t[key] : key;
@@ -51,10 +52,14 @@ function _applyDOM() {
 async function setLang(lang) {
   if (!_LANGS.includes(lang)) return;
   try {
-    const res = await fetch(`locales/${lang}.json`);
+    const [res, gamesRes] = await Promise.all([
+      fetch(`locales/${lang}.json`),
+      fetch(`locales/games-${lang}.json`).catch(() => null),
+    ]);
     if (!res.ok) throw new Error();
-    _t    = await res.json();
-    _lang = lang;
+    _t     = await res.json();
+    _games = gamesRes?.ok ? await gamesRes.json().catch(() => ({})) : {};
+    _lang  = lang;
     localStorage.setItem(_I18N_KEY, lang);
     _applyDOM();
   } catch {
@@ -63,7 +68,7 @@ async function setLang(lang) {
 }
 
 function localizeGame(game) {
-  const override = _t.games?.[game.id];
+  const override = _games[game.id];
   return override ? { ...game, ...override } : game;
 }
 
