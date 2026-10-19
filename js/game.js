@@ -1449,7 +1449,7 @@ function _showAchievementAnnouncement() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await initI18n();
-  authInit();
+  const _authReady = authInit();
   _showAchievementAnnouncement();
 
   const langDropdown = document.getElementById('lang-dropdown');
@@ -1545,6 +1545,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       document.body.classList.add('is-archive');
     } else {
+      // Esperar a que la sesión recupere lo jugado en otro navegador (sin bloquear si la red tarda)
+      await Promise.race([_authReady.catch(() => {}), new Promise(r => setTimeout(r, 3000))]);
       await initGame(today, false);
       if (_open === 'archive') openArchive();
       else if (_open === 'stats') openStatsModal();

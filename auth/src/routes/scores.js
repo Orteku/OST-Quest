@@ -27,6 +27,11 @@ export async function handleSubmitScore(request, env, db) {
   const { gameDate, score, stats } = body;
   if (!gameDate || score === undefined) return json({ error: 'missing_fields' }, 400, request);
 
+  // Cada quest se puntúa una sola vez: si ya hay resultado (otro dispositivo, almacenamiento borrado…), se conserva
+  if (await db.hasScoreForDate(payload.sub, gameDate)) {
+    return json({ ok: true, duplicate: true, newAchievements: [] }, 200, request);
+  }
+
   const pts = score === 3 ? 100 : score === 2 ? 66 : score === 1 ? 33 : 0;
   // Columnas acertadas, para los logros de tag. Solo se acepta si cuadra con la puntuación.
   const results = RESULTS_RE.test(body.results || '') && [...body.results].filter(c => c === '1').length === score
@@ -126,6 +131,13 @@ export async function handleMigrateScores(request, env, db) {
   }
 
   return json({ ok: true, migrated: rows.length }, 200, request);
+}
+
+// GET /scores/history — todas las partidas del usuario, para restaurar el estado en un navegador nuevo
+export async function handleGetHistory(request, env, db) {
+  const [payload, err] = await requireAuth(request, env);
+  if (err) return err;
+  return json(await db.getScoreHistory(payload.sub), 200, request);
 }
 
 // GET /scores/results — columnas acertadas de las quests jugadas en su día (logros de tag)

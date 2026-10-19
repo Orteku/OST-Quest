@@ -9,6 +9,7 @@ const _USER_KEY = 'ostquest_user';
 let _token              = null;   // JWT string
 let _profile            = null;   // { id, username, email, provider }
 let _cachedAchievements = [];     // último fetch de logros del usuario
+let _serverStats        = null;   // estadísticas de /scores/stats para la tarjeta del perfil
 
 // ─── API helper ───────────────────────────────────────────────────────────────
 
@@ -83,6 +84,7 @@ async function authInit() {
       _profile = data;
       localStorage.setItem(_USER_KEY, JSON.stringify(data));
       if (!data.username) { openUsernameModal(); return; }
+      await _restoreFromServer();
       _migrateIfNeeded();
       _backfillAchievements();
     } else if (!data.__networkError) {
@@ -94,6 +96,42 @@ async function authInit() {
   _renderAuthBtn();
   document.addEventListener('langchange', _renderAuthBtn);
   if (window.PROFILE_PAGE) initProfilePage();
+}
+
+// Recupera del servidor lo ya jugado. Sin esto, un navegador nuevo (otro móvil, navegador integrado
+// de una app, almacenamiento borrado…) mostraría el historial vacío y dejaría repetir la quest del día.
+// Devuelve true si ha reconstruido la quest de hoy.
+async function _restoreFromServer() {
+  if (!_token || typeof loadPlayedDays !== 'function') return false;
+  const history = await _apiFetch('/scores/history');
+  if (!Array.isArray(history) || !history.length) return false;
+
+  const played = loadPlayedDays();
+  let changed = false;
+  for (const row of history) {
+    if (played[row.game_date]) continue;
+    played[row.game_date] = { score: row.score, total: 3, ts: row.played_at ? Date.parse(row.played_at) : null };
+    changed = true;
+  }
+  if (changed) localStorage.setItem(PLAYED_KEY, JSON.stringify(played));
+
+  const today    = getGameDay();
+  const todayRow = history.find(r => r.game_date === today);
+  if (!todayRow?.results || loadDayProgress(today)) return false;
+
+  const games  = await loadGamesJson();
+  const groups = games?.[today] ? reconstructFromIds(games[today]) : [];
+  if (groups.length !== 3) return false;
+  // Solo se sabe qué columnas se acertaron, no qué portada se eligió en las falladas
+  saveDayProgress(today, groups.map((g, i) => {
+    const correct = todayRow.results[i] === '1';
+    return {
+      locked: false, solved: true, correct,
+      pickedId:  correct ? g.answer.id : null,
+      pickedPos: correct ? g.covers.findIndex(c => c.id === g.answer.id) : null,
+    };
+  }));
+  return true;
 }
 
 // Procesa un token nuevo (tras login, registro o OAuth)
@@ -112,6 +150,11 @@ async function _handleNewToken(token) {
   if (!data.username) { openUsernameModal(); return; }
   _renderAuthBtn();
   closeAuthModal();
+  // Si la quest de hoy ya se jugó en otro sitio, mostrarla terminada en vez de dejar repetirla
+  if (await _restoreFromServer() && typeof initGame === 'function'
+      && currentDateStr === getGameDay() && !isArchiveMode) {
+    initGame(currentDateStr, false);
+  }
   _migrateIfNeeded();
   _backfillAchievements();
   if (window.PROFILE_PAGE) initProfilePage();
@@ -692,13 +735,14 @@ function _renderProfileHTML(forPage = false) {
 
 function _renderProfileCardHTML(unlocked = []) {
   const p       = _profile || {};
-  const stats   = _loadLocalStats();
   const initial = (p.username || '?')[0].toUpperCase();
-  const played  = stats.played || 0;
-  const wins    = stats.wins   || 0;
-  const accuracy = played > 0 ? Math.round((wins / (played * 3)) * 100) : 0;
-  const streak  = stats.streak || 0;
-  const perfect = stats.perfectQuests || 0;
+  // Del servidor si está disponible: las del navegador solo conocen lo jugado en este dispositivo
+  const s        = _serverStats;
+  const local    = _loadLocalStats();
+  const played   = s ? s.played        : (local.played || 0);
+  const accuracy = s ? s.accuracy      : (played > 0 ? Math.round(((local.totalHits || 0) / (played * 3)) * 100) : 0);
+  const streak   = s ? s.streak        : (local.streak || 0);
+  const perfect  = s ? s.perfectQuests : (local.perfectQuests || 0);
 
   // Últimos 3 logros desbloqueados (sin los provisionales)
   let recentHtml = '';
@@ -756,6 +800,8 @@ async function initProfilePage() {
   const unlocked = (typeof ACHIEVEMENTS_DB !== 'undefined') ? await authGetAchievements() : [];
   _cachedAchievements = unlocked;
   if (typeof getAvailableAchievements === 'function') await getAvailableAchievements();  // para achievementImageReady
+  const stats = await _apiFetch('/scores/stats');
+  if (stats && !stats.error && !stats.__networkError) _serverStats = stats;
 
   if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(unlocked);
   if (settingsEl) {

@@ -61,8 +61,13 @@ export function createDb(env) {
     async upsertScore(data) {
       return check(await supabase.from('scores').upsert(data, { onConflict: 'user_id,game_date' }));
     },
+    // Migración: nunca pisa resultados que ya estén en el servidor
     async upsertScores(rows) {
-      return check(await supabase.from('scores').upsert(rows, { onConflict: 'user_id,game_date' }));
+      return check(await supabase.from('scores').upsert(rows, { onConflict: 'user_id,game_date', ignoreDuplicates: true }));
+    },
+    async getScoreHistory(userId) {
+      return check(await supabase.from('scores')
+        .select('game_date, score, results, played_at').eq('user_id', userId)) || [];
     },
     async getUserScores(userId) {
       return check(await supabase.from('scores').select('game_date').eq('user_id', userId));
