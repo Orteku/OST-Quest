@@ -28,6 +28,10 @@ async function _apiFetch(path, method = 'GET', body = null, overrideToken = null
   } catch { return { __networkError: true }; }
 }
 
+// El perfil se pide en cuanto carga el script, en paralelo con las traducciones; authInit reutiliza la respuesta
+const _savedJwt   = localStorage.getItem(_JWT_KEY);
+const _mePrefetch = _savedJwt ? _apiFetch('/auth/me', 'GET', null, _savedJwt) : null;
+
 // ─── Persistencia de sesión ───────────────────────────────────────────────────
 
 function _saveSession(token, user) {
@@ -74,7 +78,7 @@ async function authInit() {
 
   if (_token) {
     // Verificar que el token sigue siendo válido
-    const data = await _apiFetch('/auth/me');
+    const data = (_mePrefetch && _token === _savedJwt) ? await _mePrefetch : await _apiFetch('/auth/me');
     if (data?.pending) {
       // Token pendiente restaurado — usuario OAuth sin username
       _renderAuthBtn();
@@ -758,7 +762,7 @@ function _renderProfileCardHTML(unlocked = []) {
   let recentHtml = '';
   if (unlocked.length && typeof ACHIEVEMENTS_DB !== 'undefined') {
     const lang   = document.documentElement.lang || 'es';
-    const recent = unlocked.filter(u => achievementImageReady(getAchievement(u.achievement_id))).slice(-3).reverse();
+    const recent = unlocked.filter(u => !achievementImageMissing(getAchievement(u.achievement_id))).slice(-3).reverse();
     recentHtml = `<div class="pcard__recent-achievements">${
       recent.map(u => {
         const a = getAchievement(u.achievement_id);
@@ -803,18 +807,21 @@ async function initProfilePage() {
     return;
   }
 
-  // En paralelo: cada petición sumaba su tiempo cuando iban en fila
+  // El perfil ya lo acaba de pedir authInit / _handleNewToken. El resto, en paralelo.
   const hasAch = typeof ACHIEVEMENTS_DB !== 'undefined';
-  const [data, unlocked, stats] = await Promise.all([
-    _apiFetch('/auth/me'),
+  const [unlocked, stats] = await Promise.all([
     hasAch ? authGetAchievements() : [],
     _apiFetch('/scores/stats'),
   ]);
-  if (data?.id) { _profile = data; localStorage.setItem(_USER_KEY, JSON.stringify(data)); }
   _cachedAchievements = unlocked;
   if (stats && !stats.error && !stats.__networkError) _serverStats = stats;
-  // La tarjeta solo muestra logros conseguidos: basta con comprobar sus imágenes (achievementImageReady)
-  if (hasAch) await Promise.all(unlocked.map(u => achievementHasImage(getAchievement(u.achievement_id))));
+
+  // La tarjeta se pinta sin esperar a comprobar las imágenes; si algún logro resulta provisional, se repinta
+  if (hasAch) {
+    Promise.all(unlocked.map(u => achievementHasImage(getAchievement(u.achievement_id)))).then(oks => {
+      if (oks.includes(false) && cardEl) cardEl.innerHTML = _renderProfileCardHTML(_cachedAchievements);
+    });
+  }
 
   if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(unlocked);
   if (settingsEl) {

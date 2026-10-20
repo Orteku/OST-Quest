@@ -194,9 +194,9 @@ function achievementHasImage(a) {
   });
 }
 
-// Versión síncrona: true solo si ya se comprobó que tiene imagen (llamar antes a getAvailableAchievements)
-function achievementImageReady(a) {
-  return _achImageOk[a?.id] === true;
+// Versión síncrona: true solo si ya se comprobó que NO tiene imagen (lo no comprobado aún cuenta como válido)
+function achievementImageMissing(a) {
+  return _achImageOk[a?.id] === false;
 }
 
 async function getAvailableAchievements() {
