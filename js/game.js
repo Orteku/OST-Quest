@@ -9,12 +9,10 @@ let playingCol     = -1;
 let loadingCol     = -1;
 let gameFinished   = false;
 let _loadingToastTimer = null;
-let _toastTimer        = null;
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function initGame(dateStr, archiveMode) {
-  if (window.SOUNDTRACKS_PAGE) return;
   currentDateStr = dateStr;
   isArchiveMode  = archiveMode;
   gameFinished   = false;
@@ -44,7 +42,6 @@ async function initGame(dateStr, archiveMode) {
 
   showLoadingScreen(false);
   renderAll();
-  startCountdownTicker();
 
   // Precachear el audio directo de las 3 columnas
   _prewarmAnswerAudio(0);
@@ -254,10 +251,6 @@ function togglePlay(gi) {
 
 // ─── Modals ───────────────────────────────────────────────────────────────────
 
-function openModal() {
-  document.getElementById('modal').classList.add('modal--open');
-}
-
 const MODAL_PREVIEW_SECS = 30;
 let _modalStopTimer    = null;
 let _modalFadeInterval = null;
@@ -273,11 +266,6 @@ function _cleanupModalPlayer() {
   _stopModalPreview();
   const audio = document.querySelector('.modal-player__audio');
   if (audio) { audio.pause(); audio.currentTime = 0; }
-}
-
-function closeModal() {
-  _cleanupModalPlayer();
-  document.getElementById('modal').classList.remove('modal--open');
 }
 
 function _initModalAudioPlayer(startSeconds = 0) {
@@ -753,34 +741,6 @@ function tickEndCountdown() {
   setTimeout(tickEndCountdown, 1000);
 }
 
-function openStatsModal() {
-  const stats = loadStats();
-  const pct   = stats.played > 0 ? Math.round(((stats.totalHits || 0) / (stats.played * 3)) * 100) : 0;
-
-  document.getElementById('modal-inner').innerHTML = `
-    <div class="modal__end">
-      <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1.2rem">${t('stats_title')}</h2>
-      <div class="modal__stats">
-        <div class="stat-box"><span class="stat-box__val" id="stat-val-played">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
-        <div class="stat-box"><span class="stat-box__val" id="stat-val-accuracy">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
-        <div class="stat-box"><span class="stat-box__val" id="stat-val-streak">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
-        <div class="stat-box"><span class="stat-box__val" id="stat-val-perfect">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
-      </div>
-      <div class="stats-rank-section">
-        <div id="stats-rank-info" class="stats-rank-info">
-          <p class="rank-empty">${t('ranking_loading')}</p>
-        </div>
-        <a href="ranking.html" class="stats-rank-link">${t('ranking_view_full')} →</a>
-      </div>
-      <button class="btn btn--new" id="close-stats-btn">${t('btn_close')}</button>
-    </div>`;
-
-  document.getElementById('close-stats-btn').addEventListener('click', closeModal);
-  _loadStatsRankInfo();
-  authUpdateStatsDisplay?.();
-  openModal();
-}
-
 async function _loadEndRankInfo() {
   const el = document.getElementById('end-rank-info');
   if (!el) return;
@@ -791,122 +751,33 @@ async function _loadEndRankInfo() {
     : `<p class="rank-empty">${t('ranking_no_score')}</p>`;
 }
 
-async function _loadStatsRankInfo() {
-  const el = document.getElementById('stats-rank-info');
-  if (!el) return;
-
-  if (!authGetSession() || !authGetProfile()) {
-    el.innerHTML = `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="stats-register-btn">${t('register_cta_link')}</button></p>`;
-    document.getElementById('stats-register-btn')?.addEventListener('click', () => {
-      closeModal();
-      openAuthModal('register');
-    });
-    return;
+// Abre una quest antigua (desde el Quest Log de header.js o con ?date=)
+function openArchiveDay(ds) {
+  stopAudio();
+  const [ay, am, ad] = ds.split('-');
+  const banner = document.getElementById('archive-banner');
+  if (banner) {
+    const _qn = getQuestNumber(ds);
+    const _sp = _qn === null ? getSpecialForDate(ds) : null;
+    if (_sp && ds >= getGameDay()) {
+      banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span><span class="archive-banner__special-name">${_sp.label}</span>`;
+      banner.style.setProperty('--archive-banner-color', _sp.color);
+      banner.classList.add('archive-banner--special');
+    } else {
+      const _label = _sp ? _sp.label : `Quest #${_qn}`;
+      banner.innerHTML = `${_label}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
+      if (_sp) { banner.style.setProperty('--archive-banner-color', _sp.color); banner.classList.add('archive-banner--special'); }
+      else { banner.style.removeProperty('--archive-banner-color'); banner.classList.remove('archive-banner--special'); }
+    }
+    banner.style.display = 'block';
   }
-
-  const pos = await getUserWeeklyPosition();
-  if (!pos) {
-    el.innerHTML = `<p class="rank-empty">${t('ranking_no_score')}</p>`;
-  } else {
-    el.innerHTML = `<p class="stats-rank-pos">#${pos.rank} <span class="stats-rank-pts">${pos.pts} ${t('ranking_pts')}</span></p>`;
-  }
+  document.body.classList.add('is-archive');
+  return initGame(ds, true);
 }
 
-function openArchive() {
-  const played = loadPlayedDays();
-  const today  = getGameDay();
-
-  // Generar todos los días desde el inicio hasta ayer
-  const days = [];
-  const cur  = new Date(QUEST_START + 'T12:00:00Z');
-  while (true) {
-    const ds = cur.toISOString().slice(0, 10);
-    if (ds >= today) break;
-    days.push(ds);
-    cur.setUTCDate(cur.getUTCDate() + 1);
-  }
-  days.reverse(); // más reciente primero
-
-  let prevMonth = null;
-  const rows = days.map(ds => {
-    const [y, m, d] = ds.split('-');
-
-    // Separador de mes cuando cambia
-    let monthHeader = '';
-    const monthKey = `${y}-${m}`;
-    if (monthKey !== prevMonth) {
-      prevMonth = monthKey;
-      const label = new Date(`${y}-${m}-01T12:00:00Z`)
-        .toLocaleString(document.documentElement.lang, { month: 'long', year: 'numeric' });
-      monthHeader = `<li class="archive__month-sep">${label.charAt(0).toUpperCase() + label.slice(1)}</li>`;
-    }
-
-    let result = played[ds];
-    let inProgress = false;
-    if (!result) {
-      const prog = loadDayProgress(ds);
-      if (prog && prog.every(s => s.solved)) {
-        const score = prog.filter(s => s.correct).length;
-        result = { score, total: 3 };
-        savePlayedDay(ds, { score, total: 3, ts: Date.now() });
-      } else if (prog && prog.some(s => s.solved)) {
-        inProgress = true;
-      }
-    }
-    const badge = result
-      ? `<span class="archive__badge archive__badge--${result.score === 3 ? 'ok' : result.score > 0 ? 'partial' : 'fail'}">${result.score === 3 ? '✓' : result.score + '/3'}</span>`
-      : inProgress
-        ? `<span class="archive__badge archive__badge--ongoing">${t('archive_in_progress')}</span>`
-        : '';
-    const isActive  = ds === currentDateStr && isArchiveMode;
-    const questNum  = getQuestNumber(ds);
-    const special   = questNum === null ? getSpecialForDate(ds) : null;
-    const questLabel = special
-      ? `<span class="archive__special-label">⭐ ${special.label}</span>`
-      : `Quest #${questNum}`;
-    const itemClass = ['archive__item', isActive ? 'archive__item--active' : '', special ? 'archive__item--special' : ''].filter(Boolean).join(' ');
-    return monthHeader + `<li class="${itemClass}" data-date="${ds}">
-      <span class="archive__left">${questLabel}${badge}</span>
-      <span class="archive__date">${d}-${m}-${y}</span>
-    </li>`;
-  }).join('');
-
-  document.getElementById('modal-inner').innerHTML = `
-    <div class="modal__end">
-      <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1rem">${t('archive_title')}</h2>
-      <ul class="archive__list">${rows}</ul>
-      <button class="btn btn--new" id="close-archive-btn">${t('btn_close')}</button>
-    </div>`;
-
-  document.getElementById('close-archive-btn').addEventListener('click', closeModal);
-  document.querySelectorAll('.archive__item').forEach(li => {
-    li.addEventListener('click', () => {
-      const ds = li.dataset.date;
-      if (window.SOUNDTRACKS_PAGE) { location.href = 'index.html?date=' + ds; return; }
-      closeModal();
-      stopAudio();
-      const [ay,am,ad] = ds.split('-');
-      const banner = document.getElementById('archive-banner');
-      if (banner) {
-        const _qn = getQuestNumber(ds);
-        const _sp = _qn === null ? getSpecialForDate(ds) : null;
-        if (_sp && ds >= getGameDay()) {
-          banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span><span class="archive-banner__special-name">${_sp.label}</span>`;
-          banner.style.setProperty('--archive-banner-color', _sp.color);
-          banner.classList.add('archive-banner--special');
-        } else {
-          const _label = _sp ? _sp.label : `Quest #${_qn}`;
-          banner.innerHTML = `${_label}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
-          if (_sp) { banner.style.setProperty('--archive-banner-color', _sp.color); banner.classList.add('archive-banner--special'); }
-          else { banner.style.removeProperty('--archive-banner-color'); banner.classList.remove('archive-banner--special'); }
-        }
-        banner.style.display = 'block';
-      }
-      document.body.classList.add('is-archive');
-      initGame(ds, true);
-    });
-  });
-  openModal();
+// Quest antigua abierta ahora mismo, para resaltarla en el Quest Log
+function getActiveArchiveDate() {
+  return isArchiveMode ? currentDateStr : null;
 }
 
 // ─── Game Logic ───────────────────────────────────────────────────────────────
@@ -1021,127 +892,11 @@ function updateScoreDisplay() {
   document.getElementById('score-miss').textContent = colStates.filter(s => s.solved && !s.correct).length;
 }
 
-// Imágenes opcionales de img/specials/: banner_ → header, logo_ → favicon. Con null restaura las normales.
-let _specialAssetsToken = 0;
-function applySpecialAssets(sp) {
-  const token = ++_specialAssetsToken;
-  const targets = [
-    { el: document.querySelector('.site-banner'),   attr: 'src',  prefix: 'banner_' },
-    { el: document.querySelector('link[rel="icon"]'), attr: 'href', prefix: 'logo_' },
-  ].filter(x => x.el);
-
-  for (const { el, attr } of targets) {
-    if (!el.dataset.defaultAsset) el.dataset.defaultAsset = el.getAttribute(attr);
-    el.setAttribute(attr, el.dataset.defaultAsset);
-  }
-  if (!sp) return;
-
-  const d = sp.date.replace(/-/g, '');
-  for (const { el, attr, prefix } of targets) {
-    const url = `img/specials/${prefix}${d}.png`;
-    const probe = new Image();
-    probe.onload = () => { if (token === _specialAssetsToken) el.setAttribute(attr, url); };
-    probe.src = url;
-  }
-}
-
-// Aplica (o revierte con null) todo el tema de un especial. Lo usan el día real y el modo GM.
-let _themeSpecial = null;
-function applySpecialTheme(sp) {
-  if (sp !== _themeSpecial) applySpecialAssets(sp);
-  _themeSpecial = sp;
-
-  document.body.classList.toggle('is-special', !!sp);
-  if (sp) document.documentElement.style.setProperty('--special-color', sp.color);
-  else document.documentElement.style.removeProperty('--special-color');
-
-  // Texto "Especial", tagline y recuadro derecho solo en especiales con pool
-  const withPool = !!sp && hasGameData(sp);
-  document.body.classList.toggle('has-special-label', withPool);
-  const prefix = t('special_prefix');
-
-  const lbl = document.getElementById('special-event-label');
-  if (lbl) {
-    lbl.innerHTML = !withPool ? '' : t('special_order') === 'suffix'
-      ? `<span class="special-label__name">${sp.label}</span><span class="special-label__prefix">${prefix}</span>`
-      : `<span class="special-label__prefix">${prefix}</span><span class="special-label__name">${sp.label}</span>`;
-    lbl.hidden = !withPool;
-  }
-
-  const tgl = document.querySelector('.site-tagline');
-  if (tgl) {
-    if (withPool) tgl.innerHTML = t('tagline').trim().split(/\s+/).join('<br>');
-    else tgl.textContent = t('tagline');
-  }
-
-  // El recuadro se comparte con el Quest Log: en modo archivo no se toca
-  const banner = document.getElementById('archive-banner');
-  if (banner && !document.body.classList.contains('is-archive')) {
-    if (withPool) {
-      banner.innerHTML = `<span class="archive-banner__special-prefix">${prefix}</span><span class="archive-banner__special-name">${sp.label}</span>`;
-      banner.style.setProperty('--archive-banner-color', sp.color);
-      banner.classList.add('archive-banner--special');
-      banner.classList.remove('archive-banner--gm');
-      banner.style.display = 'block';
-    } else {
-      banner.innerHTML = '';
-      banner.style.display = 'none';
-      banner.classList.remove('archive-banner--special');
-      banner.style.removeProperty('--archive-banner-color');
-    }
-  }
-}
-document.addEventListener('langchange', () => { if (_themeSpecial) applySpecialTheme(_themeSpecial); });
-
-function startCountdownTicker() {
-  const el = document.getElementById('header-countdown');
-  if (!el) return;
-
-  // Si mañana es un especial, cambiar el label y el color del timer
-  const _td = new Date(getGameDay() + 'T12:00:00Z');
-  _td.setUTCDate(_td.getUTCDate() + 1);
-  const _nextSpecial = getSpecialForDate(_td.toISOString().slice(0, 10));
-  if (_nextSpecial && hasGameData(_nextSpecial)) {
-    const _lbl = el.parentElement.querySelector('[data-i18n]');
-    if (_lbl) {
-      const _prefix = t('special_prefix');
-      _lbl.textContent = t('special_order') === 'suffix'
-        ? `${_nextSpecial.name} ${_prefix}`
-        : `${_prefix} ${_nextSpecial.name}`;
-    }
-    el.style.color = _nextSpecial.color;
-  }
-
-  (function tick() {
-    el.textContent = formatCountdown(timeUntilNextGame());
-    setTimeout(tick, 1000);
-  })();
-}
-
 // ─── UI helpers ───────────────────────────────────────────────────────────────
 
 function showLoadingScreen(show) {
   document.getElementById('loading-screen').style.display = show ? 'flex' : 'none';
   document.getElementById('game-area').style.display      = show ? 'none'  : 'block';
-}
-
-function showToast(msg, type, persistent) {
-  clearTimeout(_toastTimer);
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.toggle('toast--warn',  type === 'warn');
-  el.classList.toggle('toast--error', type === 'error');
-  el.classList.add('toast--show');
-  if (!persistent) {
-    _toastTimer = setTimeout(hideToast, 3500);
-  }
-}
-
-function hideToast() {
-  clearTimeout(_toastTimer);
-  _toastTimer = null;
-  const el = document.getElementById('toast');
-  el.classList.remove('toast--show', 'toast--warn', 'toast--error');
 }
 
 // ─── GM Mode ──────────────────────────────────────────────────────────────────
@@ -1377,7 +1132,6 @@ function openGmPanel() {
 }
 
 async function initGmGame(gmGroups) {
-  if (window.SOUNDTRACKS_PAGE) return;
   currentDateStr = '__gm__';
   isArchiveMode  = true;
   gameFinished   = false;
@@ -1417,7 +1171,6 @@ async function initGmGame(gmGroups) {
   document.body.classList.add('is-archive');
 
   renderAll();
-  startCountdownTicker();
   _prewarmAnswerAudio(0);
   _prewarmAnswerAudio(1);
   _prewarmAnswerAudio(2);
@@ -1425,66 +1178,28 @@ async function initGmGame(gmGroups) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-function _showAchievementAnnouncement() {
-  const KEY = 'ostquest_seen_ach_v1';
-  if (localStorage.getItem(KEY)) return;
-  setTimeout(() => {
-    const el = document.createElement('div');
-    el.className = 'news-banner';
-    el.innerHTML = `
-      <div class="news-banner__icon">🏆</div>
-      <div class="news-banner__body">
-        <div class="news-banner__title">${t('news_ach_title')}</div>
-        <div class="news-banner__text">${t('news_ach_body')}</div>
-      </div>
-      <button class="news-banner__close" id="news-banner-close">&times;</button>`;
-    document.body.appendChild(el);
-    document.getElementById('news-banner-close').addEventListener('click', () => {
-      el.classList.add('news-banner--out');
-      el.addEventListener('animationend', () => el.remove(), { once: true });
-      localStorage.setItem(KEY, '1');
-    });
-  }, 1800);
+// Enlaces que usa header.js en la página del juego
+function goToToday() {
+  const today = getGameDay();
+  stopAudio();
+  const banner = document.getElementById('archive-banner');
+  if (banner) banner.style.display = 'none';
+  document.body.classList.remove('is-archive');
+  applySpecialTheme(getSpecialForDate(today));
+  initGame(today, false);
+}
+
+function onModalBackdropClose() {
+  renderAll();
+  checkFinished();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await initI18n();
-  const _authReady = authInit();
-  _showAchievementAnnouncement();
-
-  const langDropdown = document.getElementById('lang-dropdown');
-  document.getElementById('lang-dropdown-btn').addEventListener('click', e => {
-    e.stopPropagation();
-    const open = langDropdown.classList.toggle('lang-dropdown--open');
-    e.currentTarget.setAttribute('aria-expanded', open);
-  });
-  document.querySelectorAll('.lang-dropdown__option').forEach(btn => {
-    btn.addEventListener('click', () => {
-      setLang(btn.dataset.lang);
-      langDropdown.classList.remove('lang-dropdown--open');
-    });
-  });
-  document.addEventListener('click', () => langDropdown.classList.remove('lang-dropdown--open'));
-
+  await siteI18nReady;
   const today = getGameDay();
 
-  // Tema de evento especial (solo para el día de hoy, no en modo archivo)
-  const _todaySpecial = getSpecialForDate(today);
-  if (_todaySpecial) applySpecialTheme(_todaySpecial);
-
-  // Clic fuera del modal cierra siempre (incluyendo el modal final)
-  document.getElementById('modal').addEventListener('click', e => {
-    if (e.target.id !== 'modal') return;
-    closeModal();
-    if (!window.SOUNDTRACKS_PAGE) { renderAll(); checkFinished(); }
-  });
-
-  document.getElementById('btn-stats').addEventListener('click', openStatsModal);
-  document.getElementById('btn-archive').addEventListener('click', openArchive);
-  document.getElementById('btn-help').addEventListener('click', () => {
-    if (window.SOUNDTRACKS_PAGE) { openTutorialModal(); return; }
-    toggleTutorialPanel();
-  });
+  // Ayuda: panel del tutorial bajo el header
+  document.getElementById('btn-help').addEventListener('click', toggleTutorialPanel);
   document.addEventListener('click', e => {
     const panel = document.getElementById('tutorial-panel');
     if (!panel?.classList.contains('is-open')) return;
@@ -1495,20 +1210,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.documentElement.style.setProperty('--tp-height', '0px');
     document.getElementById('btn-help')?.classList.remove('is-active');
   });
-  document.getElementById('btn-today').addEventListener('click', () => {
-    if (window.SOUNDTRACKS_PAGE) { location.href = 'index.html'; return; }
-    stopAudio();
-    const banner = document.getElementById('archive-banner');
-    if (banner) banner.style.display = 'none';
-    document.body.classList.remove('is-archive');
-    applySpecialTheme(getSpecialForDate(today));
-    initGame(today, false);
-  });
 
   const _params = new URLSearchParams(location.search);
-  if (window.SOUNDTRACKS_PAGE) {
-    startCountdownTicker();
-  } else if (_params.has('gm')) {
+  if (_params.has('gm')) {
     openGmPanel();
   } else {
     const _open = _params.get('open');
@@ -1525,38 +1229,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
     if (_date) {
-      await initGame(_date, true);
-      const [ay, am, ad] = _date.split('-');
-      const banner = document.getElementById('archive-banner');
-      if (banner) {
-        const _qn2 = getQuestNumber(_date);
-        const _sp2 = _qn2 === null ? getSpecialForDate(_date) : null;
-        if (_sp2 && _date >= getGameDay()) {
-          banner.innerHTML = `<span class="archive-banner__special-prefix">${t('special_prefix')}</span><span class="archive-banner__special-name">${_sp2.label}</span>`;
-          banner.style.setProperty('--archive-banner-color', _sp2.color);
-          banner.classList.add('archive-banner--special');
-        } else {
-          const _label2 = _sp2 ? _sp2.label : `Quest #${_qn2}`;
-          banner.innerHTML = `${_label2}<br><span class="archive-banner__date">${ad}/${am}/${ay}</span>`;
-          if (_sp2) { banner.style.setProperty('--archive-banner-color', _sp2.color); banner.classList.add('archive-banner--special'); }
-          else { banner.style.removeProperty('--archive-banner-color'); banner.classList.remove('archive-banner--special'); }
-        }
-        banner.style.display = 'block';
-      }
-      document.body.classList.add('is-archive');
+      await openArchiveDay(_date);
     } else {
       // Esperar a que la sesión recupere lo jugado en otro navegador (sin bloquear si la red tarda)
-      await Promise.race([_authReady.catch(() => {}), new Promise(r => setTimeout(r, 3000))]);
+      await Promise.race([siteAuthReady.catch(() => {}), new Promise(r => setTimeout(r, 3000))]);
       await initGame(today, false);
       if (_open === 'archive') openArchive();
       else if (_open === 'stats') openStatsModal();
     }
   }
 
-  // Volume control
+  // Volumen
   const volSlider  = document.getElementById('vol-slider');
   const volBtn     = document.getElementById('btn-vol');
-  const volControl = document.getElementById('vol-control');
   let prevVol = 80;
 
   const savedVol = parseInt(localStorage.getItem('ostquest_vol'));
@@ -1577,18 +1262,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateVolIcon(v);
   });
 
-  // Click button: toggle mute/unmute
+  // Clic en el altavoz: silenciar / reactivar
   if (volBtn) {
     volBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const current = parseInt(volSlider.value);
       if (current === 0) {
-        // Unmute
         volSlider.value = prevVol;
         setGameVolume(prevVol);
         updateVolIcon(prevVol);
       } else {
-        // Mute
         prevVol = current;
         volSlider.value = 0;
         setGameVolume(0);
@@ -1597,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Re-render dynamic content on language change
+  // Repintar contenido dinámico al cambiar de idioma
   document.addEventListener('langchange', () => {
     const gmPanel = document.getElementById('gm-panel');
     if (gmPanel && gmPanel.style.display !== 'none') {
@@ -1637,22 +1320,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (currentGroups.length && document.getElementById('game-area').style.display !== 'none') {
       renderAll();
     }
-  });
-
-  // Theme toggle
-  const btnTheme  = document.getElementById('btn-theme');
-  const _sunIcon  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
-  const _moonIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-
-  function _applyTheme(light) {
-    document.body.classList.toggle('theme--light', light);
-    btnTheme.innerHTML = light ? _moonIcon : _sunIcon;
-    btnTheme.setAttribute('aria-label', light ? 'Modo oscuro' : 'Modo claro');
-  }
-  _applyTheme(localStorage.getItem('ostquest_theme') === 'light');
-  btnTheme.addEventListener('click', () => {
-    const light = !document.body.classList.contains('theme--light');
-    localStorage.setItem('ostquest_theme', light ? 'light' : 'dark');
-    _applyTheme(light);
   });
 });

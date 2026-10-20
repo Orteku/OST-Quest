@@ -12,7 +12,9 @@ Hay tres columnas (rondas) por día. Publicado en GitHub Pages como sitio estát
 - **`js/database.js`** — `GAME_DB`: array con los 500+ juegos
 - **`js/algorithm.js`** — algoritmo de selección de grupos (compartido por browser y update.js)
 - **`js/daily.js`** — carga `games.json`, utilidades de fecha, persistencia localStorage
-- **`js/game.js`** — lógica del juego, modales, modo GM
+- **`js/header.js`** — header y controles comunes a todas las páginas (botones, Quest Log, estadísticas,
+  idioma, tema, tema de especiales, contador) y arranque de i18n y sesión (`siteI18nReady`, `siteAuthReady`)
+- **`js/game.js`** — lógica del juego, modales de partida, modo GM (solo en `index.html`)
 - **`js/player.js`** — reproductor de audio HTML5
 - **`js/assets.js`** — extrae portada y URL de audio de cada entrada
 - **`js/i18n.js`** — internacionalización (es/en)
@@ -22,8 +24,14 @@ Hay tres columnas (rondas) por día. Publicado en GitHub Pages como sitio estát
 - **`check-links.js`** — verifica que las URLs de audio de `database.js` siguen activas
 - **`GLOSARIO.md`** — terminología del proyecto (leer antes de nombrar elementos de la UI)
 
-Orden de carga de scripts en el browser:
-`database.js` → `i18n.js` → `daily.js` → `algorithm.js` → `assets.js` → `player.js` → `game.js`
+Orden de carga de scripts en el browser (página del juego):
+`database.js` → `i18n.js` → `specials.js` → `achievements.js` → `daily.js` → `algorithm.js` → `assets.js`
+→ `player.js` → `supabase.js` → `auth.js` → `header.js` → `game.js`
+
+Las demás páginas cargan lo común (`i18n`, `specials`, `achievements`, `daily`, `supabase`, `auth`, `header`)
+más su propio script si lo tienen (`ranking.js`, `soundtracks.js`). El header no se escribe en el HTML:
+cada página tiene `<div class="site-header-wrap" id="site-header">` y `<div id="site-controls">`, que
+rellena `header.js`. La página del juego lleva `<body data-page="game">` (contador, volumen, tutorial).
 
 ## Estructura de GAME_DB
 

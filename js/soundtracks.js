@@ -36,9 +36,10 @@ function renderSoundtracks() {
 }
 
 document.addEventListener('langchange', () => {
-  if (window.SOUNDTRACKS_PAGE) renderSoundtracks();
+  renderSoundtracks();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.SOUNDTRACKS_PAGE) { renderSoundtracks(); updatePlayBanner(); }
+  renderSoundtracks();
+  updatePlayBanner();
 });

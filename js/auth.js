@@ -115,6 +115,8 @@ async function _restoreFromServer() {
   }
   if (changed) localStorage.setItem(PLAYED_KEY, JSON.stringify(played));
 
+  // Reconstruir la quest de hoy necesita la base de juegos (solo está en las páginas que la cargan)
+  if (typeof GAME_DB === 'undefined') return false;
   const today    = getGameDay();
   const todayRow = history.find(r => r.game_date === today);
   if (!todayRow?.results || loadDayProgress(today)) return false;
