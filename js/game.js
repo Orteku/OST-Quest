@@ -82,11 +82,13 @@ function renderColumn(gi, wrapper) {
   const hdr = document.createElement('div');
   hdr.className = 'col__header' + (playingCol === gi ? ' col__header--playing' : '');
   const isLoading = loadingCol === gi;
+  // El triángulo de play va desplazado 2 a la derecha (7–21, no 5–19) para que se vea centrado:
+  // su peso visual está en el lado ancho y, centrado por su caja, parece desviado a la izquierda
   const playIcon = isLoading
     ? `<svg class="col__loading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10"/></svg>`
     : playingCol === gi
       ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-      : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
+      : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="7,3 21,12 7,21"/></svg>`;
   const hintText = isLoading
     ? t('audio_loading')
     : st.solved
@@ -411,7 +413,7 @@ function openTutorialModal() {
       <h2 class="modal__tutorial-title">${t('tutorial_title')}</h2>
       <ul class="tutorial-steps">
         <li>
-          <span class="tutorial-step__icon">▶</span>
+          <span class="tutorial-step__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="7,3 21,12 7,21"/></svg></span>
           <div><strong>${t('tutorial_listen_h')}</strong><p>${t('tutorial_listen_b')}</p></div>
         </li>
         <li>
@@ -470,7 +472,7 @@ function toggleTutorialPanel() {
 
 // ─── Media widget helpers ─────────────────────────────────────────────────────
 
-const _PLAY_SM    = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>`;
+const _PLAY_SM    = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="7,3 21,12 7,21"/></svg>`;
 const _PAUSE_SM   = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
 const _LOADING_SM = `<svg class="col__loading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M12 2a10 10 0 1 0 10 10"/></svg>`;
 

@@ -374,7 +374,8 @@ body.theme--light.is-special .today-btn:hover { background: rgba(0,0,0,0.1); }
 .play-btn:disabled { background: #2c2c34; color: #444; }
 body.is-special .play-btn       { background: var(--special-color); }
 body.is-special .play-btn:hover { background: var(--special-color); filter: brightness(1.18); }
-.play-btn svg      { width: 9px; height: 9px; }
+/* Tamaño par: con 9px el margen era de 6,5px y cada navegador redondeaba el medio píxel distinto */
+.play-btn svg      { width: 10px; height: 10px; }
 
 .col__track-hint {
   font-size: 11px;
@@ -2443,4 +2444,253 @@ body.theme--light .ach-sheet__avatar-btn { background: #4a6c10; color: #fff; }
   .pcard__username { font-size: 22px; }
   .pcard__stats { gap: 16px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Páginas secundarias (antes en un <style> dentro de cada HTML)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Comunes: título de página y botón verde ──────────────────────────────── */
+.ranking-page__title,
+.st-heading,
+.legal-page__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; letter-spacing: 2px;
+  text-transform: uppercase; color: #b8e030;
+}
+body.theme--light .ranking-page__title,
+body.theme--light .st-heading,
+body.theme--light .legal-page__title { color: #4a6c10; }
+
+.about-form__send,
+.st-play-banner__btn { background: #b8e030; color: #0e0e14; }
+.about-form__send:hover,
+.st-play-banner__btn:hover { background: #c8f040; }
+body.theme--light .about-form__send,
+body.theme--light .st-play-banner__btn { background: #4a6c10; color: #fff; }
+body.theme--light .about-form__send:hover,
+body.theme--light .st-play-banner__btn:hover { background: #3a5c00; }
+
+/* ─── Ranking (ranking.html) ───────────────────────────────────────────────── */
+.ranking-page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+.ranking-page__title { font-size: 22px; margin-bottom: 16px; }
+.ranking-page .rank-tabs { margin-bottom: 12px; }
+.ranking-page .rank-content { overflow: visible; }
+
+/* ─── Lista de canciones (soundtracks.html) ────────────────────────────────── */
+.st-intro { margin: 20px 0 24px; }
+.st-heading { font-size: 22px; margin-bottom: 6px; }
+.st-desc { font-size: 13px; color: #7a7a88; line-height: 1.5; }
+
+.st-list {
+  columns: 2;
+  column-gap: 24px;
+}
+.st-entry { break-inside: avoid; margin-bottom: 14px; }
+@media (max-width: 480px) { .st-list { columns: 1; } }
+
+.st-game {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px; font-weight: 700; letter-spacing: 0.3px;
+  color: #ddd9cf; margin-bottom: 3px; line-height: 1.2;
+}
+.st-year { font-weight: 400; color: #555960; margin-left: 5px; font-size: 13px; }
+.st-tracks { display: flex; flex-direction: column; gap: 1px; }
+.st-track {
+  font-size: 12px; color: #7a7a88;
+  line-height: 1.5; padding-left: 9px; text-indent: -9px;
+}
+.st-track::before { content: "· "; color: #3a3a44; }
+.st-track__title { color: #9898a8; }
+.st-track__artist { color: #555960; font-size: 11px; }
+.st-track__artist::before { content: " — "; }
+
+.st-play-banner {
+  background: #14141e;
+  border: 1px solid #2e2e3e;
+  border-radius: 10px;
+  padding: 18px 22px;
+  text-align: center;
+  margin-bottom: 22px;
+}
+.st-play-banner__text {
+  font-size: 32px; color: #ddd9cf; margin-bottom: 12px; line-height: 1.2;
+}
+.st-play-banner__btn {
+  display: inline-block;
+  font-weight: 700; font-size: 15px; padding: 8px 18px;
+  border-radius: 6px; text-decoration: none; letter-spacing: 0.3px;
+}
+
+body.theme--light .st-desc      { color: #9898a8; }
+body.theme--light .st-game      { color: #1e1d28; }
+body.theme--light .st-year      { color: #9898a8; }
+body.theme--light .st-track::before  { color: #c8c4bc; }
+body.theme--light .st-track__title   { color: #3a3a4a; }
+body.theme--light .st-track__artist  { color: #9898a8; }
+body.theme--light .st-play-banner        { background: #f4f4ec; border-color: #d0ccc4; }
+body.theme--light .st-play-banner__text  { color: #1e1d28; }
+
+/* ─── Sobre el proyecto (about.html) ───────────────────────────────────────── */
+.about-wrap {
+  max-width: 680px;
+  margin: 28px auto 0;
+}
+
+.about-section {
+  margin-bottom: 40px;
+}
+.about-section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 23px; font-weight: 700; letter-spacing: 2.5px;
+  text-transform: uppercase; color: #adadad;
+  margin-bottom: 14px;
+}
+
+.about-intro {
+  font-size: 14px; color: #9898a8; line-height: 1.7;
+}
+.about-intro strong { color: #b8e030; font-weight: 600; }
+
+/* Tarjetas de creadores */
+.about-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 520px) { .about-cards { grid-template-columns: 1fr; } }
+
+.about-card {
+  background: #14141e;
+  border: 1px solid #1e1e2e;
+  border-radius: 12px;
+  padding: 20px 18px;
+}
+.about-card__avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+}
+.about-card__name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 800; letter-spacing: 0.5px;
+  color: #ddd9cf; margin-bottom: 6px;
+}
+.about-card__role {
+  font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #555960;
+  margin-bottom: 10px;
+}
+.about-card__bio {
+  font-size: 13px; color: #7a7a88; line-height: 1.65;
+}
+
+/* Formulario de contacto */
+.about-contact-text {
+  font-size: 14px; color: #9898a8; line-height: 1.7;
+  margin-bottom: 18px;
+}
+.about-form {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.about-form__field {
+  display: flex; flex-direction: column; gap: 5px;
+}
+.about-form__label {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+  color: #7a7a88;
+}
+.about-form__input,
+.about-form__textarea {
+  background: #14141e;
+  border: 1px solid #2e2e3e;
+  border-radius: 8px;
+  color: #ddd9cf;
+  font-size: 14px;
+  font-family: inherit;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+  resize: none;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.about-form__input:focus,
+.about-form__textarea:focus { border-color: #b8e030; }
+.about-form__textarea { min-height: 120px; }
+
+.about-form__send {
+  align-self: flex-start;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
+  border: none; border-radius: 8px;
+  padding: 10px 22px; cursor: pointer;
+  transition: background 0.15s;
+}
+.about-form__note {
+  font-size: 12px; color: #555960; margin-top: 2px;
+}
+
+body.theme--light .about-section-title { color: #9898a8; }
+body.theme--light .about-intro         { color: #5a5a68; }
+body.theme--light .about-intro strong  { color: #4a6c10; }
+body.theme--light .about-card          { background: #f4f4ec; border-color: #d0ccc4; }
+body.theme--light .about-card__name    { color: #1e1d28; }
+body.theme--light .about-card__role    { color: #9898a8; }
+body.theme--light .about-card__bio     { color: #5a5a68; }
+body.theme--light .about-contact-text  { color: #5a5a68; }
+body.theme--light .about-form__label   { color: #9898a8; }
+body.theme--light .about-form__input,
+body.theme--light .about-form__textarea {
+  background: #fff; border-color: #d0ccc4; color: #1e1d28;
+}
+body.theme--light .about-form__note    { color: #9898a8; }
+
+/* ─── Páginas legales (privacy.html, terms.html) ───────────────────────────── */
+.legal-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  font-family: 'Barlow', sans-serif;
+}
+.legal-page__back {
+  display: inline-block;
+  font-size: 13px;
+  color: #7878a8;
+  text-decoration: none;
+  margin-bottom: 24px;
+}
+.legal-page__back:hover { color: #b8e030; }
+.legal-page__title { font-size: 26px; margin-bottom: 4px; }
+.legal-page__updated {
+  font-size: 12px;
+  color: #55555f;
+  margin-bottom: 32px;
+}
+.legal-page h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: #9898c0;
+  margin: 28px 0 8px;
+}
+.legal-page p, .legal-page li {
+  font-size: 14px;
+  color: #aaa9b8;
+  line-height: 1.7;
+  margin: 6px 0;
+}
+.legal-page ul { padding-left: 20px; }
+.legal-page a { color: #b8e030; }
+.legal-page a:hover { text-decoration: underline; }
+
+body.theme--light .legal-page__back:hover { color: #4a6c10; }
+body.theme--light .legal-page__updated { color: #9898a8; }
+body.theme--light .legal-page h2 { color: #5858a0; }
+body.theme--light .legal-page p,
+body.theme--light .legal-page li { color: #444450; }
+body.theme--light .legal-page a { color: #4a6c10; }
 
