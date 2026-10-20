@@ -23,19 +23,21 @@ const WEEKLY_ACHIEVEMENTS_FROM  = '2026-10-19';  // primer lunes que cuenta para
 export async function checkServerAchievements(db, userId, have) {
   const earned = [];
 
-  try {
-    const perfect = await db.getPerfectOnTimeCount(userId, PERFECT_ACHIEVEMENTS_FROM);
-    for (const n of PERFECT_LEVELS) if (perfect >= n) earned.push(`perfect_${n}`);
-  } catch (e) { console.error('perfect achievements:', e.message); }
+  // Las dos consultas a la vez: el panel final espera a este envío para mostrar la posición
+  const [perfect, ranks] = await Promise.all([
+    db.getPerfectOnTimeCount(userId, PERFECT_ACHIEVEMENTS_FROM)
+      .catch(e => { console.error('perfect achievements:', e.message); return 0; }),
+    db.getClosedWeekRanks(userId, WEEKLY_ACHIEVEMENTS_FROM)
+      .catch(e => { console.error('weekly achievements:', e.message); return []; }),
+  ]);
 
-  try {
-    const ranks = await db.getClosedWeekRanks(userId, WEEKLY_ACHIEVEMENTS_FROM);
-    const top1  = ranks.filter(r => r === 1).length;
-    const top3  = ranks.filter(r => r <= 3).length;
-    if (top1 >= 1) earned.push('week_top1');
-    if (top3 >= 1) earned.push('week_top3');
-    if (top3 >= 3) earned.push('week_top3_x3');
-  } catch (e) { console.error('weekly achievements:', e.message); }
+  for (const n of PERFECT_LEVELS) if (perfect >= n) earned.push(`perfect_${n}`);
+
+  const top1 = ranks.filter(r => r === 1).length;
+  const top3 = ranks.filter(r => r <= 3).length;
+  if (top1 >= 1) earned.push('week_top1');
+  if (top3 >= 1) earned.push('week_top3');
+  if (top3 >= 3) earned.push('week_top3_x3');
 
   return earned.filter(id => !have.has(id));
 }

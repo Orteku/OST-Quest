@@ -84,7 +84,8 @@ async function authInit() {
       _profile = data;
       localStorage.setItem(_USER_KEY, JSON.stringify(data));
       if (!data.username) { openUsernameModal(); return; }
-      await _restoreFromServer();
+      // En segundo plano: el juego no la espera para arrancar (ver authWhenRestored)
+      _restorePromise = _restoreFromServer().catch(() => false);
       _migrateIfNeeded();
       _backfillAchievements();
     } else if (!data.__networkError) {
@@ -134,6 +135,13 @@ async function _restoreFromServer() {
     };
   }));
   return true;
+}
+
+let _restorePromise = Promise.resolve(false);
+
+// Se resuelve a true si la recuperación del servidor ha reconstruido la quest de hoy
+function authWhenRestored() {
+  return _restorePromise;
 }
 
 // Procesa un token nuevo (tras login, registro o OAuth)
@@ -795,15 +803,18 @@ async function initProfilePage() {
     return;
   }
 
-  const data = await _apiFetch('/auth/me');
+  // En paralelo: cada petición sumaba su tiempo cuando iban en fila
+  const hasAch = typeof ACHIEVEMENTS_DB !== 'undefined';
+  const [data, unlocked, stats] = await Promise.all([
+    _apiFetch('/auth/me'),
+    hasAch ? authGetAchievements() : [],
+    _apiFetch('/scores/stats'),
+  ]);
   if (data?.id) { _profile = data; localStorage.setItem(_USER_KEY, JSON.stringify(data)); }
-
-  // Cargar logros primero para poder mostrarlo en la tarjeta también
-  const unlocked = (typeof ACHIEVEMENTS_DB !== 'undefined') ? await authGetAchievements() : [];
   _cachedAchievements = unlocked;
-  if (typeof getAvailableAchievements === 'function') await getAvailableAchievements();  // para achievementImageReady
-  const stats = await _apiFetch('/scores/stats');
   if (stats && !stats.error && !stats.__networkError) _serverStats = stats;
+  // La tarjeta solo muestra logros conseguidos: basta con comprobar sus imágenes (achievementImageReady)
+  if (hasAch) await Promise.all(unlocked.map(u => achievementHasImage(getAchievement(u.achievement_id))));
 
   if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(unlocked);
   if (settingsEl) {

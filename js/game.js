@@ -1231,11 +1231,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (_date) {
       await openArchiveDay(_date);
     } else {
-      // Esperar a que la sesión recupere lo jugado en otro navegador (sin bloquear si la red tarda)
-      await Promise.race([siteAuthReady.catch(() => {}), new Promise(r => setTimeout(r, 3000))]);
       await initGame(today, false);
       if (_open === 'archive') openArchive();
       else if (_open === 'stats') openStatsModal();
+
+      // Si la quest de hoy ya se jugó en otro navegador, mostrarla terminada. No se espera para arrancar:
+      // la recuperación solo escribe si aquí no hay progreso, así que no pisa una partida empezada.
+      siteAuthReady.catch(() => {}).then(authWhenRestored).then(restored => {
+        if (restored && currentDateStr === today && !isArchiveMode) initGame(today, false);
+      });
     }
   }
 
