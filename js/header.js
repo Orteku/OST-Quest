@@ -1,6 +1,6 @@
-// Oesti Quest — Header y controles comunes a todas las páginas
+// Oesti Quest — Header, footer y controles comunes a todas las páginas
 //
-// Cada página tiene <div class="site-header-wrap" id="site-header"></div> y <div id="site-controls"></div>;
+// Cada página tiene <div class="site-header-wrap" id="site-header">, <div id="site-controls"> y <footer id="site-footer">;
 // este archivo los rellena, conecta sus botones y arranca idioma y sesión.
 // La página del juego lleva <body data-page="game">: muestra el contador y el texto de especial,
 // y game.js define openArchiveDay() / goToToday() / onModalBackdropClose() para enlazarse.
@@ -72,6 +72,22 @@ function _siteControlsHTML() {
   </div>`;
 }
 
+function _siteFooterHTML() {
+  return `
+    <div class="footer-social">
+      <a href="https://x.com/OestiQuest" target="_blank" rel="noopener" class="footer-social__btn footer-social__btn--x">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        @OestiQuest
+      </a>
+      <a href="https://ko-fi.com/C0C426TPFE" target="_blank" rel="noopener" class="footer-social__btn footer-social__btn--kofi">
+        <svg class="kofi-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M18.5 3H6a5 5 0 0 0 0 10h.5c.8 2.3 2.8 4 5.2 4.4V19H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2.7v-1.6C15 16.9 17.5 14.2 18 11h.5a3.5 3.5 0 0 0 0-7zM6 11a3 3 0 0 1 0-6h1v6H6zm12.5 0H19V5h-.5a1.5 1.5 0 0 0 0 3H19v3h-.5z"/></svg>
+        Support me on Ko-fi
+      </a>
+    </div>
+    <p data-i18n-html="footer_credit_legal">Música provista por <a href="https://archive.org" target="_blank" rel="noopener">Archive.org</a> y <a href="https://downloads.khinsider.com" target="_blank" rel="noopener">KHInsider</a> · Desarrollado por Orteku en colaboración con Vyrka · <a href="privacy.html">Privacidad</a> · <a href="terms.html">Términos</a></p>
+    <p data-i18n-html="footer_soundtracks_line">¿Tienes alguna sugerencia? Consulta la <a href="soundtracks.html">lista de canciones</a> · <a href="about.html">Sobre el proyecto</a> · <a href="ranking.html">Ranking</a> · Contacto: <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a></p>`;
+}
+
 // Se ejecuta al cargar el script (va al final del <body>, el DOM ya existe) y antes de aplicar
 // las traducciones, para que i18n traduzca también el header.
 (function _mountSiteChrome() {
@@ -81,6 +97,10 @@ function _siteControlsHTML() {
 
   const controls = document.getElementById('site-controls');
   if (controls) controls.outerHTML = _siteControlsHTML();
+
+  // La etiqueta <footer> se queda en cada página (con sus márgenes propios); aquí solo se rellena
+  const footer = document.getElementById('site-footer');
+  if (footer) footer.innerHTML = _siteFooterHTML();
 
   if (!document.getElementById('modal')) {
     document.body.insertAdjacentHTML('beforeend', `<div id="modal" role="dialog" aria-modal="true"><div id="modal-inner"></div></div>`);

@@ -1059,25 +1059,71 @@ async function authUnlockAchievement(id) {
   return data?.ok === true;
 }
 
-async function _showAchievementToast(achievementId) {
-  const a    = typeof getAchievement === 'function' ? getAchievement(achievementId) : null;
-  if (a && !await achievementHasImage(a)) return;  // provisional: se concede en silencio
+// Avisos de logro apilados en vertical (estilo Steam): máximo 3 a la vez, el resto espera en cola
+const _ACH_TOAST_MAX     = 3;
+const _ACH_TOAST_STAGGER = 350;   // ms entre avisos que llegan juntos
+const _achToastQueue     = [];
+let _achToastsVisible    = 0;
+let _achToastLastShown   = 0;
+let _achToastLastSound   = 0;
+
+let _achToastChain = Promise.resolve();
+
+// Encadenado para que los avisos salgan en el orden en que se piden, aunque las comprobaciones de imagen tarden distinto
+function _showAchievementToast(achievementId) {
+  _achToastChain = _achToastChain.then(async () => {
+    const a = typeof getAchievement === 'function' ? getAchievement(achievementId) : null;
+    if (a && !await achievementHasImage(a)) return;  // provisional: se concede en silencio
+    _achToastQueue.push({ id: achievementId, a });
+    _pumpAchievementToasts();
+  }).catch(() => {});
+}
+
+function _pumpAchievementToasts() {
+  while (_achToastsVisible < _ACH_TOAST_MAX && _achToastQueue.length) {
+    const item  = _achToastQueue.shift();
+    const delay = Math.max(0, _achToastLastShown + _ACH_TOAST_STAGGER - Date.now());
+    _achToastLastShown = Date.now() + delay;
+    _achToastsVisible++;
+    setTimeout(() => _renderAchievementToast(item), delay);
+  }
+}
+
+function _renderAchievementToast({ id, a }) {
+  let stack = document.getElementById('achievement-toast-stack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'achievement-toast-stack';
+    stack.className = 'achievement-toast-stack';
+    document.body.appendChild(stack);
+  }
+
   const lang = document.documentElement.lang || 'es';
-  const name = a ? _esc(getAchievementLabel(a, lang).name) : _esc(achievementId);
+  const name = a ? _esc(getAchievementLabel(a, lang).name) : _esc(id);
   const img  = a ? `<img class="achievement-toast__img" src="img/achievements/${_esc(a.image)}" alt="">` : `<div class="achievement-toast__img-ph">🏆</div>`;
 
   const el = document.createElement('div');
   el.className = 'achievement-toast';
   el.innerHTML = `${img}<div class="achievement-toast__body"><div class="achievement-toast__label">${t('achievement_unlocked')}</div><div class="achievement-toast__name">${name}</div></div>`;
-  document.body.appendChild(el);
+  stack.appendChild(el);
 
-  const sfx = new Audio('fx/achievement.mp3');
-  sfx.volume = Math.min(1, (typeof gameVolume !== 'undefined' ? gameVolume : 80) / 100 * 0.6);
-  sfx.play().catch(() => {});
+  // Un solo sonido por tanda
+  if (Date.now() - _achToastLastSound > 1500) {
+    _achToastLastSound = Date.now();
+    const sfx = new Audio('fx/achievement.mp3');
+    sfx.volume = Math.min(1, (typeof gameVolume !== 'undefined' ? gameVolume : 80) / 100 * 0.6);
+    sfx.play().catch(() => {});
+  }
 
+  // Temporizador en vez de animationend: ese evento no llega si las animaciones están desactivadas,
+  // y el aviso se quedaría para siempre bloqueando la cola
   setTimeout(() => {
     el.classList.add('achievement-toast--out');
-    el.addEventListener('animationend', () => el.remove(), { once: true });
+    setTimeout(() => {
+      el.remove();
+      _achToastsVisible--;
+      _pumpAchievementToasts();
+    }, 350);
   }, 4500);
 }
 

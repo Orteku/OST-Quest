@@ -43,7 +43,6 @@
     "¡Crack! ¡Fiera! ¡Mastodonte!"
   ],
   "tagline": "Adivina la OST",
-  "footer_desc": "Juego diario de adivinar bandas sonoras de videojuegos. Escucha un fragmento y elige entre cuatro portadas a cuál pertenece. Nueva quest cada día.",
   "footer_credit": "Música provista por <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> y <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Desarrollado por Orteku en colaboración con Vyrka",
   "footer_credit_legal": "Música provista por <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> y <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Desarrollado por Orteku en colaboración con Vyrka · <a href=\"privacy.html\">Privacidad</a> · <a href=\"terms.html\">Términos</a>",
   "tutorial_title": "¿Cómo se juega?",
@@ -103,7 +102,7 @@
   "about_send": "Enviar →",
   "about_send_note": "Se abrirá tu cliente de correo con el mensaje listo para enviar.",
   "about_email_subject": "Mensaje desde Oesti Quest",
-  "footer_soundtracks_line": "¿Tienes alguna sugerencia? Consulta la <a href=\"soundtracks.html\">lista de canciones</a> · <a href=\"about.html\">Sobre el proyecto</a> · Contacto: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
+  "footer_soundtracks_line": "¿Tienes alguna sugerencia? Consulta la <a href=\"soundtracks.html\">lista de canciones</a> · <a href=\"about.html\">Sobre el proyecto</a> · <a href=\"ranking.html\">Ranking</a> · Contacto: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a>",
   "auth_sign_in": "Entrar",
   "auth_register": "Registrarse",
   "auth_or": "o",
