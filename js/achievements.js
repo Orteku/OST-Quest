@@ -184,14 +184,12 @@ for (const kind of ['game', 'track']) {
 // Un logro sin imagen en img/achievements/ es provisional: no se muestra ni se desbloquea desde el cliente
 const _achImageChecks = {};
 const _achImageOk     = {};
+// Petición HEAD: pregunta si el archivo existe sin descargarlo, para no esperar a imágenes pesadas
 function achievementHasImage(a) {
-  if (!a?.image || typeof Image === 'undefined') return Promise.resolve(false);
-  return _achImageChecks[a.id] ??= new Promise(resolve => {
-    const img = new Image();
-    img.onload  = () => { _achImageOk[a.id] = true;  resolve(true); };
-    img.onerror = () => { _achImageOk[a.id] = false; resolve(false); };
-    img.src = 'img/achievements/' + a.image;
-  });
+  if (!a?.image || typeof fetch === 'undefined') return Promise.resolve(false);
+  return _achImageChecks[a.id] ??= fetch('img/achievements/' + a.image, { method: 'HEAD' })
+    .then(res => res.ok, () => false)
+    .then(ok => { _achImageOk[a.id] = ok; return ok; });
 }
 
 // Versión síncrona: true solo si ya se comprobó que NO tiene imagen (lo no comprobado aún cuenta como válido)
