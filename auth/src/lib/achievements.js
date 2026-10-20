@@ -5,10 +5,20 @@ const TAG_LEVELS = [10, 30, 50];
 const GAME_TAGS  = ['rpg', 'japanese', 'war', 'shooter', 'fighting', 'horror', 'indie', 'sport', 'platformer', 'puzzle', 'rhythm', 'strategy'];
 const TRACK_TAGS = ['asian', 'lyrics', 'retro', 'rock'];
 
-// Mantener sincronizado con TAG_ACHIEVEMENT_TAGS en js/achievements.js
-export const TAG_ACHIEVEMENT_IDS = new Set([
+// Compañías (clave → niveles). La clave coincide con DEV_ACHIEVEMENT_TERMS de js/achievements.js
+const DEV_LEVELS = {
+  nintendo: [10, 20, 30], squareenix: [10, 20, 30], sony: [10, 20, 30], microsoft: [10, 20, 30],
+  ubisoft:  [10, 20, 30], capcom:     [10, 20, 30], ea:   [10, 20, 30],
+  sega: [10, 20], konami: [10, 20], blizzard: [10, 20], bethesda: [10, 20], koeitecmo: [10, 20],
+  valve: [5, 10], obsidian: [5, 10], fromsoftware: [5, 10], bioware: [5, 10], rockstar: [5, 10],
+};
+
+// Logros que cuenta el navegador (aciertos por tag, por tag de canción y por compañía) y que el cliente puede desbloquear.
+// Mantener sincronizado con los bloques tag_* / track_* / dev_* de ACHIEVEMENTS_DB en js/achievements.js
+export const COUNTED_ACHIEVEMENT_IDS = new Set([
   ...GAME_TAGS.flatMap(t  => TAG_LEVELS.map(n => `tag_${t}_${n}`)),
   ...TRACK_TAGS.flatMap(t => TAG_LEVELS.map(n => `track_${t}_${n}`)),
+  ...Object.entries(DEV_LEVELS).flatMap(([k, levels]) => levels.map(n => `dev_${k}_${n}`)),
 ]);
 
 const PERFECT_LEVELS = [1, 10, 30, 50];

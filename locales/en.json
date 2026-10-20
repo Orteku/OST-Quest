@@ -162,6 +162,8 @@
   "drop_recent_trophies": "Recent trophies",
   "drop_see_all": "See all →",
   "profile_achievements_sub": "Select which trophy to show on your avatar",
+  "ach_only_unlocked": "Unlocked only",
+  "ach_none_unlocked": "You haven't unlocked any trophies yet. Keep playing!",
   "profile_wip": "Under construction",
   "profile_wip_desc": "Achievements coming soon",
   "profile_settings_section": "Account settings",

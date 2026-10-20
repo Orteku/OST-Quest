@@ -2259,6 +2259,27 @@ body.theme--light .rank-streak { color: #9898a8; }
   font-size: 12px; color: #555960; margin: 0 0 14px;
 }
 
+/* Rejilla de trofeos: subtítulo + casilla "Solo conseguidos" en la misma línea */
+.ach-filter-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.ach-filter-row .profile-section-sub { margin: 0; }
+.ach-filter {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #7a7a88; cursor: pointer; user-select: none;
+}
+.ach-filter input { accent-color: #b8e030; cursor: pointer; margin: 0; }
+.ach-filter:hover { color: #ddd9cf; }
+.achievements-grid__empty {
+  grid-column: 1 / -1;
+  font-size: 13px; color: #7a7a88; margin: 8px 0;
+}
+body.theme--light .ach-filter { color: #787888; }
+body.theme--light .ach-filter:hover { color: #1e1d28; }
+body.theme--light .ach-filter input { accent-color: #4a6c10; }
+body.theme--light .achievements-grid__empty { color: #787888; }
+
 /* Tarjeta de perfil */
 .pcard-group { display: flex; flex-direction: column; }
 .pcard-group .pcard { border-radius: 16px 16px 0 0; }

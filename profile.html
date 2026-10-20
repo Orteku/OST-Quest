@@ -53,7 +53,13 @@
     <!-- Logros -->
     <section>
       <p class="profile-section-heading" data-i18n="profile_achievements_section">Trofeos</p>
-      <p class="profile-section-sub" data-i18n="profile_achievements_sub">Selecciona qué trofeo lucir en tu avatar</p>
+      <div class="ach-filter-row">
+        <p class="profile-section-sub" data-i18n="profile_achievements_sub">Selecciona qué trofeo lucir en tu avatar</p>
+        <label class="ach-filter">
+          <input type="checkbox" id="ach-only-unlocked">
+          <span data-i18n="ach_only_unlocked">Solo conseguidos</span>
+        </label>
+      </div>
       <div id="achievements-grid" class="achievements-grid">
         <!-- Poblado por auth.js -->
       </div>

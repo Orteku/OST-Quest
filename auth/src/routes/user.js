@@ -1,7 +1,7 @@
 import { verifyJwt } from '../lib/jwt.js';
 import { json } from '../lib/cors.js';
 import { issueToken } from './oauth.js';
-import { TAG_ACHIEVEMENT_IDS, checkServerAchievements } from '../lib/achievements.js';
+import { COUNTED_ACHIEVEMENT_IDS, checkServerAchievements } from '../lib/achievements.js';
 
 const CLIENT_UNLOCKABLE = ['easter_line', 'easter_wasted', 'easter_both', 'share'];
 
@@ -163,8 +163,8 @@ export async function handleUnlockAchievement(request, env, db) {
     return json({ ok: true, isNew }, 200, request);
   }
 
-  // Logros de tag: el cliente cuenta los aciertos con /scores/results y games.json
-  if (TAG_ACHIEVEMENT_IDS.has(achievementId)) {
+  // Logros de tag y de compañía: el cliente cuenta los aciertos con /scores/results y games.json
+  if (COUNTED_ACHIEVEMENT_IDS.has(achievementId)) {
     const isNew = await db.unlockAchievement(payload.sub, achievementId);
     return json({ ok: true, isNew }, 200, request);
   }

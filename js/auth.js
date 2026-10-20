@@ -587,7 +587,7 @@ async function submitScoreToSupabase(dateStr, score, stats, results) {
 // Logros de tag: cuenta los aciertos por tag de las quests jugadas en su día
 // (columnas acertadas guardadas en el servidor + composición de cada quest en games.json)
 async function checkTagAchievements() {
-  if (!_token || typeof TAG_ACHIEVEMENT_TAGS === 'undefined'
+  if (!_token || typeof ACHIEVEMENTS_DB === 'undefined'
       || typeof loadGamesJson !== 'function' || typeof GAME_DB === 'undefined') return;
 
   const history = await _apiFetch('/scores/results');
@@ -605,25 +605,30 @@ async function checkTagAchievements() {
   }
   if (Object.keys(toFill).length) _apiFetch('/scores/results', 'POST', { results: toFill });
 
-  const counts = { game: {}, track: {} };
+  // Palabras completas: "square" no debe coincidir con "SadSquare Studio"
+  const devTerms = typeof DEV_ACHIEVEMENT_TERMS === 'undefined' ? [] : Object.entries(DEV_ACHIEVEMENT_TERMS)
+    .map(([key, terms]) => [key, terms.map(t => new RegExp('\\b' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b'))]);
+  const counts = { tag: {}, track: {}, dev: {} };
+  const add = (kind, key) => { counts[kind][key] = (counts[kind][key] || 0) + 1; };
   for (const { game_date, results } of history) {
     if (!results || !games[game_date]) continue;
     const groups = reconstructFromIds(games[game_date]);
     groups.forEach((g, i) => {
       if (results[i] !== '1') return;
-      for (const tag of g.answer.tags || []) counts.game[tag] = (counts.game[tag] || 0) + 1;
-      for (const tag of g.answer.tracks[g.trackIndex]?.tags || []) counts.track[tag] = (counts.track[tag] || 0) + 1;
+      for (const tag of g.answer.tags || []) add('tag', tag);
+      for (const tag of g.answer.tracks[g.trackIndex]?.tags || []) add('track', tag);
+      const dev = (g.answer.developer || '').toLowerCase();
+      for (const [key, res] of devTerms) if (res.some(re => re.test(dev))) add('dev', key);
     });
   }
 
+  // Tipo, clave y nivel salen del propio id: tag_rpg_10, track_lyrics_30, dev_nintendo_20
   const have = new Set((await authGetAchievements()).map(a => a.achievement_id));
-  for (const kind of ['game', 'track']) {
-    for (const tag of Object.keys(TAG_ACHIEVEMENT_TAGS[kind])) {
-      for (const n of TAG_ACHIEVEMENT_LEVELS) {
-        const id = `${kind === 'game' ? 'tag' : 'track'}_${tag}_${n}`;
-        if ((counts[kind][tag] || 0) >= n && !have.has(id)) await authUnlockAchievement(id);
-      }
-    }
+  for (const { id } of ACHIEVEMENTS_DB) {
+    const m = id.match(/^(tag|track|dev)_(.+)_(\d+)$/);
+    if (!m) continue;
+    const count = counts[m[1]][m[2]] || 0;
+    if (count >= Number(m[3]) && !have.has(id)) await authUnlockAchievement(id);
   }
 }
 
@@ -807,23 +812,24 @@ async function initProfilePage() {
     return;
   }
 
-  // El perfil ya lo acaba de pedir authInit / _handleNewToken. El resto, en paralelo.
-  const hasAch = typeof ACHIEVEMENTS_DB !== 'undefined';
-  const [unlocked, stats] = await Promise.all([
-    hasAch ? authGetAchievements() : [],
-    _apiFetch('/scores/stats'),
-  ]);
-  _cachedAchievements = unlocked;
-  if (stats && !stats.error && !stats.__networkError) _serverStats = stats;
+  // Todo se pinta al momento con lo que ya se sabe y se actualiza cuando llegan los datos del servidor.
+  // (El perfil ya lo acaba de pedir authInit / _handleNewToken.)
+  const hasAch    = typeof ACHIEVEMENTS_DB !== 'undefined';
+  const statsKey  = `ostquest_server_stats_${_profile.id}`;
+  const renderCard = () => { if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(_cachedAchievements); };
+  const availableP = hasAch ? getAvailableAchievements() : null;  // en paralelo con los logros del usuario
 
-  // La tarjeta se pinta sin esperar a comprobar las imágenes; si algún logro resulta provisional, se repinta
-  if (hasAch) {
-    Promise.all(unlocked.map(u => achievementHasImage(getAchievement(u.achievement_id)))).then(oks => {
-      if (oks.includes(false) && cardEl) cardEl.innerHTML = _renderProfileCardHTML(_cachedAchievements);
-    });
-  }
+  // Últimas estadísticas del servidor guardadas en este navegador (si no hay, la tarjeta usa las locales)
+  try { _serverStats = JSON.parse(localStorage.getItem(statsKey)) || null; } catch { _serverStats = null; }
+  renderCard();
 
-  if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(unlocked);
+  _apiFetch('/scores/stats').then(stats => {
+    if (!stats || stats.error || stats.__networkError) return;
+    _serverStats = stats;
+    try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
+    renderCard();
+  });
+
   if (settingsEl) {
     settingsEl.innerHTML = _renderProfileHTML(true);
     _bindProfilePageEvents();
@@ -839,10 +845,33 @@ async function initProfilePage() {
     });
   }
 
+  if (!hasAch) return;
+  const unlocked = await authGetAchievements();
+  _cachedAchievements = unlocked;
+  renderCard();
+  // Si algún logro conseguido resulta provisional (sin imagen), se repinta la tarjeta sin él
+  Promise.all(unlocked.map(u => achievementHasImage(getAchievement(u.achievement_id)))).then(oks => {
+    if (oks.includes(false)) renderCard();
+  });
+
   const achievementsEl = document.getElementById('achievements-grid');
-  if (achievementsEl && typeof ACHIEVEMENTS_DB !== 'undefined') {
-    achievementsEl.innerHTML = _renderAchievementsHTML(unlocked, await getAvailableAchievements());
-    _bindAchievementEvents();
+  if (achievementsEl) {
+    const available = await availableP;
+    const renderGrid = () => {
+      achievementsEl.innerHTML = _renderAchievementsHTML(_cachedAchievements, available);
+      _bindAchievementEvents();
+    };
+    renderGrid();
+
+    const filterEl = document.getElementById('ach-only-unlocked');
+    if (filterEl && !filterEl.dataset.bound) {
+      filterEl.dataset.bound = '1';
+      filterEl.checked = _achOnlyUnlocked();
+      filterEl.addEventListener('change', () => {
+        try { localStorage.setItem(_ACH_FILTER_KEY, filterEl.checked ? '1' : '0'); } catch {}
+        renderGrid();
+      });
+    }
   }
 }
 
@@ -1163,15 +1192,22 @@ function _renderAchievementsHTML(unlocked, available) {
     </div>`;
   }
 
-  const isSpecial = a => a.id.startsWith('special_');
-  const regular   = available.filter(a => !isSpecial(a) && !a.hidden);
-  const secrets   = available.filter(a => !isSpecial(a) && a.hidden);
-  const specials  = available.filter(isSpecial);
+  // Casilla "Solo conseguidos" del perfil
+  const list = _achOnlyUnlocked() ? available.filter(a => unlockedIds.has(a.id)) : available;
+  if (!list.length) return `<p class="achievements-grid__empty">${t('ach_none_unlocked')}</p>`;
 
-  return [...regular, ...secrets].map(_card).join('')
-    + (specials.length
-        ? `<div class="achievements-grid__sep"></div>${specials.map(_card).join('')}`
-        : '');
+  const isSpecial = a => a.id.startsWith('special_');
+  const main      = [...list.filter(a => !isSpecial(a) && !a.hidden), ...list.filter(a => !isSpecial(a) && a.hidden)];
+  const specials  = list.filter(isSpecial);
+
+  return main.map(_card).join('')
+    + (main.length && specials.length ? `<div class="achievements-grid__sep"></div>` : '')
+    + specials.map(_card).join('');
+}
+
+const _ACH_FILTER_KEY = 'ostquest_ach_only_unlocked';
+function _achOnlyUnlocked() {
+  try { return localStorage.getItem(_ACH_FILTER_KEY) === '1'; } catch { return false; }
 }
 
 function _bindAchievementEvents() {

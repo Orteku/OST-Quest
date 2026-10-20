@@ -160,6 +160,8 @@
   "drop_recent_trophies": "Últimos trofeos",
   "drop_see_all": "Ver todos →",
   "profile_achievements_sub": "Selecciona qué trofeo lucir en tu avatar",
+  "ach_only_unlocked": "Solo conseguidos",
+  "ach_none_unlocked": "Aún no has conseguido ningún trofeo. ¡Sigue jugando!",
   "profile_wip": "En construcción",
   "profile_wip_desc": "Los logros llegarán pronto",
   "profile_settings_section": "Ajustes de cuenta",
