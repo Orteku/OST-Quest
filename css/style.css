@@ -2266,18 +2266,45 @@ body.theme--light .rank-streak { color: #9898a8; }
 }
 .ach-filter-row .profile-section-sub { margin: 0; }
 .ach-filter {
-  display: inline-flex; align-items: center; gap: 6px;
+  position: relative;
+  display: inline-flex; align-items: center; gap: 8px;
   font-size: 12px; color: #7a7a88; cursor: pointer; user-select: none;
 }
-.ach-filter input { accent-color: #b8e030; cursor: pointer; margin: 0; }
 .ach-filter:hover { color: #ddd9cf; }
+
+/* Interruptor: la casilla real queda invisible encima y .switch dibuja la pastilla y el círculo */
+.switch-input {
+  position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0;
+}
+.switch {
+  position: relative; flex-shrink: 0;
+  width: 34px; height: 18px; border-radius: 9px;
+  background: #2c2c34; border: 1px solid #3a3a46;
+  transition: background 0.2s, border-color 0.2s;
+}
+.switch::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #7a7a88;
+  transition: transform 0.2s, background 0.2s;
+}
+.switch-input:checked + .switch { background: #b8e030; border-color: #b8e030; }
+.switch-input:checked + .switch::after { transform: translateX(16px); background: #16171a; }
+.switch-input:focus-visible + .switch { outline: 2px solid #b8e030; outline-offset: 2px; }
+.ach-filter:hover .switch { border-color: #55555f; }
+.ach-filter:hover .switch-input:checked + .switch { border-color: #c8f040; background: #c8f040; }
 .achievements-grid__empty {
   grid-column: 1 / -1;
   font-size: 13px; color: #7a7a88; margin: 8px 0;
 }
 body.theme--light .ach-filter { color: #787888; }
 body.theme--light .ach-filter:hover { color: #1e1d28; }
-body.theme--light .ach-filter input { accent-color: #4a6c10; }
+body.theme--light .switch { background: #e0ddd6; border-color: #c6c4bc; }
+body.theme--light .switch::after { background: #9898a8; }
+body.theme--light .switch-input:checked + .switch { background: #4a6c10; border-color: #4a6c10; }
+body.theme--light .switch-input:checked + .switch::after { background: #fff; }
+body.theme--light .switch-input:focus-visible + .switch { outline-color: #4a6c10; }
+body.theme--light .ach-filter:hover .switch-input:checked + .switch { background: #3a5c00; border-color: #3a5c00; }
 body.theme--light .achievements-grid__empty { color: #787888; }
 
 /* Tarjeta de perfil */
