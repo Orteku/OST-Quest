@@ -55,11 +55,21 @@
       <p class="profile-section-heading" data-i18n="profile_achievements_section">Trofeos</p>
       <div class="ach-filter-row">
         <p class="profile-section-sub" data-i18n="profile_achievements_sub">Selecciona qué trofeo lucir en tu avatar</p>
-        <label class="ach-filter">
-          <span data-i18n="ach_only_unlocked">Solo conseguidos</span>
-          <input type="checkbox" id="ach-only-unlocked" class="switch-input" role="switch">
-          <span class="switch" aria-hidden="true"></span>
-        </label>
+        <div class="ach-controls">
+          <div class="seg" role="group" id="ach-view" data-i18n-aria="ach_view_label" aria-label="Vista">
+            <button type="button" class="seg__btn seg__btn--icon" data-view="compact" data-i18n-aria="ach_view_compact" aria-label="Compacta" title="Compacta">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+            </button>
+            <button type="button" class="seg__btn seg__btn--icon" data-view="detailed" data-i18n-aria="ach_view_detailed" aria-label="Detallada" title="Detallada">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><rect x="1" y="1.5" width="3.5" height="3.5" rx="1"/><rect x="6.5" y="2.25" width="8.5" height="2" rx="1"/><rect x="1" y="6.25" width="3.5" height="3.5" rx="1"/><rect x="6.5" y="7" width="8.5" height="2" rx="1"/><rect x="1" y="11" width="3.5" height="3.5" rx="1"/><rect x="6.5" y="11.75" width="8.5" height="2" rx="1"/></svg>
+            </button>
+          </div>
+          <label class="ach-filter">
+            <span data-i18n="ach_only_unlocked">Solo conseguidos</span>
+            <input type="checkbox" id="ach-only-unlocked" class="switch-input" role="switch">
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
       <div id="achievements-grid" class="achievements-grid">
         <!-- Poblado por auth.js -->

@@ -1612,22 +1612,80 @@ body.theme--light .auth-btn__avatar { background: #4a6c10; color: #fff; }
 }
 
 /* ─── Logros ────────────────────────────────────────────────────────────────── */
-.achievements-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-  gap: 14px 10px;
-  padding: 8px 0 16px;
-}
+.achievements-grid { padding: 8px 0 16px; }
 .achievement-card {
   display: flex; align-items: center; justify-content: center;
   cursor: default; user-select: none;
 }
-.achievements-grid__sep {
-  grid-column: 1 / -1;
-  border-top: 1px dashed #2c2c34;
-  margin: 4px 0;
+
+/* Categorías: título + contador, y sus trofeos en vista compacta (iconos) o detallada (filas) */
+.ach-cat { margin-bottom: 22px; }
+.ach-cat:last-child { margin-bottom: 0; }
+.ach-cat--special { border-top: 1px dashed #2c2c34; padding-top: 18px; }
+.ach-cat__head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 10px;
 }
-body.theme--light .achievements-grid__sep { border-color: #d0cec6; }
+.ach-cat__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #7a7a88;
+}
+.ach-cat__count { font-size: 11px; color: #55555f; font-variant-numeric: tabular-nums; }
+.ach-cat__items--compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 14px 10px;
+}
+.ach-cat__items--detailed {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 600px) { .ach-cat__items--detailed { grid-template-columns: 1fr; } }
+
+.achievement-row {
+  justify-content: flex-start; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  background: #14141e; border: 1px solid #1e1e2e; border-radius: 10px;
+  transition: border-color 0.15s;
+}
+.achievement-row.achievement-card--unlocked:hover { border-color: #3a3a46; }
+.achievement-row.achievement-card--selected { border-color: #b8e030; }
+.achievement-row .achievement-card__img,
+.achievement-row .achievement-card__mystery { width: 48px; height: 48px; font-size: 16px; }
+.achievement-row.achievement-card--unlocked:hover .achievement-card__img { transform: none; }
+.achievement-row.achievement-card--selected .achievement-card__img { box-shadow: none; }
+.achievement-row__icon { flex-shrink: 0; display: flex; }
+.achievement-row__text { min-width: 0; flex: 1; }
+.achievement-row__name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.3px;
+  color: #ddd9cf; line-height: 1.2;
+}
+.achievement-row__desc { font-size: 12px; color: #7a7a88; line-height: 1.35; margin-top: 2px; }
+.achievement-card--locked .achievement-row__name { color: #7a7a88; }
+.achievement-card--locked .achievement-row__desc { color: #55555f; }
+
+/* Progreso de logros por niveles */
+.ach-progress { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.ach-progress__bar { flex: 1; height: 4px; border-radius: 2px; background: #2c2c34; overflow: hidden; }
+.ach-progress__bar span { display: block; height: 100%; background: #b8e030; border-radius: 2px; }
+.ach-progress__num { font-size: 11px; color: #9898a8; font-variant-numeric: tabular-nums; }
+
+body.theme--light .ach-cat--special { border-color: #d0cec6; }
+body.theme--light .ach-cat__title { color: #787888; }
+body.theme--light .ach-cat__count { color: #9898a8; }
+body.theme--light .achievement-row { background: #f4f4ec; border-color: #d0ccc4; }
+body.theme--light .achievement-row.achievement-card--unlocked:hover { border-color: #b6b4ac; }
+body.theme--light .achievement-row.achievement-card--selected { border-color: #4a6c10; }
+body.theme--light .achievement-row__name { color: #1e1d28; }
+body.theme--light .achievement-row__desc { color: #5a5a68; }
+body.theme--light .achievement-card--locked .achievement-row__name { color: #787888; }
+body.theme--light .achievement-card--locked .achievement-row__desc { color: #9898a8; }
+body.theme--light .ach-progress__bar { background: #e0ddd6; }
+body.theme--light .ach-progress__bar span { background: #4a6c10; }
+body.theme--light .ach-progress__num { color: #787888; }
 .ach-tooltip {
   position: absolute; z-index: 9000; display: none;
   background: #1a1a28; border: 1px solid #2c2c34; border-radius: 8px;
@@ -1636,6 +1694,8 @@ body.theme--light .achievements-grid__sep { border-color: #d0cec6; }
 }
 .ach-tooltip__name { font-size: 13px; font-weight: 700; color: #ddd9cf; margin-bottom: 3px; }
 .ach-tooltip__desc { font-size: 11px; color: #9898a8; line-height: 1.4; }
+.ach-tooltip__progress { font-size: 11px; color: #b8e030; margin-top: 4px; font-variant-numeric: tabular-nums; }
+body.theme--light .ach-tooltip__progress { color: #4a6c10; }
 body.theme--light .ach-tooltip { background: #f0ede8; border-color: #d0cec6; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
 body.theme--light .ach-tooltip__name { color: #1e1d28; }
 body.theme--light .ach-tooltip__desc { color: #7a7a88; }
@@ -2265,6 +2325,26 @@ body.theme--light .rank-streak { color: #9898a8; }
   gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
 }
 .ach-filter-row .profile-section-sub { margin: 0; }
+.ach-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+/* Selector de dos o más opciones (vista compacta / detallada) */
+.seg {
+  display: inline-flex; border: 1px solid #2c2c34; border-radius: 8px; overflow: hidden;
+}
+.seg__btn {
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 12px; color: #7a7a88;
+  padding: 4px 10px; transition: background 0.15s, color 0.15s;
+}
+.seg__btn + .seg__btn { border-left: 1px solid #2c2c34; }
+.seg__btn--icon { display: inline-flex; align-items: center; justify-content: center; padding: 5px 9px; }
+.seg__btn:hover { color: #ddd9cf; }
+.seg__btn.is-active { background: #2c2c34; color: #b8e030; }
+body.theme--light .seg { border-color: #c6c4bc; }
+body.theme--light .seg__btn { color: #787888; }
+body.theme--light .seg__btn + .seg__btn { border-left-color: #c6c4bc; }
+body.theme--light .seg__btn:hover { color: #1e1d28; }
+body.theme--light .seg__btn.is-active { background: #e0ddd6; color: #4a6c10; }
 .ach-filter {
   position: relative;
   display: inline-flex; align-items: center; gap: 8px;
@@ -2468,6 +2548,8 @@ body.theme--light .profile-settings-box { background: #f4f4ec; border-color: #d0
   color: #ddd9cf; letter-spacing: 0.5px; margin: 0;
 }
 .ach-sheet__desc { font-size: 13px; color: #9898a8; line-height: 1.5; max-width: 300px; margin: 0; }
+.ach-sheet__progress { font-size: 12px; color: #b8e030; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+body.theme--light .ach-sheet__progress { color: #4a6c10; }
 .ach-sheet__avatar-btn {
   margin-top: 8px; padding: 11px 28px;
   background: #b8e030; color: #0e0e14;

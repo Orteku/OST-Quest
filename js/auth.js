@@ -10,6 +10,8 @@ let _token              = null;   // JWT string
 let _profile            = null;   // { id, username, email, provider }
 let _cachedAchievements = [];     // último fetch de logros del usuario
 let _serverStats        = null;   // estadísticas de /scores/stats para la tarjeta del perfil
+let _achGridRender      = null;   // repinta la sección de trofeos del perfil (cuando está en pantalla)
+document.addEventListener('langchange', () => _achGridRender?.());
 
 // ─── API helper ───────────────────────────────────────────────────────────────
 
@@ -622,6 +624,9 @@ async function checkTagAchievements() {
     });
   }
 
+  // Se guarda para mostrar el progreso en el perfil, que no carga la base de juegos
+  try { localStorage.setItem(`ostquest_ach_progress_${_profile?.id}`, JSON.stringify(counts)); } catch {}
+
   // Tipo, clave y nivel salen del propio id: tag_rpg_10, track_lyrics_30, dev_nintendo_20
   const have = new Set((await authGetAchievements()).map(a => a.achievement_id));
   for (const { id } of ACHIEVEMENTS_DB) {
@@ -828,6 +833,7 @@ async function initProfilePage() {
     _serverStats = stats;
     try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
     renderCard();
+    _achGridRender?.();
   });
 
   if (settingsEl) {
@@ -872,6 +878,28 @@ async function initProfilePage() {
         renderGrid();
       });
     }
+
+    // Vista compacta (iconos) o detallada (nombre, descripción y progreso)
+    const viewEl = document.getElementById('ach-view');
+    if (viewEl && !viewEl.dataset.bound) {
+      viewEl.dataset.bound = '1';
+      const markView = () => viewEl.querySelectorAll('.seg__btn').forEach(b => {
+        const on = b.dataset.view === _achView();
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', on);
+      });
+      markView();
+      viewEl.addEventListener('click', e => {
+        const btn = e.target.closest('.seg__btn');
+        if (!btn || btn.dataset.view === _achView()) return;
+        try { localStorage.setItem(_ACH_VIEW_KEY, btn.dataset.view); } catch {}
+        markView();
+        renderGrid();
+      });
+    }
+
+    // Las estadísticas del servidor llegan aparte y dan el progreso de partidas y racha
+    _achGridRender = renderGrid;
   }
 }
 
@@ -1173,41 +1201,90 @@ async function authSetAvatar(filename) {
   return data?.ok === true;
 }
 
+// Categorías de la sección de trofeos, en orden. Los especiales van al final, tras la línea de puntos.
+const _ACH_CATEGORIES = ['general', 'perfect', 'ranking', 'genre', 'music', 'company', 'secret', 'special'];
+function _achCategory(a) {
+  if (a.hidden) return 'secret';
+  return { perfect: 'perfect', week: 'ranking', tag: 'genre', track: 'music', dev: 'company', special: 'special' }[a.id.split('_')[0]] || 'general';
+}
+
+// Progreso de un logro por niveles: { cur, goal } o null si no se sabe.
+// Tags y compañías: lo guarda el juego al contar aciertos. Partidas y racha: estadísticas del servidor.
+function _achProgress(id) {
+  const m = id.match(/^(tag|track|dev)_(.+)_(\d+)$/);
+  if (m) {
+    let counts = null;
+    try { counts = JSON.parse(localStorage.getItem(`ostquest_ach_progress_${_profile?.id}`)); } catch {}
+    if (!counts?.[m[1]]) return null;
+    return { cur: counts[m[1]][m[2]] || 0, goal: Number(m[3]) };
+  }
+  if (id === 'played_30' && _serverStats) return { cur: _serverStats.played || 0, goal: 30 };
+  if (id === 'streak_7'  && _serverStats) return { cur: _serverStats.streak || 0, goal: 7 };
+  return null;
+}
+
 function _renderAchievementsHTML(unlocked, available) {
   if (typeof ACHIEVEMENTS_DB === 'undefined') return '';
   const unlockedIds = new Set(unlocked.map(a => a.achievement_id));
-  const lang = document.documentElement.lang || 'es';
+  const lang     = document.documentElement.lang || 'es';
+  const detailed = _achView() === 'detailed';
 
-  function _card(a) {
+  function _item(a) {
     const isUnlocked = unlockedIds.has(a.id);
     const label      = getAchievementLabel(a, lang);
     const isHidden   = a.hidden && !isUnlocked;
     const name = isHidden ? '???' : _esc(label.name);
     const desc = isHidden ? '???' : _esc(label.desc || '');
-    return `<div class="achievement-card ${isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked'}${_profile?.selected_avatar === a.image ? ' achievement-card--selected' : ''}" data-id="${_esc(a.id)}" data-img="${isHidden ? '' : _esc(a.image)}" data-name="${name}" data-desc="${desc}">
-      ${isHidden
-        ? `<div class="achievement-card__mystery">?</div>`
-        : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}">`
-      }
+    const prog = !isUnlocked ? _achProgress(a.id) : null;
+    const progText = prog ? `${Math.min(prog.cur, prog.goal)}/${prog.goal}` : '';
+    const cls = ['achievement-card', isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked',
+      _profile?.selected_avatar === a.image ? 'achievement-card--selected' : '', detailed ? 'achievement-row' : ''].filter(Boolean).join(' ');
+    const icon = isHidden
+      ? `<div class="achievement-card__mystery">?</div>`
+      : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}" loading="lazy">`;
+    const attrs = `class="${cls}" data-id="${_esc(a.id)}" data-img="${isHidden ? '' : _esc(a.image)}" data-name="${name}" data-desc="${desc}" data-progress="${progText}"`;
+
+    if (!detailed) return `<div ${attrs}>${icon}</div>`;
+    const bar = prog
+      ? `<div class="ach-progress"><div class="ach-progress__bar"><span style="width:${Math.min(100, Math.round(prog.cur / prog.goal * 100))}%"></span></div><span class="ach-progress__num">${progText}</span></div>`
+      : '';
+    return `<div ${attrs}>
+      <div class="achievement-row__icon">${icon}</div>
+      <div class="achievement-row__text">
+        <div class="achievement-row__name">${name}</div>
+        <div class="achievement-row__desc">${desc}</div>
+        ${bar}
+      </div>
     </div>`;
   }
 
-  // Casilla "Solo conseguidos" del perfil
+  // Interruptor "Solo conseguidos" del perfil
   const list = _achOnlyUnlocked() ? available.filter(a => unlockedIds.has(a.id)) : available;
   if (!list.length) return `<p class="achievements-grid__empty">${t('ach_none_unlocked')}</p>`;
 
-  const isSpecial = a => a.id.startsWith('special_');
-  const main      = [...list.filter(a => !isSpecial(a) && !a.hidden), ...list.filter(a => !isSpecial(a) && a.hidden)];
-  const specials  = list.filter(isSpecial);
-
-  return main.map(_card).join('')
-    + (main.length && specials.length ? `<div class="achievements-grid__sep"></div>` : '')
-    + specials.map(_card).join('');
+  return _ACH_CATEGORIES.map(cat => {
+    const items = list.filter(a => _achCategory(a) === cat);
+    if (!items.length) return '';
+    const all  = available.filter(a => _achCategory(a) === cat);
+    const done = all.filter(a => unlockedIds.has(a.id)).length;
+    return `<section class="ach-cat${cat === 'special' ? ' ach-cat--special' : ''}">
+      <div class="ach-cat__head">
+        <span class="ach-cat__title">${t('ach_cat_' + cat)}</span>
+        <span class="ach-cat__count">${done}/${all.length}</span>
+      </div>
+      <div class="ach-cat__items ach-cat__items--${detailed ? 'detailed' : 'compact'}">${items.map(_item).join('')}</div>
+    </section>`;
+  }).join('');
 }
 
 const _ACH_FILTER_KEY = 'ostquest_ach_only_unlocked';
 function _achOnlyUnlocked() {
   try { return localStorage.getItem(_ACH_FILTER_KEY) === '1'; } catch { return false; }
+}
+
+const _ACH_VIEW_KEY = 'ostquest_ach_view';
+function _achView() {
+  try { return localStorage.getItem(_ACH_VIEW_KEY) === 'detailed' ? 'detailed' : 'compact'; } catch { return 'compact'; }
 }
 
 function _bindAchievementEvents() {
@@ -1229,9 +1306,12 @@ function _bindAchievementTooltip() {
     document.body.appendChild(tip);
   }
 
-  document.querySelectorAll('.achievement-card').forEach(card => {
+  // En la vista detallada el nombre y la descripción ya se ven: sin tooltip
+  document.querySelectorAll('.achievement-card:not(.achievement-row)').forEach(card => {
     card.addEventListener('mouseenter', () => {
-      tip.innerHTML = `<div class="ach-tooltip__name">${card.dataset.name}</div><div class="ach-tooltip__desc">${card.dataset.desc}</div>`;
+      const prog = card.dataset.progress
+        ? `<div class="ach-tooltip__progress">${t('ach_progress')}: ${_esc(card.dataset.progress)}</div>` : '';
+      tip.innerHTML = `<div class="ach-tooltip__name">${_esc(card.dataset.name)}</div><div class="ach-tooltip__desc">${_esc(card.dataset.desc)}</div>${prog}`;
       tip.style.display = 'block';
       const r  = card.getBoundingClientRect();
       const tw = tip.offsetWidth;
@@ -1280,6 +1360,7 @@ function _bindAchievementSheet() {
       <div id="ach-sheet-media"></div>
       <p class="ach-sheet__name" id="ach-sheet-name"></p>
       <p class="ach-sheet__desc" id="ach-sheet-desc"></p>
+      <p class="ach-sheet__progress" id="ach-sheet-progress"></p>
       <button class="ach-sheet__avatar-btn" id="ach-sheet-btn"></button>
     `;
     document.body.appendChild(sheet);
@@ -1320,6 +1401,11 @@ function _bindAchievementSheet() {
 
       document.getElementById('ach-sheet-name').textContent = card.dataset.name || '?';
       document.getElementById('ach-sheet-desc').textContent = card.dataset.desc || '';
+      const progEl = document.getElementById('ach-sheet-progress');
+      if (progEl) {
+        progEl.textContent  = card.dataset.progress ? `${t('ach_progress')}: ${card.dataset.progress}` : '';
+        progEl.style.display = card.dataset.progress ? '' : 'none';
+      }
 
       const btn = document.getElementById('ach-sheet-btn');
       btn.textContent  = t('ach_set_avatar');
