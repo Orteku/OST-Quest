@@ -1633,12 +1633,13 @@ body.theme--light .auth-btn__avatar { background: #4a6c10; color: #fff; }
 }
 .ach-cat__count { font-size: 11px; color: #55555f; font-variant-numeric: tabular-nums; }
 /* Compacta: flujo de iconos de ancho fijo (no rejilla) para que el hueco entre categorías pueda ser estrecho */
+/* Entre iconos: 13px. Entre categorías: el doble, porque el hueco (ancho 0) suma un espacio más del flex */
 .ach-cat__items--compact {
   display: flex; flex-wrap: wrap;
-  gap: 14px 10px;
+  gap: 14px 13px;
 }
-.ach-cat__items--compact .achievement-card { width: 84px; }
-.ach-compact-gap { width: 18px; flex-shrink: 0; }
+.ach-cat__items--compact .achievement-card { width: 68px; }
+.ach-compact-gap { width: 0; flex-shrink: 0; }
 /* Línea de puntos de lado a lado antes de los especiales */
 .ach-compact-sep {
   flex-basis: 100%;
