@@ -1632,11 +1632,20 @@ body.theme--light .auth-btn__avatar { background: #4a6c10; color: #fff; }
   text-transform: uppercase; color: #7a7a88;
 }
 .ach-cat__count { font-size: 11px; color: #55555f; font-variant-numeric: tabular-nums; }
+/* Compacta: flujo de iconos de ancho fijo (no rejilla) para que el hueco entre categorías pueda ser estrecho */
 .ach-cat__items--compact {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  display: flex; flex-wrap: wrap;
   gap: 14px 10px;
 }
+.ach-cat__items--compact .achievement-card { width: 84px; }
+.ach-compact-gap { width: 18px; flex-shrink: 0; }
+/* Línea de puntos de lado a lado antes de los especiales */
+.ach-compact-sep {
+  flex-basis: 100%;
+  border-top: 1px dashed #2c2c34;
+  margin: 4px 0;
+}
+body.theme--light .ach-compact-sep { border-color: #d0cec6; }
 .ach-cat__items--detailed {
   display: grid;
   grid-template-columns: 1fr 1fr;

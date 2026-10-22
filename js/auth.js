@@ -1262,6 +1262,20 @@ function _renderAchievementsHTML(unlocked, available) {
   const list = _achOnlyUnlocked() ? available.filter(a => unlockedIds.has(a.id)) : available;
   if (!list.length) return `<p class="achievements-grid__empty">${t('ach_none_unlocked')}</p>`;
 
+  // Compacta: una sola rejilla seguida, con un hueco entre categorías y la línea de puntos antes de los especiales
+  if (!detailed) {
+    const parts = _ACH_CATEGORIES
+      .map(cat => ({ cat, items: list.filter(a => _achCategory(a) === cat) }))
+      .filter(p => p.items.length)
+      .map((p, i) => {
+        const sep = i === 0 ? '' : p.cat === 'special'
+          ? `<div class="ach-compact-sep" aria-hidden="true"></div>`
+          : `<div class="ach-compact-gap" aria-hidden="true"></div>`;
+        return sep + p.items.map(_item).join('');
+      });
+    return `<div class="ach-cat__items ach-cat__items--compact">${parts.join('')}</div>`;
+  }
+
   return _ACH_CATEGORIES.map(cat => {
     const items = list.filter(a => _achCategory(a) === cat);
     if (!items.length) return '';
@@ -1272,7 +1286,7 @@ function _renderAchievementsHTML(unlocked, available) {
         <span class="ach-cat__title">${t('ach_cat_' + cat)}</span>
         <span class="ach-cat__count">${done}/${all.length}</span>
       </div>
-      <div class="ach-cat__items ach-cat__items--${detailed ? 'detailed' : 'compact'}">${items.map(_item).join('')}</div>
+      <div class="ach-cat__items ach-cat__items--detailed">${items.map(_item).join('')}</div>
     </section>`;
   }).join('');
 }
