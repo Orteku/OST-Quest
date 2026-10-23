@@ -10,11 +10,17 @@ let loadingCol     = -1;
 let gameFinished   = false;
 let _loadingToastTimer = null;
 
+// Logro oculto de rapidez: cuándo empezó a sonar cada canción y cuándo se pulsó una portada de su columna
+const FAST_GUESS_MS = 7000;
+let _heardAt  = [];
+let _pickedAt = [];
+
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function initGame(dateStr, archiveMode) {
   currentDateStr = dateStr;
   isArchiveMode  = archiveMode;
+  _heardAt = []; _pickedAt = [];
   gameFinished   = false;
   stopAudio();
   document.getElementById('gm-panel').style.display = 'none';
@@ -234,6 +240,8 @@ function togglePlay(gi) {
       }
     },
     () => {
+      // Ya suena de verdad (tras cargar): desde aquí cuenta el tiempo del logro de rapidez
+      _heardAt[gi] ??= performance.now();
       clearTimeout(_loadingToastTimer);
       _loadingToastTimer = null;
       hideToast();
@@ -378,6 +386,7 @@ function _initModalAudioPlayer(startSeconds = 0) {
 }
 
 function openGuessModal(gi, cv, ci) {
+  _pickedAt[gi] = performance.now();
   const asset    = currentGroups[gi].assets[ci];
   const lcv      = localizeGame(cv);
   const fallback = `https://placehold.co/400x400/1a1d25/b8e030?text=${encodeURIComponent(lcv.game)}`;
@@ -796,6 +805,12 @@ function _prewarmAnswerAudio(gi) {
 
 function resolveGuess(gi, pickedCv, pickedPos) {
   const correct = pickedCv.id === currentGroups[gi].answer.id;
+  // Logro oculto: acertar menos de 7 s después de que empiece a sonar (solo en la quest del día;
+  // pulsar sin haber escuchado no cuenta)
+  if (correct && !isArchiveMode && _heardAt[gi] && _pickedAt[gi] - _heardAt[gi] < FAST_GUESS_MS
+      && typeof authUnlockAchievement === 'function') {
+    authUnlockAchievement('easter_fast');
+  }
   colStates[gi].solved    = true;
   colStates[gi].pickedId  = pickedCv.id;
   colStates[gi].pickedPos = pickedPos ?? null;

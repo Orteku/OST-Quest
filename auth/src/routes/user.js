@@ -3,7 +3,7 @@ import { json } from '../lib/cors.js';
 import { issueToken } from './oauth.js';
 import { COUNTED_ACHIEVEMENT_IDS, checkServerAchievements } from '../lib/achievements.js';
 
-const CLIENT_UNLOCKABLE = ['easter_line', 'easter_wasted', 'easter_both', 'share'];
+const CLIENT_UNLOCKABLE = ['easter_line', 'easter_wasted', 'easter_both', 'easter_fast', 'easter_konami', 'share'];
 
 // Extrae y verifica el JWT del header Authorization
 export async function requireAuth(request, env) {

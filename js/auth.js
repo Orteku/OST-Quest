@@ -1216,6 +1216,87 @@ async function authSetAvatar(filename) {
   return data?.ok === true;
 }
 
+// ─── Código Konami (logro oculto) ─────────────────────────────────────────────
+// Se introduce en el mando que abre su "???" en el perfil, pulsando sus botones o con el teclado.
+const _KONAMI = 'up,up,down,down,left,right,left,right,b,a';
+let _konamiBuffer = [];
+
+function _konamiInput(key) {
+  _konamiBuffer = [..._konamiBuffer, key].slice(-10);
+  if (_konamiBuffer.join(',') !== _KONAMI) return false;
+  _konamiBuffer = [];
+  _unlockKonami();
+  return true;
+}
+
+async function _unlockKonami() {
+  _closeKonamiPad();
+  if (!_token) return;
+  await authUnlockAchievement('easter_konami');
+  if (_achGridRender) { _cachedAchievements = await authGetAchievements(); _achGridRender(); }
+}
+
+// El teclado solo cuenta con el mando abierto (igual que en móvil) y hunde el botón correspondiente
+document.addEventListener('keydown', e => {
+  const overlay = document.getElementById('konami-overlay');
+  if (!overlay?.classList.contains('is-open')) return;
+  if (e.key === 'Escape') { _closeKonamiPad(); return; }
+  const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', b: 'b', B: 'b', a: 'a', A: 'a' };
+  const key = map[e.key];
+  if (key) {
+    e.preventDefault();  // que las flechas no muevan la página
+    _pressPadButton(overlay.querySelector(`[data-k="${key}"]`));
+  }
+  _konamiInput(key || e.key);
+});
+
+function _pressPadButton(btn) {
+  if (!btn) return;
+  btn.classList.remove('is-pressed');
+  void btn.offsetWidth;  // reinicia la animación aunque se repita la misma tecla
+  btn.classList.add('is-pressed');
+}
+
+const _PAD_ARROW = `<svg viewBox="0 0 10 10" width="12" height="12" fill="currentColor" aria-hidden="true"><polygon points="5,1.5 9,8 1,8"/></svg>`;
+
+function _openKonamiPad() {
+  let overlay = document.getElementById('konami-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'konami-overlay';
+    overlay.className = 'konami-overlay';
+    overlay.innerHTML = `
+      <div class="konami-pad" role="dialog" aria-modal="true">
+        <button type="button" class="konami-pad__close" aria-label="${t('btn_close')}">&times;</button>
+        <div class="konami-pad__dpad">
+          <button type="button" class="konami-pad__dir konami-pad__dir--up"    data-k="up"    aria-label="↑">${_PAD_ARROW}</button>
+          <button type="button" class="konami-pad__dir konami-pad__dir--left"  data-k="left"  aria-label="←">${_PAD_ARROW}</button>
+          <span class="konami-pad__center"></span>
+          <button type="button" class="konami-pad__dir konami-pad__dir--right" data-k="right" aria-label="→">${_PAD_ARROW}</button>
+          <button type="button" class="konami-pad__dir konami-pad__dir--down"  data-k="down"  aria-label="↓">${_PAD_ARROW}</button>
+        </div>
+        <div class="konami-pad__ab">
+          <button type="button" class="konami-pad__btn" data-k="b">B</button>
+          <button type="button" class="konami-pad__btn" data-k="a">A</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay || e.target.closest('.konami-pad__close')) { _closeKonamiPad(); return; }
+      const btn = e.target.closest('[data-k]');
+      if (!btn) return;
+      _pressPadButton(btn);
+      _konamiInput(btn.dataset.k);
+    });
+  }
+  _konamiBuffer = [];
+  overlay.classList.add('is-open');
+}
+
+function _closeKonamiPad() {
+  document.getElementById('konami-overlay')?.classList.remove('is-open');
+}
+
 // Carga js/database.js bajo demanda (páginas que no lo incluyen, como el perfil)
 let _gameDbPromise = null;
 function _loadGameDb() {
@@ -1276,7 +1357,9 @@ function _renderAchievementsHTML(unlocked, available) {
     const icon = isHidden
       ? `<div class="achievement-card__mystery">?</div>`
       : `<img class="achievement-card__img" src="img/achievements/${_esc(a.image)}" alt="${name}" loading="lazy">`;
-    const attrs = `class="${cls}" data-id="${_esc(a.id)}" data-img="${isHidden ? '' : _esc(a.image)}" data-name="${name}" data-desc="${desc}" data-progress="${progText}"`;
+    // El "???" del código Konami abre un mando para introducirlo (la pista de que hay que hacer algo)
+    const konami = a.id === 'easter_konami' && !isUnlocked ? ' data-konami="1"' : '';
+    const attrs = `class="${cls}" data-id="${_esc(a.id)}" data-img="${isHidden ? '' : _esc(a.image)}" data-name="${name}" data-desc="${desc}" data-progress="${progText}"${konami}`;
 
     if (!detailed) return `<div ${attrs}>${icon}</div>`;
     const bar = prog
@@ -1373,6 +1456,10 @@ function _bindAchievementTooltip() {
     card.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
   });
 
+  document.querySelectorAll('.achievement-card[data-konami]').forEach(card => {
+    card.addEventListener('click', _openKonamiPad);
+  });
+
   document.querySelectorAll('.achievement-card--unlocked').forEach(card => {
     card.addEventListener('click', async () => {
       const img = card.dataset.img;
@@ -1440,6 +1527,7 @@ function _bindAchievementSheet() {
 
   document.querySelectorAll('.achievement-card').forEach(card => {
     card.addEventListener('click', () => {
+      if (card.dataset.konami) { _openKonamiPad(); return; }
       const img      = card.dataset.img || '';
       const unlocked = card.classList.contains('achievement-card--unlocked');
 

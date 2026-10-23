@@ -746,6 +746,20 @@ const ACHIEVEMENTS_DB = [
     en: { name: 'You are not prepared!', desc: 'At least you found a secret — something is something.' },
   },
   {
+    id:     'easter_fast',
+    hidden: true,
+    image:  'easter_fast.webp',
+    es: { name: 'Estamos a 7 segundos del fin', desc: 'Pues sí fue suficiente tiempo para ti.' },
+    en: { name: '7 seconds till the end', desc: 'Indeed time enough for you.' },
+  },
+  {
+    id:     'easter_konami',
+    hidden: true,
+    image:  'easter_konami.webp',
+    es: { name: 'A miserable little pile of secrets!', desc: '¡Has encontrado el código de una civilización antigua!' },
+    en: { name: 'A miserable little pile of secrets!', desc: 'You have found the code of an ancient civilization!' },
+  },
+  {
     id:     'easter_both',
     hidden: true,
     image:  'easter_both.webp',
