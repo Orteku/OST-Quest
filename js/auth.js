@@ -900,6 +900,17 @@ async function initProfilePage() {
 
     // Las estadísticas del servidor llegan aparte y dan el progreso de partidas y racha
     _achGridRender = renderGrid;
+
+    // Progreso de tags y compañías calculado aquí mismo, para que sea igual en cualquier dispositivo.
+    // Necesita la base de juegos (~100 KB), que el perfil no carga de inicio: solo se pide en segundo plano
+    // si hay algún logro de ese tipo visible y sin conseguir.
+    const have = new Set(_cachedAchievements.map(u => u.achievement_id));
+    if (available.some(a => /^(tag|track|dev)_/.test(a.id) && !have.has(a.id))) {
+      _loadGameDb()
+        .then(() => checkTagAchievements())
+        .then(async () => { _cachedAchievements = await authGetAchievements(); renderGrid(); })
+        .catch(() => {});
+    }
   }
 }
 
@@ -1201,6 +1212,19 @@ async function authSetAvatar(filename) {
   return data?.ok === true;
 }
 
+// Carga js/database.js bajo demanda (páginas que no lo incluyen, como el perfil)
+let _gameDbPromise = null;
+function _loadGameDb() {
+  if (typeof GAME_DB !== 'undefined') return Promise.resolve();
+  return _gameDbPromise ??= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'js/database.js';
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
 // Categorías de la sección de trofeos, en orden. Los especiales van al final, tras la línea de puntos.
 const _ACH_CATEGORIES = ['general', 'perfect', 'ranking', 'genre', 'music', 'company', 'secret', 'special'];
 function _achCategory(a) {
@@ -1218,8 +1242,14 @@ function _achProgress(id) {
     if (!counts?.[m[1]]) return null;
     return { cur: counts[m[1]][m[2]] || 0, goal: Number(m[3]) };
   }
-  if (id === 'played_30' && _serverStats) return { cur: _serverStats.played || 0, goal: 30 };
-  if (id === 'streak_7'  && _serverStats) return { cur: _serverStats.streak || 0, goal: 7 };
+  if (!_serverStats) return null;
+  if (id === 'played_30') return { cur: _serverStats.played || 0, goal: 30 };
+  if (id === 'streak_7')  return { cur: _serverStats.streak || 0, goal: 7 };
+  // Plenos y podio: el servidor los cuenta desde la fecha de inicio de estos logros
+  const sp = _serverStats.achievementProgress;
+  const perfect = id.match(/^perfect_(\d+)$/);
+  if (perfect && sp) return { cur: sp.perfect || 0, goal: Number(perfect[1]) };
+  if (id === 'week_top3_x3' && sp) return { cur: sp.top3Weeks || 0, goal: 3 };
   return null;
 }
 

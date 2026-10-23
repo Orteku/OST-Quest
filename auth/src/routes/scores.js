@@ -1,6 +1,6 @@
 import { json } from '../lib/cors.js';
 import { requireAuth } from './user.js';
-import { checkServerAchievements } from '../lib/achievements.js';
+import { checkServerAchievements, getServerProgress } from '../lib/achievements.js';
 
 const RESULTS_RE = /^[01]{3}$/;
 const DATE_RE    = /^\d{4}-\d{2}-\d{2}$/;
@@ -10,10 +10,13 @@ export async function handleGetStats(request, env, db) {
   const [payload, err] = await requireAuth(request, env);
   if (err) return err;
 
-  const stats = await db.calcStats(payload.sub);
+  const [stats, achievementProgress] = await Promise.all([
+    db.calcStats(payload.sub),
+    getServerProgress(db, payload.sub),  // plenos y semanas en el podio, para el progreso de los logros
+  ]);
   // Sincronizar racha en player_accounts si cambió
   await db.updateUser(payload.sub, { streak: stats.streak });
-  return json(stats, 200, request);
+  return json({ ...stats, achievementProgress }, 200, request);
 }
 
 // POST /scores  { gameDate, score, results: '101', stats: { streak } }

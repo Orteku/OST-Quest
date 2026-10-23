@@ -28,26 +28,31 @@ const PERFECT_LEVELS = [1, 10, 30, 50];
 const PERFECT_ACHIEVEMENTS_FROM = '2026-10-19';  // primera quest que cuenta para los plenos
 const WEEKLY_ACHIEVEMENTS_FROM  = '2026-10-19';  // primer lunes que cuenta para el ranking semanal
 
-// Devuelve los IDs que el usuario cumple y aún no tiene. `have` = Set de IDs ya desbloqueados.
-// Cada bloque va protegido: si falta la vista o la columna en Supabase, no rompe el envío de la puntuación.
-export async function checkServerAchievements(db, userId, have) {
-  const earned = [];
-
-  // Las dos consultas a la vez: el panel final espera a este envío para mostrar la posición
+// Contadores de los logros que concede el servidor (desde sus fechas de inicio).
+// Los usa checkServerAchievements y /scores/stats, para mostrar el progreso en el perfil.
+// Cada consulta va protegida: si falta la vista o la columna en Supabase, cuenta 0 y no rompe nada.
+export async function getServerProgress(db, userId) {
+  // Las dos consultas a la vez: el panel final espera al envío de la puntuación para mostrar la posición
   const [perfect, ranks] = await Promise.all([
     db.getPerfectOnTimeCount(userId, PERFECT_ACHIEVEMENTS_FROM)
       .catch(e => { console.error('perfect achievements:', e.message); return 0; }),
     db.getClosedWeekRanks(userId, WEEKLY_ACHIEVEMENTS_FROM)
       .catch(e => { console.error('weekly achievements:', e.message); return []; }),
   ]);
+  return {
+    perfect,
+    top1Weeks: ranks.filter(r => r === 1).length,
+    top3Weeks: ranks.filter(r => r <= 3).length,
+  };
+}
 
+// Devuelve los IDs que el usuario cumple y aún no tiene. `have` = Set de IDs ya desbloqueados.
+export async function checkServerAchievements(db, userId, have) {
+  const { perfect, top1Weeks, top3Weeks } = await getServerProgress(db, userId);
+  const earned = [];
   for (const n of PERFECT_LEVELS) if (perfect >= n) earned.push(`perfect_${n}`);
-
-  const top1 = ranks.filter(r => r === 1).length;
-  const top3 = ranks.filter(r => r <= 3).length;
-  if (top1 >= 1) earned.push('week_top1');
-  if (top3 >= 1) earned.push('week_top3');
-  if (top3 >= 3) earned.push('week_top3_x3');
-
+  if (top1Weeks >= 1) earned.push('week_top1');
+  if (top3Weeks >= 1) earned.push('week_top3');
+  if (top3Weeks >= 3) earned.push('week_top3_x3');
   return earned.filter(id => !have.has(id));
 }
