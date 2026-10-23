@@ -2835,6 +2835,7 @@ body.theme--light .legal-page li { color: #444450; }
 body.theme--light .legal-page a { color: #4a6c10; }
 
 /* ─── Mando del código Konami (logro oculto) ──────────────────────────────── */
+/* Inspirado en el mando de NES. Mismos colores en modo claro y oscuro: es un objeto con sus colores propios. */
 .konami-overlay {
   position: fixed; inset: 0; z-index: 9500;
   display: none; align-items: center; justify-content: center;
@@ -2843,57 +2844,93 @@ body.theme--light .legal-page a { color: #4a6c10; }
 .konami-overlay.is-open { display: flex; }
 .konami-pad {
   position: relative;
-  display: flex; align-items: center; justify-content: space-between; gap: 36px;
-  padding: 30px 34px;
-  background: #1a1a28; border: 1px solid #2c2c34; border-radius: 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  padding: 26px 16px 16px;
+  background: linear-gradient(#d4d4d4, #b9b9b9);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   user-select: none; -webkit-user-select: none; touch-action: manipulation;
 }
 .konami-pad__close {
-  position: absolute; top: 8px; right: 16px;
-  background: none; border: none; color: #55555f; font-size: 20px; cursor: pointer; line-height: 1;
+  position: absolute; top: 3px; right: 10px;
+  background: none; border: none; color: #6a6a6a; font-size: 20px; cursor: pointer; line-height: 1;
 }
-.konami-pad__close:hover { color: #ddd9cf; }
+.konami-pad__close:hover { color: #1e1e1e; }
+.konami-pad__face {
+  display: flex; align-items: center; gap: 26px;
+  padding: 22px 24px;
+  background: #262626; border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
 
-/* Cruceta: rejilla 3×3 con las cuatro direcciones en cruz */
+/* Cruceta negra con un relieve suave y el hoyuelo central */
 .konami-pad__dpad {
-  display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px);
+  display: grid; grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 34px);
+  filter: drop-shadow(0 0 0 #555) drop-shadow(0 2px 0 #000);
 }
-.konami-pad__dir, .konami-pad__center { background: #2c2c34; }
+.konami-pad__dir, .konami-pad__center { background: #121212; }
 .konami-pad__dir {
-  border: none; color: #9898a8; cursor: pointer;
+  border: none; color: #3a3a3a; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
-.konami-pad__dir--up    { grid-area: 1 / 2; border-radius: 8px 8px 0 0; }
-.konami-pad__dir--left  { grid-area: 2 / 1; border-radius: 8px 0 0 8px; }
-.konami-pad__center     { grid-area: 2 / 2; }
-.konami-pad__dir--right { grid-area: 2 / 3; border-radius: 0 8px 8px 0; }
-.konami-pad__dir--down  { grid-area: 3 / 2; border-radius: 0 0 8px 8px; }
+.konami-pad__dir--up    { grid-area: 1 / 2; border-radius: 4px 4px 0 0; }
+.konami-pad__dir--left  { grid-area: 2 / 1; border-radius: 4px 0 0 4px; }
+.konami-pad__center     { grid-area: 2 / 2; display: flex; align-items: center; justify-content: center; }
+.konami-pad__center span { width: 14px; height: 14px; border-radius: 50%; background: #0a0a0a; box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.12); }
+.konami-pad__dir--right { grid-area: 2 / 3; border-radius: 0 4px 4px 0; }
+.konami-pad__dir--down  { grid-area: 3 / 2; border-radius: 0 0 4px 4px; }
 .konami-pad__dir--left  svg { transform: rotate(-90deg); }
 .konami-pad__dir--right svg { transform: rotate(90deg); }
 .konami-pad__dir--down  svg { transform: rotate(180deg); }
-.konami-pad__dir:hover  { color: #ddd9cf; }
+.konami-pad__dir:hover  { color: #5a5a5a; }
 
-/* B y A en diagonal, como en los mandos clásicos */
-.konami-pad__ab { display: flex; align-items: flex-end; gap: 14px; height: 104px; }
-.konami-pad__btn {
-  width: 48px; height: 48px; border-radius: 50%;
-  border: none; cursor: pointer;
-  background: #b8e030; color: #16171a;
-  font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800;
-  box-shadow: 0 3px 0 #6f8a1a;
+/* Centro: franjas grises, rótulos rojos y los botones alargados de SELECT y START */
+.konami-pad__mid { display: flex; flex-direction: column; gap: 7px; width: 132px; }
+.konami-pad__stripe { height: 13px; border-radius: 3px; background: #9d9d9d; }
+.konami-pad__labels {
+  display: flex; justify-content: space-around;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  color: #d0212b;
 }
-.konami-pad__btn[data-k="a"] { align-self: flex-start; }
-.konami-pad__btn:hover { background: #c8f040; }
-.konami-pad__dir.is-pressed, .konami-pad__btn.is-pressed { animation: konami-press 0.15s ease; }
+.konami-pad__ss {
+  display: flex; justify-content: space-around; align-items: center;
+  height: 34px; border-radius: 5px; background: #c4c4c4;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.konami-pad__pill {
+  width: 40px; height: 13px; border-radius: 7px; border: none; cursor: pointer;
+  background: #151515; box-shadow: 0 2px 0 #000;
+}
+
+/* Derecha: rótulo en el sitio del logo del original (la pista) y, debajo, B y A */
+.konami-pad__right { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.konami-pad__brand {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800;
+  letter-spacing: 2px; color: #d0212b; line-height: 1;
+}
+
+/* B y A: botones rojos sobre casillas grises, con su letra roja debajo */
+.konami-pad__ab { display: flex; gap: 12px; }
+.konami-pad__key { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.konami-pad__tile {
+  display: flex; align-items: center; justify-content: center;
+  width: 54px; height: 54px; border-radius: 5px; background: #c4c4c4;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.konami-pad__btn {
+  width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer;
+  background: radial-gradient(circle at 40% 35%, #f0414a, #c8141f 70%);
+  box-shadow: 0 3px 0 #7d0b12;
+}
+.konami-pad__btn:hover { filter: brightness(1.08); }
+.konami-pad__letter {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800; color: #d0212b;
+}
+
+.konami-pad__dir.is-pressed, .konami-pad__btn.is-pressed, .konami-pad__pill.is-pressed { animation: konami-press 0.15s ease; }
 @keyframes konami-press { 50% { transform: scale(0.88); } }
 
-body.theme--light .konami-pad { background: #f4f4ec; border-color: #d0ccc4; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); }
-body.theme--light .konami-pad__dir, body.theme--light .konami-pad__center { background: #d8d5ce; }
-body.theme--light .konami-pad__dir { color: #6a6878; }
-body.theme--light .konami-pad__dir:hover { color: #1e1d28; }
-body.theme--light .konami-pad__btn { background: #4a6c10; color: #fff; box-shadow: 0 3px 0 #2f4508; }
-body.theme--light .konami-pad__btn:hover { background: #3a5c00; }
-body.theme--light .konami-pad__close { color: #9898a8; }
+/* En pantallas estrechas el mando se reduce entero para que quepa sin perder su forma */
+@media (max-width: 520px) { .konami-pad { transform: scale(0.68); } }
+
 .achievement-card[data-konami] { cursor: pointer; }
 

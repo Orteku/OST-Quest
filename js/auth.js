@@ -1265,19 +1265,35 @@ function _openKonamiPad() {
     overlay = document.createElement('div');
     overlay.id = 'konami-overlay';
     overlay.className = 'konami-overlay';
+    // Inspirado en el mando de NES: cuerpo gris claro, panel oscuro, cruceta negra, SELECT/START y B/A rojos
     overlay.innerHTML = `
       <div class="konami-pad" role="dialog" aria-modal="true">
         <button type="button" class="konami-pad__close" aria-label="${t('btn_close')}">&times;</button>
-        <div class="konami-pad__dpad">
-          <button type="button" class="konami-pad__dir konami-pad__dir--up"    data-k="up"    aria-label="↑">${_PAD_ARROW}</button>
-          <button type="button" class="konami-pad__dir konami-pad__dir--left"  data-k="left"  aria-label="←">${_PAD_ARROW}</button>
-          <span class="konami-pad__center"></span>
-          <button type="button" class="konami-pad__dir konami-pad__dir--right" data-k="right" aria-label="→">${_PAD_ARROW}</button>
-          <button type="button" class="konami-pad__dir konami-pad__dir--down"  data-k="down"  aria-label="↓">${_PAD_ARROW}</button>
-        </div>
-        <div class="konami-pad__ab">
-          <button type="button" class="konami-pad__btn" data-k="b">B</button>
-          <button type="button" class="konami-pad__btn" data-k="a">A</button>
+        <div class="konami-pad__face">
+          <div class="konami-pad__dpad">
+            <button type="button" class="konami-pad__dir konami-pad__dir--up"    data-k="up"    aria-label="↑">${_PAD_ARROW}</button>
+            <button type="button" class="konami-pad__dir konami-pad__dir--left"  data-k="left"  aria-label="←">${_PAD_ARROW}</button>
+            <span class="konami-pad__center"><span></span></span>
+            <button type="button" class="konami-pad__dir konami-pad__dir--right" data-k="right" aria-label="→">${_PAD_ARROW}</button>
+            <button type="button" class="konami-pad__dir konami-pad__dir--down"  data-k="down"  aria-label="↓">${_PAD_ARROW}</button>
+          </div>
+          <div class="konami-pad__mid">
+            <span class="konami-pad__stripe"></span>
+            <span class="konami-pad__stripe"></span>
+            <div class="konami-pad__labels"><span>SELECT</span><span>START</span></div>
+            <div class="konami-pad__ss">
+              <button type="button" class="konami-pad__pill" data-k="select" aria-label="Select"></button>
+              <button type="button" class="konami-pad__pill" data-k="start"  aria-label="Start"></button>
+            </div>
+            <span class="konami-pad__stripe"></span>
+          </div>
+          <div class="konami-pad__right">
+            <span class="konami-pad__brand" aria-hidden="true">KONAMI</span>
+            <div class="konami-pad__ab">
+              <div class="konami-pad__key"><span class="konami-pad__tile"><button type="button" class="konami-pad__btn" data-k="b" aria-label="B"></button></span><span class="konami-pad__letter">B</span></div>
+              <div class="konami-pad__key"><span class="konami-pad__tile"><button type="button" class="konami-pad__btn" data-k="a" aria-label="A"></button></span><span class="konami-pad__letter">A</span></div>
+            </div>
+          </div>
         </div>
       </div>`;
     document.body.appendChild(overlay);
