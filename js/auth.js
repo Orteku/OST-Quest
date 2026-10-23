@@ -92,8 +92,7 @@ async function authInit() {
       if (!data.username) { openUsernameModal(); return; }
       // En segundo plano: el juego no la espera para arrancar (ver authWhenRestored)
       _restorePromise = _restoreFromServer().catch(() => false);
-      _migrateIfNeeded();
-      _backfillAchievements();
+      _syncAfterLogin();
     } else if (!data.__networkError) {
       // Solo cerrar sesión si el servidor rechazó el token (401/403), no por error de red
       _clearSession();
@@ -171,8 +170,7 @@ async function _handleNewToken(token) {
       && currentDateStr === getGameDay() && !isArchiveMode) {
     initGame(currentDateStr, false);
   }
-  _migrateIfNeeded();
-  _backfillAchievements();
+  _syncAfterLogin();
   if (window.PROFILE_PAGE) initProfilePage();
 }
 
@@ -475,7 +473,7 @@ async function _saveUsername() {
   localStorage.setItem(_USER_KEY, JSON.stringify(_profile));
   _renderAuthBtn();
   closeAuthModal();
-  _migrateIfNeeded();
+  _syncAfterLogin();
 }
 
 // ─── Sign out ─────────────────────────────────────────────────────────────────
@@ -644,6 +642,12 @@ const _SYNC_KEY = 'ostquest_synced'; // legacy, se mantiene para _signOut
 
 function _syncKey() {
   return _profile?.id ? `ostquest_synced_${_profile.id}` : _SYNC_KEY;
+}
+
+// Primero sube lo jugado sin cuenta y después comprueba logros: si van a la vez, la comprobación
+// llega antes que las partidas migradas y no las ve (p. ej. un pleno hecho antes de iniciar sesión)
+function _syncAfterLogin() {
+  _migrateIfNeeded().catch(() => {}).then(_backfillAchievements);
 }
 
 async function _migrateIfNeeded() {
