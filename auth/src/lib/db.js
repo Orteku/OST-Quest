@@ -62,8 +62,31 @@ export function createDb(env) {
       return check(await supabase.from('scores').upsert(data, { onConflict: 'user_id,game_date' }));
     },
     // Migración: nunca pisa resultados que ya estén en el servidor
+    // Devuelve solo las fechas realmente añadidas (las que ya existían se ignoran)
     async upsertScores(rows) {
-      return check(await supabase.from('scores').upsert(rows, { onConflict: 'user_id,game_date', ignoreDuplicates: true }));
+      return (check(await supabase.from('scores')
+        .upsert(rows, { onConflict: 'user_id,game_date', ignoreDuplicates: true })
+        .select('game_date')) || []).map(r => r.game_date);
+    },
+    // Recalcula la bonificación de racha (+10 con 2 o más días seguidos jugados en su día) desde fromDate.
+    // Mismo criterio que al enviar una partida; las partidas fuera de plazo no forman racha ni se tocan.
+    async recalcStreakBonuses(userId, fromDate) {
+      const rows = await check(await supabase.from('scores')
+        .select('game_date, played_at, points, streak_bonus')
+        .eq('user_id', userId).order('game_date', { ascending: true }));
+      const nextDay = ds => { const d = new Date(ds + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
+      let streak = 0, prev = null;
+      for (const r of rows || []) {
+        if (!this._isOnTime(r.game_date, r.played_at)) continue;
+        streak = prev && nextDay(prev) === r.game_date ? streak + 1 : 1;
+        prev = r.game_date;
+        if (r.game_date < fromDate) continue;
+        const bonus = streak >= 2 ? 10 : 0;
+        if (bonus === r.streak_bonus) continue;
+        await check(await supabase.from('scores')
+          .update({ streak_bonus: bonus, total_points: (r.points || 0) + bonus })
+          .eq('user_id', userId).eq('game_date', r.game_date));
+      }
     },
     async getScoreHistory(userId) {
       return check(await supabase.from('scores')

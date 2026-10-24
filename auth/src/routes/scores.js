@@ -106,34 +106,28 @@ export async function handleMigrateScores(request, env, db) {
   const { played } = body;
   if (!played || typeof played !== 'object') return json({ error: 'invalid_played' }, 400, request);
 
-  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-  const dates = Object.keys(played).filter(d => DATE_RE.test(d)).sort();
-  let last = null, streakLocal = 0;
+  // Solo partidas jugadas en su día (ts = momento en que se jugó): las del Quest Log no suman puntos
   const rows = [];
-
-  for (const date of dates) {
+  for (const date of Object.keys(played).filter(d => DATE_RE.test(d))) {
     const res = played[date];
-    if (res?.score === undefined) continue;
-    const prevNext = last
-      ? (() => { const d = new Date(last + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); })()
-      : null;
-    streakLocal = (prevNext === date) ? streakLocal + 1 : 1;
-    const pts      = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
-    const bonus    = streakLocal >= 2 ? 10 : 0;
-    // ts = Date.now() guardado en localStorage cuando el usuario jugó la quest
-    const playedAt = res.ts ? new Date(res.ts).toISOString() : null;
-    rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: bonus, total_points: pts + bonus, played_at: playedAt });
-    last = date;
+    if (![0, 1, 2, 3].includes(res?.score) || !res.ts) continue;
+    const playedAt = new Date(res.ts).toISOString();
+    if (!db._isOnTime(date, playedAt)) continue;
+    const pts = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
+    rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: 0, total_points: pts, played_at: playedAt });
   }
 
-  if (rows.length) {
-    await db.upsertScores(rows);
-    // Racha calculada desde la BD, no desde el historial del cliente
+  // Nunca pisa lo que ya hay en el servidor; solo añade lo que falta
+  const added = rows.length ? await db.upsertScores(rows) : [];
+  if (added.length) {
+    // La bonificación de racha se recalcula desde el primer día añadido (también la de los días siguientes,
+    // que se calcularon sin él) y la racha se actualiza desde la BD
+    await db.recalcStreakBonuses(payload.sub, added.sort()[0]);
     const streak = await db.calcStreakFromScores(payload.sub);
     await db.updateUser(payload.sub, { streak });
   }
 
-  return json({ ok: true, migrated: rows.length }, 200, request);
+  return json({ ok: true, migrated: added.length }, 200, request);
 }
 
 // GET /scores/history — todas las partidas del usuario, para restaurar el estado en un navegador nuevo

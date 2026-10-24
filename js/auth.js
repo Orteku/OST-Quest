@@ -39,6 +39,7 @@ const _mePrefetch = _savedJwt ? _apiFetch('/auth/me', 'GET', null, _savedJwt) : 
 function _saveSession(token, user) {
   _token   = token;
   _profile = user;
+  _historyPromise = null;  // el historial guardado era de la sesión anterior
   localStorage.setItem(_JWT_KEY,  token);
   localStorage.setItem(_USER_KEY, JSON.stringify(user));
 }
@@ -46,6 +47,7 @@ function _saveSession(token, user) {
 function _clearSession() {
   _token   = null;
   _profile = null;
+  _historyPromise = null;
   localStorage.removeItem(_JWT_KEY);
   localStorage.removeItem(_USER_KEY);
 }
@@ -107,9 +109,15 @@ async function authInit() {
 // Recupera del servidor lo ya jugado. Sin esto, un navegador nuevo (otro móvil, navegador integrado
 // de una app, almacenamiento borrado…) mostraría el historial vacío y dejaría repetir la quest del día.
 // Devuelve true si ha reconstruido la quest de hoy.
+// Historial del servidor, pedido una sola vez por carga de página (lo usan la recuperación y la subida)
+let _historyPromise = null;
+function _getServerHistory() {
+  return _historyPromise ??= _apiFetch('/scores/history').then(h => Array.isArray(h) ? h : null);
+}
+
 async function _restoreFromServer() {
   if (!_token || typeof loadPlayedDays !== 'function') return false;
-  const history = await _apiFetch('/scores/history');
+  const history = await _getServerHistory();
   if (!Array.isArray(history) || !history.length) return false;
 
   const played = loadPlayedDays();
@@ -501,8 +509,6 @@ async function _saveUsername() {
 // ─── Sign out ─────────────────────────────────────────────────────────────────
 
 function _signOut() {
-  if (_profile?.id) localStorage.removeItem(`ostquest_synced_${_profile.id}`);
-  localStorage.removeItem(_SYNC_KEY); // legacy
   _clearSession();
   if (window.PROFILE_PAGE) { window.location.href = 'index.html'; return; }
   _renderAuthBtn();
@@ -659,33 +665,29 @@ async function checkTagAchievements() {
 
 // ─── Migración de localStorage ────────────────────────────────────────────────
 
-// Clave por usuario para que cada cuenta tenga su propio estado de migración
-const _SYNC_KEY = 'ostquest_synced'; // legacy, se mantiene para _signOut
-
-function _syncKey() {
-  return _profile?.id ? `ostquest_synced_${_profile.id}` : _SYNC_KEY;
-}
-
 // Primero sube lo jugado sin cuenta y después comprueba logros: si van a la vez, la comprobación
 // llega antes que las partidas migradas y no las ve (p. ej. un pleno hecho antes de iniciar sesión)
 function _syncAfterLogin() {
   _migrateIfNeeded().catch(() => {}).then(_backfillAchievements);
 }
 
+// Sube al servidor las partidas jugadas en su día que aún no tenga (p. ej. jugadas sin sesión iniciada).
+// Se comprueba en cada carga con sesión: antes era una sola vez por dispositivo y las posteriores se perdían.
+// Las del Quest Log no se suben: no deben sumar puntos.
 async function _migrateIfNeeded() {
-  if (!_token || !_profile?.id) return;
-  if (localStorage.getItem(_syncKey())) return;
+  if (!_token || !_profile?.id || typeof loadPlayedDays !== 'function') return;
+  const history = await _getServerHistory();
+  if (!history) return;
+  const onServer = new Set(history.map(r => r.game_date));
 
-  const played = loadPlayedDays();
-  const dates  = Object.keys(played);
-  if (!dates.length) { localStorage.setItem(_syncKey(), '1'); return; }
+  const missing = Object.fromEntries(Object.entries(loadPlayedDays()).filter(([date, r]) =>
+    !onServer.has(date) && r?.ts && getGameDay(new Date(r.ts)) === date));
+  if (!Object.keys(missing).length) return;
 
-  const data = await _apiFetch('/scores/migrate', 'POST', { played });
-  if (data?.error) return; // no marcar como hecho si el servidor falló
+  const data = await _apiFetch('/scores/migrate', 'POST', { played: missing });
   if ((data?.migrated ?? 0) > 0 && typeof showToast === 'function') {
     showToast(t('auth_migration_done'));
   }
-  localStorage.setItem(_syncKey(), '1');
 }
 
 async function getUserWeeklyPosition() {
