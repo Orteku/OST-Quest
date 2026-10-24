@@ -231,6 +231,19 @@ function _loadLocalStats() {
   try { return JSON.parse(localStorage.getItem('ostquest_stats')) || {}; } catch { return {}; }
 }
 
+// Estadísticas del servidor: las últimas guardadas en este navegador (al instante) y la actualización.
+// Las locales solo conocen lo jugado en este dispositivo (p. ej. la racha se reinicia al cambiar de móvil a ordenador).
+function _cachedServerStats() {
+  try { return JSON.parse(localStorage.getItem(`ostquest_server_stats_${_profile?.id}`)) || null; } catch { return null; }
+}
+async function _refreshServerStats() {
+  const stats = await _apiFetch('/scores/stats');
+  if (!stats || stats.error || stats.__networkError) return null;
+  _serverStats = stats;
+  try { localStorage.setItem(`ostquest_server_stats_${_profile?.id}`, JSON.stringify(stats)); } catch {}
+  return stats;
+}
+
 function _openDrop() {
   const existing = document.getElementById('auth-drop');
   if (existing) { existing.remove(); return; }
@@ -240,7 +253,7 @@ function _openDrop() {
   drop.id        = 'auth-drop';
   drop.className = 'auth-drop auth-drop--card';
 
-  const stats   = _loadLocalStats();
+  const stats   = _cachedServerStats() || _loadLocalStats();
   const initial = (_profile.username || '?')[0].toUpperCase();
 
   drop.innerHTML = `
@@ -260,8 +273,8 @@ function _openDrop() {
           </div>
         </div>
         <div class="auth-drop__drop-stats">
-          <span class="auth-drop__drop-stat">⚡ ${t('stat_streak_short')} <strong>${stats.streak || 0}</strong></span>
-          <span class="auth-drop__drop-stat">🎮 ${t('stat_played')} <strong>${stats.played || 0}</strong></span>
+          <span class="auth-drop__drop-stat">⚡ ${t('stat_streak_short')} <strong id="auth-drop-streak">${stats.streak || 0}</strong></span>
+          <span class="auth-drop__drop-stat">🎮 ${t('stat_played')} <strong id="auth-drop-played">${stats.played || 0}</strong></span>
         </div>
       </div>
     </div>
@@ -274,6 +287,15 @@ function _openDrop() {
     </div>
   `;
   document.body.appendChild(drop);
+
+  // Racha y partidas del servidor (iguales en todos los dispositivos)
+  _refreshServerStats().then(s => {
+    if (!s) return;
+    const streakEl = document.getElementById('auth-drop-streak');
+    const playedEl = document.getElementById('auth-drop-played');
+    if (streakEl) streakEl.textContent = s.streak || 0;
+    if (playedEl) playedEl.textContent = s.played || 0;
+  });
 
   // Cargar logros recientes en segundo plano
   if (_token && typeof ACHIEVEMENTS_DB !== 'undefined') {
@@ -824,18 +846,15 @@ async function initProfilePage() {
   // Todo se pinta al momento con lo que ya se sabe y se actualiza cuando llegan los datos del servidor.
   // (El perfil ya lo acaba de pedir authInit / _handleNewToken.)
   const hasAch    = typeof ACHIEVEMENTS_DB !== 'undefined';
-  const statsKey  = `ostquest_server_stats_${_profile.id}`;
   const renderCard = () => { if (cardEl) cardEl.innerHTML = _renderProfileCardHTML(_cachedAchievements); };
   const availableP = hasAch ? getAvailableAchievements() : null;  // en paralelo con los logros del usuario
 
   // Últimas estadísticas del servidor guardadas en este navegador (si no hay, la tarjeta usa las locales)
-  try { _serverStats = JSON.parse(localStorage.getItem(statsKey)) || null; } catch { _serverStats = null; }
+  _serverStats = _cachedServerStats();
   renderCard();
 
-  _apiFetch('/scores/stats').then(stats => {
-    if (!stats || stats.error || stats.__networkError) return;
-    _serverStats = stats;
-    try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
+  _refreshServerStats().then(stats => {
+    if (!stats) return;
     renderCard();
     _achGridRender?.();
   });
