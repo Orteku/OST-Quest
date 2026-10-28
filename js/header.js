@@ -24,7 +24,7 @@ function _siteHeaderHTML() {
   return `
   <header class="site-header">
     <div class="site-header__left">
-      <a href="index.html"><img src="img/banner.png" alt="Oesti Quest" class="site-banner"></a>
+      <a href="/"><img src="img/banner.png" alt="Oesti Quest" class="site-banner"></a>
       <div class="site-header__brand">
         <span id="special-event-label" hidden></span>
         <span class="site-tagline" data-i18n="tagline">Adivina la OST</span>
@@ -291,7 +291,7 @@ function openArchive() {
   document.querySelectorAll('.archive__item').forEach(li => {
     li.addEventListener('click', () => {
       const ds = li.dataset.date;
-      if (typeof openArchiveDay !== 'function') { location.href = 'index.html?date=' + ds; return; }
+      if (typeof openArchiveDay !== 'function') { location.href = '/?date=' + ds; return; }
       closeModal();
       openArchiveDay(ds);
     });
@@ -445,7 +445,7 @@ siteI18nReady.then(() => {
   document.getElementById('btn-archive')?.addEventListener('click', openArchive);
   document.getElementById('btn-today')?.addEventListener('click', () => {
     if (typeof goToToday === 'function') goToToday();
-    else location.href = 'index.html';
+    else location.href = '/';
   });
 
   // Clic fuera del modal lo cierra

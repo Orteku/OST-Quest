@@ -510,7 +510,7 @@ async function _saveUsername() {
 
 function _signOut() {
   _clearSession();
-  if (window.PROFILE_PAGE) { window.location.href = 'index.html'; return; }
+  if (window.PROFILE_PAGE) { window.location.href = '/'; return; }
   _renderAuthBtn();
 }
 
@@ -995,7 +995,7 @@ function _bindProfilePageEvents() {
     if (!ok) return;
     await _apiFetch('/auth/account', 'DELETE');
     _signOut();
-    window.location.href = 'index.html';
+    window.location.href = '/';
   });
 }
 
