@@ -5,6 +5,9 @@ let gameVolume = 80; // 0-100
 function setGameVolume(vol) {
   gameVolume = Math.max(0, Math.min(100, vol));
   if (_audioEl) _audioEl.volume = gameVolume / 100;
+  // El reproductor del modal es un <audio> aparte
+  const modalAudio = document.querySelector('.modal-player__audio');
+  if (modalAudio) modalAudio.volume = gameVolume / 100;
   localStorage.setItem('ostquest_vol', gameVolume);
 }
 

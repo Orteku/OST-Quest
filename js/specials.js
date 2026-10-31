@@ -21,6 +21,7 @@ const SPECIAL_EVENTS = [
   },
   {
     date:    "10-31",
+    dateTo:  "11-01",
     label:   "Halloween",
     name:    "Halloween",
     color:   "#E8720C",

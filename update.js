@@ -35,7 +35,7 @@ console.log(`📦 Base de datos cargada: ${GAME_DB.length} juegos`);
 
 // ── Cargar eventos especiales ─────────────────────────────────────────────────
 
-const { getSpecialForDate, hasGameData } = require('./specials.js');
+const { getSpecialForDate, hasGameData } = require('./js/specials.js');
 
 // ── Cargar algoritmo compartido ───────────────────────────────────────────────
 
@@ -192,16 +192,24 @@ let generated = 0;
 
 const _todayGameSpecial = (() => { const s = getSpecialForDate(today); return s && hasGameData(s) ? s : null; })();
 
-// 1. Preservar días pasados. Hoy se preserva solo si NO es especial con pool de juego.
+// Hoy solo se regenera si es especial y su quest aún no es del especial (p. ej. evento añadido el mismo día).
+// Si ya lo es, puede haberse jugado: cambiarla descuadraría los resultados de quien ya ha jugado.
+const _todayNeedsSpecial = (() => {
+  if (!_todayGameSpecial) return false;
+  const poolIds = new Set(getPoolForDate(today).map(g => g.id));
+  return !(existing[today] || []).length || existing[today].some(g => !poolIds.has(g.answerId));
+})();
+
+// 1. Preservar días pasados y hoy, salvo que haya que pasar hoy al especial.
 for (const [dateStr, game] of Object.entries(existing)) {
-  if (dateStr < today || (dateStr === today && !_todayGameSpecial)) {
+  if (dateStr < today || (dateStr === today && !_todayNeedsSpecial)) {
     result[dateStr] = game;
     preserved++;
   }
 }
 
-// 2. Regenerar hoy si es especial con pool de juego
-if (_todayGameSpecial) {
+// 2. Regenerar hoy si hay que pasarlo al especial
+if (_todayNeedsSpecial) {
   result[today] = generateGameForDate(today, getPoolForDate(today));
   generated++;
 }
