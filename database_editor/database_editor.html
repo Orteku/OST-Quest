@@ -321,7 +321,7 @@
     .mp3-link[href]:hover { opacity: 0.75; }
     button.btn-playing { background: #22c55e; border-color: #22c55e; color: #000; }
     .track-btns { display: flex; gap: 4px; align-items: end; }
-    .meta-fields select { width: 100%; min-width: 0; }
+    .meta-fields select, .year-input { width: 100%; min-width: 0; }
     .compact select { padding: 6px 8px; }
     input.field-error { border-color: var(--danger) !important; }
     input.field-warn  { border-color: var(--warn) !important; }
@@ -514,6 +514,11 @@
     .special-color { width: 38px; height: 34px; padding: 2px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
     .special-date { width: 130px; font-family: ui-monospace, monospace; font-size: 13px; }
     .special-date-sep { color: var(--muted); }
+    .date-combo { position: relative; display: inline-flex; align-items: center; }
+    .date-combo .special-date { padding-right: 30px; }
+    .date-pick-btn { position: absolute; right: 2px; width: 26px; height: 26px; padding: 0; border: none; background: transparent; font-size: 14px; line-height: 1; cursor: pointer; opacity: .7; }
+    .date-pick-btn:hover { opacity: 1; }
+    .date-picker-hidden { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
     .special-name { width: 140px; }
     .special-label { flex: 1; min-width: 120px; }
     .special-card-body { display: flex; flex-direction: column; gap: 10px; }
@@ -645,7 +650,7 @@
       <div class="add-row1">
         <label><span>Juego</span><input id="newGame" placeholder="Nombre del juego" /></label>
         <label><span>Cover URL</span><input id="newCover" class="field-cover" placeholder="https://..." /></label>
-        <label><span>Año</span><select id="newYear"></select></label>
+        <label><span>Año</span><input id="newYear" class="year-input" list="yearOptions" inputmode="numeric" maxlength="4" autocomplete="off" /></label>
         <label><span>Pop (1–6)</span><input id="newPop" type="number" min="1" max="6" step="1" value="5" /></label>
         <label><span>Desarrollador</span><input id="newDeveloper" placeholder="Estudio o publisher (opcional)" /></label>
       </div>
@@ -912,15 +917,6 @@
     }));
   }
 
-  function yearSelectHtml(selected) {
-    const cur = new Date().getFullYear();
-    let opts = '';
-    for (let y = cur; y >= 1970; y--) {
-      opts += `<option value="${y}"${Number(selected) === y ? ' selected' : ''}>${y}</option>`;
-    }
-    return opts;
-  }
-
   function getAllTags() {
     const set = new Set();
     db.forEach(item => (item.tags || []).forEach(t => set.add(t)));
@@ -1101,7 +1097,7 @@
           <label><span>Juego</span><input class="game-input" data-field="game" value="${escapeHtml(item.game)}" /></label>
           <label><span>Cover URL</span><input class="field-cover" data-field="cover" value="${escapeHtml(item.cover)}" placeholder="https://..." /></label>
           <button class="small" data-action="reloadCover">↺ Cover</button>
-          <label><span>Año</span><select data-field="year">${yearSelectHtml(item.year)}</select></label>
+          <label><span>Año</span><input class="year-input" data-field="year" list="yearOptions" inputmode="numeric" maxlength="4" autocomplete="off" value="${escapeHtml(item.year || '')}" /></label>
           <label><span>Pop</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
           <label style="grid-column:1/-1"><span>Desarrollador</span><input data-field="developer" value="${escapeHtml(item.developer || '')}" placeholder="Estudio o publisher (opcional)" /></label>
         </div>
@@ -1277,6 +1273,7 @@
         _addToIdx(_coverIdx, newCoverUrl, index);
         revalidateByIndices(new Set([...oldCoverRows, ...(_coverIdx.get(newCoverUrl) || []), index]), 'cover');
       } else {
+        if (field === "year" && !/^\d{4}$/.test(String(value).trim())) { input.value = db[index].year || ""; return; }
         if (["pop", "year"].includes(field)) value = Number(value) || 0;
         if (field === "pop") value = Math.max(1, Math.min(6, value));
         const oldGyKey  = (field === "game" || field === "year") ? _gyKey(db[index].game, db[index].year) : null;
@@ -1581,9 +1578,28 @@
   ["newCover", "newMp3Url", "newGame", "newYear"].forEach(id => $(id).addEventListener("change", validateNewForm));
 
   (function() {
-    const sel = $("newYear"); const cur = new Date().getFullYear();
-    for (let y = cur; y >= 1970; y--) { const o = document.createElement('option'); o.value = o.textContent = y; if (y === cur) o.selected = true; sel.appendChild(o); }
+    const dl = document.createElement('datalist');
+    dl.id = 'yearOptions';
+    for (let y = new Date().getFullYear() + 1; y >= 1970; y--) { const o = document.createElement('option'); o.value = y; dl.appendChild(o); }
+    document.body.appendChild(dl);
+    $("newYear").value = new Date().getFullYear();
   })();
+
+  // Con datalist el navegador filtra las opciones por el texto del campo; se vacía al enfocar
+  // para que el desplegable muestre todos los años, y se restaura al salir sin cambios.
+  document.addEventListener("focusin", e => {
+    const el = e.target;
+    if (!el.classList?.contains("year-input")) return;
+    el.dataset.prev = el.value;
+    el.placeholder = el.value;
+    el.value = "";
+  });
+  document.addEventListener("focusout", e => {
+    const el = e.target;
+    if (!el.classList?.contains("year-input")) return;
+    if (!/^\d{4}$/.test(el.value.trim())) el.value = el.dataset.prev || "";
+    el.placeholder = "";
+  });
 
   $("toggleAdd").addEventListener("click", () => {
     $("addPanel").classList.toggle("open");
@@ -2495,9 +2511,17 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
       <div class="special-card-header">
         <input type="color" class="special-color" data-field="color" data-index="${i}" value="${escapeHtml(ev.color || '#888888')}" title="Color del evento" />
-        <input class="special-date" data-field="date" data-index="${i}" placeholder="YYYY-MM-DD o MM-DD" value="${escapeHtml(ev.date || '')}" title="Fecha de inicio: exacta o anual (MM-DD)" />
+        <span class="date-combo">
+          <input class="special-date" data-field="date" data-index="${i}" placeholder="YYYY-MM-DD o MM-DD" value="${escapeHtml(ev.date || '')}" title="Fecha de inicio: exacta o anual (MM-DD)" />
+          <button type="button" class="date-pick-btn" data-action="pickDate" title="Elegir en calendario">📅</button>
+          <input type="date" class="date-picker-hidden" tabindex="-1" aria-hidden="true" />
+        </span>
         <span class="special-date-sep">→</span>
-        <input class="special-date" data-field="dateTo" data-index="${i}" placeholder="Fin (opcional)" value="${escapeHtml(ev.dateTo || '')}" title="Fecha de fin opcional, mismo formato que la de inicio. Vacío = solo un día" />
+        <span class="date-combo">
+          <input class="special-date" data-field="dateTo" data-index="${i}" placeholder="Fin (opcional)" value="${escapeHtml(ev.dateTo || '')}" title="Fecha de fin opcional, mismo formato que la de inicio. Vacío = solo un día" />
+          <button type="button" class="date-pick-btn" data-action="pickDate" title="Elegir en calendario">📅</button>
+          <input type="date" class="date-picker-hidden" tabindex="-1" aria-hidden="true" />
+        </span>
         <input class="special-name" data-field="name" data-index="${i}" placeholder="Nombre corto" value="${escapeHtml(ev.name || '')}" />
         <input class="special-label" data-field="label" data-index="${i}" placeholder="Nombre completo" value="${escapeHtml(ev.label || '')}" />
         <button class="small danger" data-action="removeSpecial" data-index="${i}">✕</button>
@@ -2556,7 +2580,28 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     $("specialsDirtyPill").style.display = '';
   });
 
+  $("specialsList").addEventListener("change", e => {
+    const picker = e.target.closest(".date-picker-hidden");
+    if (!picker || !picker.value) return;
+    const text = picker.closest(".date-combo").querySelector(".special-date");
+    // si el campo estaba en formato anual (MM-DD), se conserva anual
+    text.value = /^\d{2}-\d{2}$/.test(text.value.trim()) ? picker.value.slice(5) : picker.value;
+    text.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+
   $("specialsList").addEventListener("click", e => {
+    const pick = e.target.closest("[data-action='pickDate']");
+    if (pick) {
+      const combo  = pick.closest(".date-combo");
+      const text   = combo.querySelector(".special-date").value.trim();
+      const picker = combo.querySelector(".date-picker-hidden");
+      const year   = new Date().getFullYear();
+      picker.value = /^\d{4}-\d{2}-\d{2}$/.test(text) ? text
+                   : /^\d{2}-\d{2}$/.test(text)       ? `${year}-${text}`
+                   : '';
+      try { picker.showPicker(); } catch { picker.focus(); picker.click(); }
+      return;
+    }
     const btn = e.target.closest("[data-action='removeSpecial']");
     if (btn) {
       const i = Number(btn.dataset.index);
