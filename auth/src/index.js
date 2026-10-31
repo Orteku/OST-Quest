@@ -5,7 +5,7 @@ import { handleGoogleStart, handleGoogleCallback } from './routes/google.js';
 import { handleDiscordStart, handleDiscordCallback } from './routes/discord.js';
 import { handleTwitchStart, handleTwitchCallback } from './routes/twitch.js';
 import { handleSteamStart, handleSteamCallback } from './routes/steam.js';
-import { handleGetMe, handleSetUsername, handleUnlink, handleDeleteAccount, handleGetAchievements, handleUnlockAchievement, handleSetAvatar, handleBackfillAchievements } from './routes/user.js';
+import { handleGetMe, handleSetUsername, handleUnlink, handleDeleteAccount, handleGetAchievements, handleUnlockAchievement, handleSetAvatar, handleBackfillAchievements, handleGetPublicPlayer } from './routes/user.js';
 import { handleSubmitScore, handleMigrateScores, handleGetStats, handleGetResults, handleFillResults, handleGetHistory } from './routes/scores.js';
 
 export default {
@@ -59,6 +59,10 @@ export default {
       if (path === '/scores/history' && method === 'GET')  return handleGetHistory(request, env, db);
       if (path === '/scores/results' && method === 'GET')  return handleGetResults(request, env, db);
       if (path === '/scores/results' && method === 'POST') return handleFillResults(request, env, db);
+
+      // ── Datos públicos (tarjeta de jugador del ranking) ─────────────────
+      const playerMatch = method === 'GET' && path.match(/^\/public\/player\/([a-zA-Z0-9_]{1,40})$/);
+      if (playerMatch) return handleGetPublicPlayer(request, db, playerMatch[1]);
 
       return json({ error: 'not_found' }, 404, request);
     } catch (e) {

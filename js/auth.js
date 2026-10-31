@@ -89,6 +89,12 @@ async function authInit() {
       openUsernameModal();
       return;
     } else if (data?.id) {
+      // Sesión renovada por el worker: 30 días más desde esta visita
+      if (data.token) {
+        _token = data.token;
+        localStorage.setItem(_JWT_KEY, data.token);
+        delete data.token;
+      }
       _profile = data;
       localStorage.setItem(_USER_KEY, JSON.stringify(data));
       if (!data.username) { openUsernameModal(); return; }
@@ -523,6 +529,7 @@ async function loadRankingInto(containerId, tab) {
   if (!el) return;
   el.innerHTML = `<p class="rank-empty">${t('ranking_loading')}</p>`;
 
+  document.getElementById('player-card')?.remove();
   const view = tab === 'weekly' ? 'ranking_weekly' : 'ranking_global';
   const { data, error } = await _supabase
     .from(view).select('username, streak, pts, selected_avatar').order('pts', { ascending: false }).limit(25);
@@ -548,12 +555,85 @@ async function loadRankingInto(containerId, tab) {
         : `<span class="rank-avatar">${_esc(r.username.charAt(0).toUpperCase())}</span>`;
       return `<tr class="${[medal, isMe ? 'rank-row--me' : ''].filter(Boolean).join(' ')}">
         <td class="rank-pos">${i + 1}</td>
-        <td class="rank-name">${avatarHtml}${_esc(r.username)}${isMe ? ' ★' : ''}</td>
+        <td class="rank-name"><button type="button" class="rank-name__btn">${avatarHtml}${_esc(r.username)}${isMe ? ' ★' : ''}</button></td>
         <td class="rank-pts">${r.pts}</td>
         <td class="rank-streak">${r.streak || '—'}</td>
       </tr>`;
     }).join('')}</tbody>
   </table>`;
+  el.querySelectorAll('.rank-name__btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => _openPlayerCard(btn, data[i]));
+  });
+}
+
+// Tarjeta de jugador: como el menú de usuario, pero con datos públicos y sin ajustes ni enlaces.
+// Puntos y racha son los de la fila; quests y trofeos se piden al abrirla.
+function _openPlayerCard(btn, row) {
+  const wasOpenFor = document.getElementById('player-card')?.dataset.user;
+  document.getElementById('player-card')?.remove();
+  if (wasOpenFor === row.username) return;
+
+  const card = document.createElement('div');
+  card.id = 'player-card';
+  card.className = 'auth-drop auth-drop--card player-card';
+  card.dataset.user = row.username;
+  const initial = _esc(row.username.charAt(0).toUpperCase());
+  card.innerHTML = `
+    <div class="auth-drop__top">
+      <div class="auth-drop__avatar">${row.selected_avatar ? `<img class="auth-drop__avatar-img" src="img/achievements/${_esc(row.selected_avatar)}" alt="">` : initial}</div>
+      <div class="auth-drop__body">
+        <div class="auth-drop__name">${_esc(row.username)}</div>
+        <div class="auth-drop__drop-stats">
+          <span class="auth-drop__drop-stat">🏆 ${t('ranking_pts')} <strong>${row.pts}</strong></span>
+          <span class="auth-drop__drop-stat">⚡ ${t('stat_streak_short')} <strong>${row.streak || 0}</strong></span>
+          <span class="auth-drop__drop-stat">🎮 ${t('stat_played')} <strong data-played>…</strong></span>
+        </div>
+      </div>
+    </div>
+    <div class="auth-drop__trofeos">
+      <div class="auth-drop__trofeos-head">
+        <span class="auth-drop__trofeos-title">${t('drop_recent_trophies')}</span>
+      </div>
+      <div class="auth-drop__trofeos-icons" data-trophies></div>
+    </div>`;
+  document.body.appendChild(card);
+
+  // En móvil el CSS la centra en pantalla; aquí se coloca junto al nombre sin salirse por la derecha
+  if (window.innerWidth > 600) {
+    const rect = btn.getBoundingClientRect();
+    const left = Math.min(rect.left, document.documentElement.clientWidth - card.offsetWidth - 8);
+    card.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
+    card.style.left = (left + window.scrollX) + 'px';
+  }
+
+  const close = () => {
+    card.remove();
+    document.removeEventListener('click', onOutside);
+    document.removeEventListener('keydown', onKey);
+  };
+  // Pulsar otro nombre ya cierra esta tarjeta y abre la suya
+  const onOutside = e => { if (!card.contains(e.target) && !e.target.closest('.rank-name__btn')) close(); };
+  const onKey     = e => { if (e.key === 'Escape') close(); };
+  setTimeout(() => {
+    if (!card.isConnected) return;
+    document.addEventListener('click', onOutside);
+    document.addEventListener('keydown', onKey);
+  }, 0);
+
+  _apiFetch('/public/player/' + encodeURIComponent(row.username)).then(async res => {
+    const failed   = res.__networkError || res.error;
+    const unlocked = failed ? [] : (res.recent || []).map(getAchievement).filter(Boolean);
+    const oks      = await Promise.all(unlocked.map(achievementHasImage));
+    if (!card.isConnected) return;
+    card.querySelector('[data-played]').textContent = failed ? '—' : res.played;
+    const lang   = document.documentElement.lang || 'es';
+    const recent = unlocked.filter((a, i) => oks[i]).slice(-3).reverse();
+    const icons  = card.querySelector('[data-trophies]');
+    if (!recent.length) { icons.textContent = '—'; return; }
+    icons.innerHTML = recent.map(a =>
+      `<img class="auth-drop__ach-icon" src="img/achievements/${_esc(a.image)}" alt="" title="${_esc(getAchievementLabel(a, lang).name)}">`
+    ).join('');
+  });
 }
 
 // ─── customConfirm ────────────────────────────────────────────────────────────
@@ -921,6 +1001,18 @@ async function initProfilePage() {
         markView();
         renderGrid();
       });
+    }
+
+    // Recuerda las categorías cerradas. "toggle" no se propaga: hay que escucharlo en la fase de captura
+    if (!achievementsEl.dataset.boundToggle) {
+      achievementsEl.dataset.boundToggle = '1';
+      achievementsEl.addEventListener('toggle', e => {
+        const cat = e.target.dataset?.cat;
+        if (!cat) return;
+        const closed = _achClosedCats();
+        if (e.target.open) closed.delete(cat); else closed.add(cat);
+        try { localStorage.setItem(_ACH_CLOSED_KEY, JSON.stringify([...closed])); } catch {}
+      }, true);
     }
 
     // Las estadísticas del servidor llegan aparte y dan el progreso de partidas y racha
@@ -1430,19 +1522,26 @@ function _renderAchievementsHTML(unlocked, available) {
     return `<div class="ach-cat__items ach-cat__items--compact">${parts.join('')}</div>`;
   }
 
+  const closed = _achClosedCats();
   return _ACH_CATEGORIES.map(cat => {
     const items = list.filter(a => _achCategory(a) === cat);
     if (!items.length) return '';
     const all  = available.filter(a => _achCategory(a) === cat);
     const done = all.filter(a => unlockedIds.has(a.id)).length;
-    return `<section class="ach-cat${cat === 'special' ? ' ach-cat--special' : ''}">
-      <div class="ach-cat__head">
+    return `<details class="ach-cat${cat === 'special' ? ' ach-cat--special' : ''}" data-cat="${cat}"${closed.has(cat) ? '' : ' open'}>
+      <summary class="ach-cat__head">
         <span class="ach-cat__title">${t('ach_cat_' + cat)}</span>
         <span class="ach-cat__count">${done}/${all.length}</span>
-      </div>
+      </summary>
       <div class="ach-cat__items ach-cat__items--detailed">${items.map(_item).join('')}</div>
-    </section>`;
+    </details>`;
   }).join('');
+}
+
+// Categorías que el jugador ha cerrado en la vista detallada
+const _ACH_CLOSED_KEY = 'ostquest_ach_closed';
+function _achClosedCats() {
+  try { return new Set(JSON.parse(localStorage.getItem(_ACH_CLOSED_KEY)) || []); } catch { return new Set(); }
 }
 
 const _ACH_FILTER_KEY = 'ostquest_ach_only_unlocked';

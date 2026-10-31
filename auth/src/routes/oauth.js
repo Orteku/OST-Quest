@@ -1,4 +1,4 @@
-import { signJwt, verifyJwt } from '../lib/jwt.js';
+import { signJwt, signSession, verifyJwt } from '../lib/jwt.js';
 
 export const AUTH_BASE     = 'https://auth.oestiquest.com';
 export const FRONTEND_BASE = 'https://oestiquest.com';
@@ -15,7 +15,7 @@ export function oauthError(error) {
 
 // Emite un JWT para el usuario dado
 export async function issueToken(user, env) {
-  return signJwt({ sub: user.id, role: 'authenticated' }, env.JWT_SECRET);
+  return signSession(user.id, env.JWT_SECRET);
 }
 
 // Codifica el state OAuth. Si hay linkJwt, lo incluye para el flujo de vinculación.

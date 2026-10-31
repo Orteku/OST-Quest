@@ -1625,7 +1625,18 @@ body.theme--light .auth-btn__avatar { background: #4a6c10; color: #fff; }
 .ach-cat__head {
   display: flex; align-items: baseline; gap: 8px;
   margin-bottom: 10px;
+  cursor: pointer; user-select: none; list-style: none;
 }
+.ach-cat__head::-webkit-details-marker { display: none; }
+.ach-cat:not([open]) .ach-cat__head { margin-bottom: 0; }
+/* Flecha de desplegable, a la derecha de la fila */
+.ach-cat__head::after {
+  content: ''; margin-left: auto; align-self: center;
+  width: 7px; height: 7px;
+  border-right: 2px solid #7a7a88; border-bottom: 2px solid #7a7a88;
+  transform: rotate(45deg); transition: transform 0.15s;
+}
+.ach-cat:not([open]) .ach-cat__head::after { transform: rotate(-45deg); }
 .ach-cat__title {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
@@ -1845,6 +1856,16 @@ body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
 .auth-drop__trofeos-link:hover { text-decoration: underline; }
 .auth-drop__trofeos-icons { display: flex; gap: 8px; align-items: center; min-height: 36px; }
 .auth-drop__ach-icon { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #2c2c34; }
+
+/* Tarjeta de jugador del ranking: colocada desde JS; en móvil, centrada en pantalla */
+.player-card { position: absolute; right: auto; }
+@media (max-width: 600px) {
+  .player-card {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: calc(100vw - 32px); max-width: 340px; min-width: 0;
+    animation: none; /* popIn pisa el transform que la centra */
+  }
+}
 
 body.theme--light .auth-drop__avatar { background: #4a6c10; color: #fff; }
 body.theme--light .auth-drop--card .auth-drop__name { color: #1e1d28; }
@@ -2218,6 +2239,12 @@ body.theme--light .profile-delete-btn:hover { background: #f8e8e8; border-color:
 .rank-th--streak { text-align: right !important; }
 .rank-pos { width: 1%; white-space: nowrap; color: #555560; text-align: center; }
 .rank-name { color: #ddd9cf; display: flex; align-items: center; gap: 8px; }
+.rank-name__btn {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  padding: 0; border: none; background: none;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.rank-name__btn:hover { text-decoration: underline; }
 .rank-avatar {
   width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
   background: #2c2c3c; color: #9898a8;

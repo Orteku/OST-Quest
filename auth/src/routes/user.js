@@ -1,4 +1,4 @@
-import { verifyJwt } from '../lib/jwt.js';
+import { signSession, sessionNeedsRenewal, verifyJwt } from '../lib/jwt.js';
 import { json } from '../lib/cors.js';
 import { issueToken } from './oauth.js';
 import { COUNTED_ACHIEVEMENT_IDS, checkServerAchievements } from '../lib/achievements.js';
@@ -29,6 +29,7 @@ export async function handleGetMe(request, env, db) {
   if (!user) return json({ error: 'user_not_found' }, 404, request);
 
   return json({
+    ...(sessionNeedsRenewal(payload) && { token: await signSession(user.id, env.JWT_SECRET) }),
     id:              user.id,
     email:           user.email,
     username:        user.username,
@@ -139,6 +140,23 @@ export async function handleGetAchievements(request, env, db) {
 
   const achievements = await db.getUserAchievements(payload.sub);
   return json(achievements || [], 200, request);
+}
+
+// GET /public/player/:username — tarjeta del ranking. Sin sesión: devolver solo datos pensados para ser públicos.
+// Los trofeos secretos no se incluyen para no desvelarlos.
+export async function handleGetPublicPlayer(request, db, username) {
+  const user = await db.getUserByUsername(username);
+  if (!user) return json({ error: 'not_found' }, 404, request);
+
+  const [scores, achievements] = await Promise.all([
+    db.getUserScores(user.id),
+    db.getUserAchievements(user.id),
+  ]);
+  const recent = (achievements || [])
+    .map(a => a.achievement_id)
+    .filter(id => !id.startsWith('easter_'))
+    .slice(-10);
+  return json({ played: scores?.length || 0, recent }, 200, request);
 }
 
 // POST /auth/achievements/unlock  { achievementId }

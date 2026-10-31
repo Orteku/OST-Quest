@@ -16,6 +16,19 @@ async function getKey(secret) {
   );
 }
 
+// La sesión dura 30 días desde la última visita: /auth/me la renueva (ver handleGetMe)
+const SESSION_SECONDS = 30 * 24 * 3600;
+const SESSION_RENEW_AFTER_SECONDS = 24 * 3600;
+
+export function signSession(userId, secret) {
+  return signJwt({ sub: userId, role: 'authenticated' }, secret, SESSION_SECONDS);
+}
+
+// Una vez al día basta: renovar en cada visita generaría un token nuevo por pestaña
+export function sessionNeedsRenewal(payload) {
+  return Math.floor(Date.now() / 1000) - payload.iat >= SESSION_RENEW_AFTER_SECONDS;
+}
+
 export async function signJwt(payload, secret, expiresInSeconds = 7 * 24 * 3600) {
   const header = { alg: 'HS256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);

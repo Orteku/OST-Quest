@@ -1,5 +1,5 @@
 import { hashPassword, verifyPassword } from '../lib/password.js';
-import { signJwt, verifyJwt } from '../lib/jwt.js';
+import { signSession, verifyJwt } from '../lib/jwt.js';
 import { sendPasswordResetEmail } from '../lib/mailer.js';
 import { json } from '../lib/cors.js';
 
@@ -30,7 +30,7 @@ export async function handleRegister(request, env, db) {
     provider: 'email',
   });
 
-  const token = await signJwt({ sub: user.id, role: 'authenticated' }, env.JWT_SECRET);
+  const token = await signSession(user.id, env.JWT_SECRET);
   return json({ token, user: { id: user.id, username: user.username } }, 201, request);
 }
 
@@ -48,7 +48,7 @@ export async function handleLogin(request, env, db) {
   const valid = await verifyPassword(password, user.password_hash);
   if (!valid) return json({ error: 'invalid_credentials' }, 401, request);
 
-  const token = await signJwt({ sub: user.id, role: 'authenticated' }, env.JWT_SECRET);
+  const token = await signSession(user.id, env.JWT_SECRET);
   return json({ token, user: { id: user.id, username: user.username } }, 200, request);
 }
 
