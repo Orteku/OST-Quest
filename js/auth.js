@@ -682,6 +682,10 @@ async function authUpdateStatsDisplay() {
 
 async function submitScoreToSupabase(dateStr, score, stats, results) {
   if (!_token) return;
+  // Los logros de tag se comprueban ya, sin esperar a que se guarde la puntuación: con los datos
+  // precargados y las columnas de hoy, solo falta pedir el desbloqueo mientras se ve el modal final
+  checkTagAchievements({ date: dateStr, results });
+
   _pendingScoreSubmit = _apiFetch('/scores', 'POST', { gameDate: dateStr, score, stats, results });
   const res = await _pendingScoreSubmit;
   _pendingScoreSubmit = null;
@@ -689,30 +693,27 @@ async function submitScoreToSupabase(dateStr, score, stats, results) {
   if (res?.newAchievements?.length) {
     for (const id of res.newAchievements) _showAchievementToast(id);
   }
-  checkTagAchievements();
 }
 
 // Logros de tag: cuenta los aciertos por tag de las quests jugadas en su día
 // (columnas acertadas guardadas en el servidor + composición de cada quest en games.json)
-async function checkTagAchievements() {
-  if (!_token || typeof ACHIEVEMENTS_DB === 'undefined'
-      || typeof loadGamesJson !== 'function' || typeof GAME_DB === 'undefined') return;
+// Si se corta a medias (pestaña cerrada, recarga, red), la marca queda puesta y se repite en la siguiente carga
+const _ACH_CHECK_PENDING_KEY = 'ostquest_ach_check_pending';
+const _ACH_ID_RE             = /^(tag|track|dev)_(.+)_(\d+)$/;
 
-  const history = await _apiFetch('/scores/results');
-  const games   = Array.isArray(history) ? await loadGamesJson() : null;
-  if (!games) return;
+// Historial, quests y logros ya conseguidos; en la página del juego se piden al cargar
+// para que al terminar la partida no haya que esperar a ninguna petición
+let _achDataPromise = null;
 
-  // Partidas anteriores a que se guardaran las columnas: completar con el progreso de este navegador
-  const toFill = {};
-  for (const row of history) {
-    if (row.results) continue;
-    const prog = typeof loadDayProgress === 'function' ? loadDayProgress(row.game_date) : null;
-    if (!Array.isArray(prog) || prog.length !== 3) continue;
-    row.results = prog.map(s => s?.correct ? '1' : '0').join('');
-    toFill[row.game_date] = row.results;
+function _loadAchievementData(fresh = false) {
+  if (fresh || !_achDataPromise) {
+    _achDataPromise = Promise.all([_apiFetch('/scores/results'), loadGamesJson(), authGetAchievements()])
+      .then(([history, games, achievements]) => Array.isArray(history) && games ? { history, games, achievements } : null);
   }
-  if (Object.keys(toFill).length) _apiFetch('/scores/results', 'POST', { results: toFill });
+  return _achDataPromise;
+}
 
+function _countAchievementHits(history, games) {
   // Palabras completas: "square" no debe coincidir con "SadSquare Studio"
   const devTerms = typeof DEV_ACHIEVEMENT_TERMS === 'undefined' ? [] : Object.entries(DEV_ACHIEVEMENT_TERMS)
     .map(([key, terms]) => [key, terms.map(t => new RegExp('\\b' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b'))]);
@@ -729,26 +730,79 @@ async function checkTagAchievements() {
       for (const [key, res] of devTerms) if (res.some(re => re.test(dev))) add('dev', key);
     });
   }
+  return counts;
+}
+
+// Precarga en la página del juego si aún no se ha jugado hoy. También comprueba ya la imagen de los
+// logros a los que les faltan 3 aciertos o menos (los que puede dar la partida de hoy)
+function _prefetchAchievementData() {
+  if (!_token || document.body.dataset.page !== 'game' || typeof ACHIEVEMENTS_DB === 'undefined'
+      || typeof loadGamesJson !== 'function' || typeof GAME_DB === 'undefined') return;
+  if (typeof loadPlayedDays === 'function' && typeof getGameDay === 'function' && loadPlayedDays()[getGameDay()]) return;
+  _loadAchievementData().then(data => {
+    if (!data) return;
+    const counts = _countAchievementHits(data.history, data.games);
+    const have   = new Set(data.achievements.map(a => a.achievement_id));
+    for (const a of ACHIEVEMENTS_DB) {
+      const m = a.id.match(_ACH_ID_RE);
+      if (m && !have.has(a.id) && (counts[m[1]][m[2]] || 0) + 3 >= Number(m[3])) achievementHasImage(a);
+    }
+  }).catch(() => {});
+}
+
+// today: { date, results } de la partida recién terminada. Se usan los datos precargados
+// y se añaden las columnas de hoy, que el servidor quizá aún no tiene
+async function checkTagAchievements(today = null) {
+  if (!_token || typeof ACHIEVEMENTS_DB === 'undefined'
+      || typeof loadGamesJson !== 'function' || typeof GAME_DB === 'undefined') return;
+  try { localStorage.setItem(_ACH_CHECK_PENDING_KEY, '1'); } catch {}
+
+  let data = await _loadAchievementData(!today);
+  if (!data && today) data = await _loadAchievementData(true);  // la precarga falló: se reintenta
+  if (!data) return;
+  // Las columnas de hoy se quedan en los datos cargados: si la pestaña sigue abierta mañana, cuentan
+  if (today?.results) data.history = [...data.history.filter(r => r.game_date !== today.date), { game_date: today.date, results: today.results }];
+  const { history, games, achievements } = data;
+
+  // Partidas anteriores a que se guardaran las columnas: completar con el progreso de este navegador
+  const toFill = {};
+  for (const row of history) {
+    if (row.results) continue;
+    const prog = typeof loadDayProgress === 'function' ? loadDayProgress(row.game_date) : null;
+    if (!Array.isArray(prog) || prog.length !== 3) continue;
+    row.results = prog.map(s => s?.correct ? '1' : '0').join('');
+    toFill[row.game_date] = row.results;
+  }
+  if (Object.keys(toFill).length) _apiFetch('/scores/results', 'POST', { results: toFill });
+
+  const counts = _countAchievementHits(history, games);
 
   // Se guarda para mostrar el progreso en el perfil, que no carga la base de juegos
   try { localStorage.setItem(`ostquest_ach_progress_${_profile?.id}`, JSON.stringify(counts)); } catch {}
 
-  // Tipo, clave y nivel salen del propio id: tag_rpg_10, track_lyrics_30, dev_nintendo_20
-  const have = new Set((await authGetAchievements()).map(a => a.achievement_id));
-  for (const { id } of ACHIEVEMENTS_DB) {
-    const m = id.match(/^(tag|track|dev)_(.+)_(\d+)$/);
-    if (!m) continue;
-    const count = counts[m[1]][m[2]] || 0;
-    if (count >= Number(m[3]) && !have.has(id)) await authUnlockAchievement(id);
-  }
+  // Tipo, clave y nivel salen del propio id: tag_rpg_10, track_lyrics_30, dev_nintendo_20.
+  // A la vez y no uno tras otro, para acabar cuanto antes
+  const have = new Set(achievements.map(a => a.achievement_id));
+  const toUnlock = ACHIEVEMENTS_DB.map(a => a.id).filter(id => {
+    const m = id.match(_ACH_ID_RE);
+    return m && !have.has(id) && (counts[m[1]][m[2]] || 0) >= Number(m[3]);
+  });
+  const oks = await Promise.all(toUnlock.map(authUnlockAchievement));
+  toUnlock.forEach((id, i) => { if (oks[i]) achievements.push({ achievement_id: id }); });
+  try { localStorage.removeItem(_ACH_CHECK_PENDING_KEY); } catch {}
 }
 
 // ─── Migración de localStorage ────────────────────────────────────────────────
 
 // Primero sube lo jugado sin cuenta y después comprueba logros: si van a la vez, la comprobación
-// llega antes que las partidas migradas y no las ve (p. ej. un pleno hecho antes de iniciar sesión)
+// llega antes que las partidas migradas y no las ve (p. ej. un pleno hecho antes de iniciar sesión).
+// El backfill va una vez por pestaña; si quedó a medias una comprobación de logros, se repite aquí
 function _syncAfterLogin() {
-  _migrateIfNeeded().catch(() => {}).then(_backfillAchievements);
+  _migrateIfNeeded().catch(() => {}).then(_backfillAchievements).then(() => {
+    let pending = false;
+    try { pending = !!localStorage.getItem(_ACH_CHECK_PENDING_KEY); } catch {}
+    if (pending) return checkTagAchievements();
+  }).catch(() => {}).then(_prefetchAchievementData);
 }
 
 // Sube al servidor las partidas jugadas en su día que aún no tenga (p. ej. jugadas sin sesión iniciada).

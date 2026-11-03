@@ -812,9 +812,13 @@ function achievementHasImage(a) {
     .then(res => {
       _achImgCache.ok[a.image] = res.ok;
       try { localStorage.setItem(_ACH_IMG_CACHE_KEY, JSON.stringify(_achImgCache)); } catch {}
+      _achImageOk[a.id] = res.ok;
       return res.ok;
-    }, () => false)  // error de red: no se guarda, se reintenta la próxima vez
-    .then(ok => { _achImageOk[a.id] = ok; return ok; });
+    }, () => {
+      // Error de red: no se guarda en ningún sitio, la siguiente llamada vuelve a preguntar
+      delete _achImageChecks[a.id];
+      return false;
+    });
 }
 
 // Versión síncrona: true solo si ya se comprobó que NO tiene imagen (lo no comprobado aún cuenta como válido)
