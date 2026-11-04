@@ -32,8 +32,10 @@ export function createDb(env) {
       // fallback legacy
       return check(await supabase.from('player_accounts').select('*').eq('provider', provider).eq('provider_id', String(providerId)).maybeSingle());
     },
+    // Sin distinguir mayúsculas: "Pepe" y "pepe" son el mismo nombre. En ilike "_" es comodín: se escapa
     async getUserByUsername(username) {
-      return check(await supabase.from('player_accounts').select('*').eq('username', username).maybeSingle());
+      return check(await supabase.from('player_accounts').select('*')
+        .ilike('username', username.replace(/[\\%_]/g, '\\$&')).maybeSingle());
     },
     async createUser(data) {
       return check(await supabase.from('player_accounts').insert(data).select().single());
@@ -54,6 +56,7 @@ export function createDb(env) {
     async deleteUser(userId) {
       await check(await supabase.from('scores').delete().eq('user_id', userId));
       await check(await supabase.from('password_reset_tokens').delete().eq('user_id', userId));
+      await check(await supabase.from('user_achievements').delete().eq('user_id', userId));
       return check(await supabase.from('player_accounts').delete().eq('id', userId));
     },
 

@@ -1,9 +1,19 @@
-import { signSession, sessionNeedsRenewal, verifyJwt } from '../lib/jwt.js';
+import { signJwt, signSession, sessionNeedsRenewal, verifyJwt } from '../lib/jwt.js';
 import { json } from '../lib/cors.js';
 import { issueToken } from './oauth.js';
 import { COUNTED_ACHIEVEMENT_IDS, checkServerAchievements } from '../lib/achievements.js';
 
 const CLIENT_UNLOCKABLE = ['easter_line', 'easter_wasted', 'easter_both', 'easter_fast', 'easter_konami', 'share'];
+
+// Índice único de Supabase (p. ej. dos altas a la vez con el mismo nombre)
+function isUniqueViolation(e) {
+  return e?.details?.code === '23505';
+}
+
+// Imagen de cada logro: su id + .webp; en los especiales, la fecha sin guiones (special_10-31 → special_1031.webp)
+function achievementImage(id) {
+  return (id.startsWith('special_') ? 'special_' + id.slice(8).replace(/-/g, '') : id) + '.webp';
+}
 
 // Extrae y verifica el JWT del header Authorization
 export async function requireAuth(request, env) {
@@ -12,7 +22,8 @@ export async function requireAuth(request, env) {
   if (!token) return [null, json({ error: 'unauthorized' }, 401, request)];
 
   const payload = await verifyJwt(token, env.JWT_SECRET);
-  if (!payload)  return [null, json({ error: 'invalid_token' }, 401, request)];
+  // Los tickets de vinculación y los state del login social no son sesiones
+  if (!payload || payload.purpose || payload.n) return [null, json({ error: 'invalid_token' }, 401, request)];
 
   return [payload, null];
 }
@@ -64,14 +75,20 @@ export async function handleSetUsername(request, env, db) {
   if (payload.pending) {
     if (existing) return json({ error: 'username_taken' }, 409, request);
     const providerCol = { google: 'google_id', discord: 'discord_id', twitch: 'twitch_id', steam: 'steam_id' };
-    const newUser = await db.createUser({
-      id:                        crypto.randomUUID(),
-      email:                     payload.email || null,
-      provider:                  payload.provider,
-      provider_id:               payload.provider_id,
-      [providerCol[payload.provider]]: payload.provider_id,
-    });
-    await db.updateUser(newUser.id, { username });
+    let newUser;
+    try {
+      newUser = await db.createUser({
+        id:                        crypto.randomUUID(),
+        email:                     payload.email || null,
+        username,
+        provider:                  payload.provider,
+        provider_id:               payload.provider_id,
+        [providerCol[payload.provider]]: payload.provider_id,
+      });
+    } catch (e) {
+      if (isUniqueViolation(e)) return json({ error: 'username_taken' }, 409, request);
+      throw e;
+    }
     await db.unlockAchievement(newUser.id, 'register');
     const token = await issueToken(newUser, env);
     return json({ ok: true, username, token }, 200, request);
@@ -84,9 +101,24 @@ export async function handleSetUsername(request, env, db) {
   // Primera vez que se pone username (registro por email)
   const currentUser = await db.getUserById(payload.sub);
   const isFirst = !currentUser?.username;
-  await db.updateUser(payload.sub, { username });
+  try {
+    await db.updateUser(payload.sub, { username });
+  } catch (e) {
+    if (isUniqueViolation(e)) return json({ error: 'username_taken' }, 409, request);
+    throw e;
+  }
   if (isFirst) await db.unlockAchievement(payload.sub, 'register');
   return json({ ok: true, username }, 200, request);
+}
+
+// POST /auth/link-ticket — ticket de 5 minutos para vincular un proveedor desde un popup,
+// para no poner el token de sesión en la URL (que llega a los registros del proveedor y del navegador)
+export async function handleLinkTicket(request, env) {
+  const [payload, err] = await requireAuth(request, env);
+  if (err) return err;
+  if (payload.pending) return json({ error: 'pending_user' }, 403, request);
+  const ticket = await signJwt({ sub: payload.sub, purpose: 'link' }, env.JWT_SECRET, 300);
+  return json({ ticket }, 200, request);
 }
 
 // POST /auth/unlink  { provider }
@@ -170,6 +202,7 @@ export async function handleUnlockAchievement(request, env, db) {
   try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
 
   const { achievementId } = body;
+  if (typeof achievementId !== 'string') return json({ error: 'invalid_achievement' }, 400, request);
 
   // Logros de especiales: el cliente verifica desde localStorage (incluye archivo)
   if (achievementId.startsWith('special_')) {
@@ -261,6 +294,11 @@ export async function handleSetAvatar(request, env, db) {
   const { avatar } = body;
   if (!avatar || typeof avatar !== 'string' || avatar.includes('/') || avatar.includes('..') || !/^[\w-]+\.(png|webp)$/i.test(avatar)) {
     return json({ error: 'invalid_avatar' }, 400, request);
+  }
+  // Solo la imagen de un logro conseguido
+  const unlocked = await db.getUserAchievements(payload.sub);
+  if (!(unlocked || []).some(a => achievementImage(a.achievement_id) === avatar)) {
+    return json({ error: 'achievement_not_unlocked' }, 403, request);
   }
 
   await db.setAvatar(payload.sub, avatar);

@@ -2,6 +2,16 @@
 -- Esquema para el sistema de auth personalizado (reemplaza Supabase Auth)
 -- Ejecutar en: Supabase Dashboard → SQL Editor
 -- ═══════════════════════════════════════════════════════════════════════════
+--
+-- ATENCIÓN: archivo histórico. La tabla `users` de abajo se llama ahora `player_accounts`
+-- y tiene más columnas. Tablas reales que usa el worker (auth/src/lib/db.js):
+--   player_accounts       id, email, password_hash, provider, provider_id, username, created_at,
+--                         streak, selected_avatar, google_id, discord_id, twitch_id, steam_id
+--   scores                user_id, game_date, score, points, streak_bonus, total_points, played_at, results
+--   user_achievements     user_id, achievement_id, unlocked_at
+--   password_reset_tokens user_id, token, expires_at
+-- Vistas: ranking_weekly, ranking_global (públicas) y ranking_weekly_history (solo worker).
+-- Las vistas y columnas añadidas al final de este archivo sí están al día.
 
 -- ── Tabla de usuarios ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.users (

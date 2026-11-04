@@ -29,86 +29,20 @@ function getPastGameDay(daysAgo) {
 
 let _gamesCache = null;
 
+// Sin parámetro anti-caché: GitHub Pages lo sirve con 10 min de caché y ETag, así que el navegador
+// lo reutiliza y comprueba si ha cambiado en vez de bajarlo entero en cada visita.
+// Los días ya jugados nunca cambian; una quest de hoy regenerada tarda como mucho esos 10 min en llegar.
 async function loadGamesJson() {
   if (_gamesCache) return _gamesCache;
   try {
-    const res  = await fetch('games.json?v=' + Date.now());
+    const res  = await fetch('games.json');
     if (!res.ok) throw new Error('games.json no encontrado');
     _gamesCache = await res.json();
     return _gamesCache;
   } catch (e) {
-    console.warn('⚠️ No se pudo cargar games.json, usando generación por semilla:', e.message);
+    console.warn('⚠️ No se pudo cargar games.json:', e.message);
     return null;
   }
-}
-
-// ── RNG determinista (fallback si no hay games.json) ─────────────────────────
-
-function seededRng(seed) {
-  let s = seed;
-  return function () {
-    s |= 0; s = s + 0x6D2B79F5 | 0;
-    let t = Math.imul(s ^ s >>> 15, 1 | s);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-function dateToSeed(dateStr) {
-  let hash = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function seededShuffle(arr, rng) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// Genera el juego con semilla (fallback si no hay games.json)
-function generateFromSeed(dateStr) {
-  const seed = dateToSeed(dateStr);
-  const rng  = seededRng(seed);
-  const used = new Set();
-  const groups = [];
-  const shuffled = seededShuffle(GAME_DB, rng);
-
-  const strictGroupIndex = Math.floor(rng() * 3);
-
-  for (let gi = 0; gi < 3; gi++) {
-    let answer = null;
-    for (const g of shuffled) {
-      if (!used.has(g.id)) { answer = g; break; }
-    }
-    used.add(answer.id);
-
-    const trackIndex    = Math.floor(rng() * answer.tracks.length);
-    const answerEffTags = effectiveTags(answer, answer.tracks[trackIndex]);
-
-    const weights    = gi === strictGroupIndex ? WEIGHTS.strict : WEIGHTS.normal;
-    const candidates = GAME_DB.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
-
-    let distractors = weightedPickN(candidates, answer, answerEffTags, weights, rng, 3);
-
-    if (distractors.length < 3) {
-      const distIds = new Set(distractors.map(d => d.id));
-      const fallback = GAME_DB.filter(g => !used.has(g.id) && !distIds.has(g.id));
-      const extra    = weightedPickN(fallback, answer, answerEffTags, WEIGHTS.normal, rng, 3 - distractors.length);
-      distractors    = [...distractors, ...extra];
-    }
-
-    distractors.forEach(d => used.add(d.id));
-    groups.push({ answer, covers: seededShuffle([answer, ...distractors], rng), trackIndex });
-  }
-
-  return groups;
 }
 
 // Reconstruye el juego desde IDs guardados en games.json
@@ -122,18 +56,15 @@ function reconstructFromIds(stored) {
   }).filter(Boolean);
 }
 
-// Punto de entrada principal — usa games.json si existe, semilla como fallback
+// Quest de un día desde games.json, o null si no se puede cargar o el día no está.
+// No se genera nada en el navegador: una quest inventada aquí no sería la de los demás jugadores
+// y la puntuación y los logros contarían otros juegos.
 async function generateDailyGame(dateStr) {
-  const games = await loadGamesJson();
-
-  if (games && games[dateStr]) {
-    const groups = reconstructFromIds(games[dateStr]);
-    if (groups.length === 3) return groups;
-    console.warn('⚠️ Juego en games.json incompleto para', dateStr, '— usando semilla');
-  }
-
-  // Fallback: generación por semilla (útil durante desarrollo sin games.json)
-  return generateFromSeed(dateStr);
+  const games  = await loadGamesJson();
+  const groups = games?.[dateStr] ? reconstructFromIds(games[dateStr]) : [];
+  if (groups.length === 3) return groups;
+  console.warn('⚠️ No hay quest en games.json para', dateStr);
+  return null;
 }
 
 // ── Countdown ─────────────────────────────────────────────────────────────────

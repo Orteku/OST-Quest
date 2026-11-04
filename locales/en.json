@@ -44,7 +44,6 @@
     "You're a legend!"
   ],
   "tagline": "Guess the OST",
-  "games": {},
   "footer_credit": "Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Developed by Orteku in collaboration with Vyrka",
   "footer_credit_legal": "Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a> · Developed by Orteku in collaboration with Vyrka · <a href=\"privacy.html\">Privacy</a> · <a href=\"terms.html\">Terms</a>",
   "tutorial_title": "How to play",
@@ -87,7 +86,6 @@
   "soundtracks_heading": "Song List",
   "soundtracks_cta_text": "Could you guess the OST of your favorite game?",
   "soundtracks_cta_btn": "Play today's quest →",
-  "soundtracks_play": "Play",
   "about_section_project": "The project",
   "about_section_team": "Who we are",
   "about_section_contact": "Comments & suggestions",
@@ -109,6 +107,10 @@
   "auth_register": "Register",
   "auth_or": "or",
   "auth_email": "Email",
+  "auth_email_or_username": "Email or username",
+  "auth_password_login_hint": "With a password you can sign in with your email or your username.",
+  "auth_password_only": "No email (sign in with your username)",
+  "load_error": "Couldn't load the quest. Check your connection and reload the page.",
   "auth_password": "Password",
   "auth_username": "Username",
   "auth_username_hint": "Letters, numbers and _ only (3-20 chars)",
@@ -176,10 +178,7 @@
   "ach_cat_special": "Special events",
   "ach_only_unlocked": "Unlocked only",
   "ach_none_unlocked": "You haven't unlocked any trophies yet. Keep playing!",
-  "profile_wip": "Under construction",
-  "profile_wip_desc": "Achievements coming soon",
   "profile_settings_section": "Account settings",
-  "auth_view_profile": "View profile",
   "profile_not_logged_in": "Sign in to view your profile",
   "stat_streak_short": "Streak",
   "auth_error_provider_taken": "That account is already linked to another user",
@@ -187,6 +186,5 @@
   "auth_last_used": "Last used",
   "achievement_unlocked": "Trophy acquired",
   "news_ach_title": "NEW!",
-  "news_ach_body": "Earn trophies and unlock avatars for your profile.",
-  "games": {}
+  "news_ach_body": "Earn trophies and unlock avatars for your profile."
 }

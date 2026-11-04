@@ -8,8 +8,6 @@ function updatePlayBanner() {
 }
 
 function renderSoundtracks() {
-  document.title = t('soundtracks_page_title');
-
   const container = document.getElementById('soundtracks-list');
   if (!container) return;
   container.innerHTML = '';

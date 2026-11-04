@@ -1,4 +1,4 @@
-import { AUTH_BASE, buildOAuthState, getLinkUserId, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
+import { AUTH_BASE, startOAuth, checkOAuthState, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError, verifiedEmail } from './oauth.js';
 
 const TOKEN_URL    = 'https://discord.com/api/oauth2/token';
 const USERINFO_URL = 'https://discord.com/api/users/@me';
@@ -6,15 +6,16 @@ const REDIRECT_URI = `${AUTH_BASE}/auth/discord/callback`;
 
 // GET /auth/discord
 export function handleDiscordStart(request, env) {
-  const linkJwt = new URL(request.url).searchParams.get('link');
-  const params = new URLSearchParams({
-    client_id:     env.DISCORD_CLIENT_ID,
-    redirect_uri:  REDIRECT_URI,
-    response_type: 'code',
-    scope:         'identify email',
-    state:         buildOAuthState(linkJwt),
+  return startOAuth(request, env, state => {
+    const params = new URLSearchParams({
+      client_id:     env.DISCORD_CLIENT_ID,
+      redirect_uri:  REDIRECT_URI,
+      response_type: 'code',
+      scope:         'identify email',
+      state,
+    });
+    return `https://discord.com/oauth2/authorize?${params}`;
   });
-  return Response.redirect(`https://discord.com/oauth2/authorize?${params}`, 302);
 }
 
 // GET /auth/discord/callback
@@ -25,7 +26,9 @@ export async function handleDiscordCallback(request, env, db) {
   if (!code) return oauthError('no_code');
 
   try {
-    const linkUserId = await getLinkUserId(state, env);
+    const checked = await checkOAuthState(request, state, env);
+    if (!checked) return oauthError('invalid_state');
+    const { linkUserId } = checked;
 
     const tokenRes = await fetch(TOKEN_URL, {
       method:  'POST',
@@ -56,9 +59,11 @@ export async function handleDiscordCallback(request, env, db) {
       return oauthSuccess(token, true);
     }
 
-    const user = await findExistingOauthUser(db, 'discord', dUser.id, dUser.email);
+    // Discord deja tener un email sin verificar: no sirve para identificar a nadie
+    const email = verifiedEmail(dUser.email, dUser.verified);
+    const user  = await findExistingOauthUser(db, 'discord', dUser.id, email);
     if (!user) {
-      const token = await issuePendingToken({ provider: 'discord', provider_id: dUser.id, email: dUser.email }, env);
+      const token = await issuePendingToken({ provider: 'discord', provider_id: dUser.id, email }, env);
       return oauthSuccess(token);
     }
     const token = await issueToken(user, env);

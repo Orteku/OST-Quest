@@ -34,15 +34,19 @@ export async function handleRegister(request, env, db) {
   return json({ token, user: { id: user.id, username: user.username } }, 201, request);
 }
 
-// POST /auth/login  { email, password }
+// POST /auth/login  { login, password }  (login = email o nombre de usuario; `email` se acepta por compatibilidad)
+// Con nombre de usuario pueden entrar también las cuentas sin email (p. ej. Steam) que se pongan contraseña
 export async function handleLogin(request, env, db) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
 
-  const { email, password } = body;
-  if (!email || !password) return json({ error: 'email_and_password_required' }, 400, request);
+  const login = String(body.login ?? body.email ?? '').trim();
+  const { password } = body;
+  if (!login || !password) return json({ error: 'email_and_password_required' }, 400, request);
 
-  const user = await db.getUserByEmail(email.toLowerCase());
+  const user = login.includes('@')
+    ? await db.getUserByEmail(login.toLowerCase())
+    : /^[a-zA-Z0-9_]{3,20}$/.test(login) ? await db.getUserByUsername(login) : null;
   if (!user || !user.password_hash) return json({ error: 'invalid_credentials' }, 401, request);
 
   const valid = await verifyPassword(password, user.password_hash);

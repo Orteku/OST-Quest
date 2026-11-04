@@ -60,6 +60,24 @@ function hasGameData(e) {
   return !!(e.gameIds?.length || e.search || e.tag);
 }
 
+// Juegos entre los que se elige la quest de un especial: lista de IDs, tag (de juego o de pista)
+// o búsqueda de texto en nombre, desarrolladora y tags. null si el especial no tiene pool.
+// Lo usan update.js (al generar games.json) y el modo GM.
+function getSpecialPool(sp, db) {
+  if (!sp || !hasGameData(sp)) return null;
+  if (sp.gameIds?.length) return db.filter(g => sp.gameIds.includes(g.id));
+  if (sp.tag) return db.filter(g =>
+    (g.tags && g.tags.includes(sp.tag)) ||
+    g.tracks.some(tr => tr.tags && tr.tags.includes(sp.tag))
+  );
+  const terms = sp.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  return db.filter(g => terms.some(term =>
+    (g.game      && g.game.toLowerCase().includes(term)) ||
+    (g.developer && g.developer.toLowerCase().includes(term)) ||
+    (g.tags      && g.tags.some(tag => tag.toLowerCase().includes(term)))
+  ));
+}
+
 function getSpecialForDate(dateStr) {
   const year = parseInt(dateStr.slice(0, 4), 10);
   const mmdd = dateStr.slice(5);
@@ -117,4 +135,4 @@ function countSpecialsBefore(dateStr) {
   return count;
 }
 
-if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore, hasGameData };
+if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore, hasGameData, getSpecialPool };

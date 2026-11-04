@@ -45,24 +45,10 @@ ul, li { list-style: none; }
   transform: translateY(var(--tp-height, 0px));
 }
 .site-header__left { display: flex; align-items: flex-end; gap: 10px; flex-shrink: 0; }
-.site-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #b8e030;
-  line-height: 1;
-}
 .site-banner {
   height: 36px;
   width: auto;
   display: block;
-}
-.site-subtitle {
-  font-size: 12px;
-  color: #555960;
-  letter-spacing: 0.5px;
 }
 .site-header__brand {
   display: flex;
@@ -135,8 +121,6 @@ body.has-special-label .site-tagline { font-size: 9px; }
 }
 .icon-btn:hover { background: #20202a; color: #ddd9cf; border-color: #2c2c34; }
 .icon-btn svg { width: 18px; height: 18px; }
-.icon-btn--ghost { background: none; border-color: transparent; }
-.icon-btn--ghost:hover { background: none; border-color: transparent; color: #ddd9cf; }
 
 @property --tp-height {
   syntax: '<length>';
@@ -621,9 +605,6 @@ body.is-special .play-btn:hover { background: var(--special-color); filter: brig
   background: rgba(255, 196, 0, 0.12);
 }
 
-.tutorial-hit  { color: #b8e030; }
-.tutorial-miss { color: #c84040; }
-
 .tutorial-steps strong,
 .tutorial-btn-item strong {
   display: block;
@@ -913,31 +894,6 @@ body.is-special .play-btn:hover { background: var(--special-color); filter: brig
 #toast.toast--show { transform: translateX(-50%) translateY(0); }
 #toast.toast--warn  { background: #7a3000; border-color: #c84800; color: #ffd9b3; }
 #toast.toast--error { background: #5a0000; border-color: #c80000; color: #ffc0c0; }
-
-/* ─── Sección "Cómo se juega" (estática para crawlers) ─────────────────────── */
-.how-to-play {
-  margin: 24px 0 8px;
-  border: 1px solid #2a2b30;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.how-to-play > summary {
-  padding: 12px 16px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: .4px;
-  color: #7a7a8a;
-  cursor: pointer;
-  user-select: none;
-  list-style: none;
-}
-.how-to-play > summary::-webkit-details-marker { display: none; }
-.how-to-play > summary::before {
-  content: '▸ ';
-  font-size: 11px;
-}
-.how-to-play[open] > summary::before { content: '▾ '; }
 .how-to-play__body {
   padding: 4px 16px 16px;
   border-top: 1px solid #2a2b30;
@@ -961,8 +917,6 @@ body.is-special .play-btn:hover { background: var(--special-color); filter: brig
   color: #55555f;
   line-height: 1.5;
 }
-body.theme--light .how-to-play { border-color: #d0d0da; }
-body.theme--light .how-to-play > summary { color: #888; }
 body.theme--light .how-to-play__body { border-color: #d0d0da; }
 body.theme--light .how-to-play__body li { color: #666; }
 body.theme--light .how-to-play__body li strong { color: #444; }
@@ -1051,8 +1005,6 @@ body.theme--light .site-footer a:hover { color: #4a6c10; }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 520px) {
-  .site-title { font-size: 20px; }
-  .site-subtitle { display: none; }
   .col { border-radius: 8px; }
   .modal__stats { grid-template-columns: repeat(2, 1fr); }
 
@@ -1451,8 +1403,6 @@ body.theme--light .header-countdown { color: #525060; }
 body.theme--light .header-countdown span { color: #4a6c10; }
 body.theme--light .icon-btn { background: #e8e6e0; border-color: #c6c4bc; color: #6a6878; }
 body.theme--light .icon-btn:hover { background: #dddbd4; color: #1e1d28; border-color: #b6b4ac; }
-body.theme--light .icon-btn--ghost { background: none; border-color: transparent; }
-body.theme--light .icon-btn--ghost:hover { background: rgba(0,0,0,0.06); border-color: transparent; color: #1e1d28; }
 body.theme--light .today-btn { background: #dce8c4; border-color: #9ab850; color: #3a5810; }
 body.theme--light .today-btn:hover { background: #ccdcb4; border-color: #7a9840; }
 body.theme--light .archive-banner { background: #f4ecc8; border-color: #c8a820; color: #806010; }
@@ -1733,7 +1683,6 @@ body.theme--light .ach-tooltip__desc { color: #7a7a88; }
   display: flex; align-items: center; justify-content: center;
   font-size: 22px; color: #3a3a44; background: #18191e;
 }
-.achievement-card--unlocked .achievement-card__name { color: #b8b6c0; }
 .achievement-card--selected .achievement-card__img {
   border-color: #b8e030;
   box-shadow: 0 0 0 2px #b8e030;
@@ -1741,8 +1690,6 @@ body.theme--light .ach-tooltip__desc { color: #7a7a88; }
 
 body.theme--light .achievement-card__img { border-color: #c6c4bc; }
 body.theme--light .achievement-card__mystery { border-color: #c6c4bc; color: #bbb9b0; background: #eeece8; }
-body.theme--light .achievement-card__name { color: #9998a0; }
-body.theme--light .achievement-card--unlocked .achievement-card__name { color: #3e3d48; }
 body.theme--light .achievement-card--selected .achievement-card__img { border-color: #4a6c10; box-shadow: 0 0 0 2px #4a6c10; }
 
 /* ─── Dropdown ──────────────────────────────────────────────────────────────── */
@@ -1766,24 +1713,8 @@ body.theme--light .achievement-card--selected .achievement-card__img { border-co
   color: #b8e030;
   border-bottom: 1px solid #2c2c34;
 }
-.auth-drop__item {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 9px 14px;
-  font-size: 14px;
-  color: #ddd9cf;
-  transition: background 0.12s;
-}
-.auth-drop__item:hover { background: #28292e; }
-.auth-drop__item--out { color: #e06060; }
-.auth-drop__item--out:hover { background: #2a1e1e; }
 body.theme--light .auth-drop { background: #f0ede6; border-color: #c6c4bc; box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
 body.theme--light .auth-drop__name { color: #4a6c10; border-color: #d0cec6; }
-body.theme--light .auth-drop__item { color: #1e1d28; }
-body.theme--light .auth-drop__item:hover { background: #e4e2da; }
-body.theme--light .auth-drop__item--out { color: #b02020; }
-body.theme--light .auth-drop__item--out:hover { background: #f8e0e0; }
 
 /* ─── Steam-card dropdown ───────────────────────────────────────────────────── */
 .auth-drop--card { min-width: 290px; padding: 0; }
@@ -2508,22 +2439,6 @@ body.theme--light .pcard__achievement-icon { border-color: #c6c4bc; }
 }
 .pcard__guest-msg { font-size: 15px; color: #9898a8; margin: 0; }
 
-/* Logros WIP */
-.profile-achievements-wip {
-  background: #14141e;
-  border: 1px dashed #2c2c3e;
-  border-radius: 12px;
-  padding: 40px 24px;
-  text-align: center;
-}
-.profile-wip-icon { font-size: 28px; display: block; margin-bottom: 10px; }
-.profile-wip-text {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 18px; font-weight: 700;
-  color: #ddd9cf; margin: 0 0 4px;
-}
-.profile-wip-desc { font-size: 13px; color: #555960; margin: 0; }
-
 
 /* Light theme — página de perfil */
 body.theme--light .profile-section-heading { color: #5a5870; }
@@ -2537,10 +2452,6 @@ body.theme--light .pcard__username { color: #1e1d28; }
 body.theme--light .pcard__stat-value { color: #4a6c10; }
 body.theme--light .pcard__stat-label { color: #9898a8; }
 body.theme--light .pcard__guest-msg { color: #5a5a68; }
-body.theme--light .profile-achievements-wip { background: #f4f4ec; border-color: #c6c4bc; }
-body.theme--light .profile-wip-text { color: #1e1d28; }
-body.theme--light .profile-wip-desc { color: #9898a8; }
-body.theme--light .profile-settings-box { background: #f4f4ec; border-color: #d0ccc4; }
 
 /* Bottom sheet de logros (táctil) */
 .ach-sheet-overlay {

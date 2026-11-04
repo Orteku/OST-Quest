@@ -3,25 +3,33 @@
 Juego diario de adivinar bandas sonoras de videojuegos. El jugador escucha
 un fragmento de audio y selecciona a qué juego pertenece entre cuatro portadas.
 Hay tres columnas (rondas) por día. Publicado en GitHub Pages como sitio estático
-(HTML/CSS/JS puro, sin framework, sin bundler).
+(HTML/CSS/JS puro, sin framework, sin bundler). Cuentas, puntos y logros van por
+un Cloudflare Worker (`auth/`) con Supabase como base de datos.
 
 ## Arquitectura general
 
-- **`index.html`** — estructura de la página
+- **`index.html`** — página del juego (`<body data-page="game">`)
+- **`profile.html`, `ranking.html`, `soundtracks.html`, `about.html`, `privacy.html`, `terms.html`** — resto de páginas
 - **`css/style.css`** — todos los estilos
-- **`js/database.js`** — `GAME_DB`: array con los 500+ juegos
-- **`js/algorithm.js`** — algoritmo de selección de grupos (compartido por browser y update.js)
+- **`js/database.js`** — `GAME_DB`: array con los ~800 juegos
+- **`js/specials.js`** — eventos especiales (`SPECIAL_EVENTS`, `getSpecialForDate`, `getSpecialPool`); también lo usa `update.js`
+- **`js/achievements.js`** — `ACHIEVEMENTS_DB`, `DEV_ACHIEVEMENT_TERMS`, `TRACK_ACHIEVEMENT_MAX_YEAR`, comprobación de imágenes
+- **`js/algorithm.js`** — selección de grupos y generación de quests (`generateGameForDate`, la usa update.js; el modo GM usa `weightedPickN`)
 - **`js/daily.js`** — carga `games.json`, utilidades de fecha, persistencia localStorage
 - **`js/header.js`** — header y controles comunes a todas las páginas (botones, Quest Log, estadísticas,
   idioma, tema, tema de especiales, contador) y arranque de i18n y sesión (`siteI18nReady`, `siteAuthReady`)
+- **`js/auth.js`** — sesión, perfil, ranking, tarjeta de jugador, logros (comprobación y avisos), `customConfirm()`
 - **`js/game.js`** — lógica del juego, modales de partida, modo GM (solo en `index.html`)
 - **`js/player.js`** — reproductor de audio HTML5
 - **`js/assets.js`** — extrae portada y URL de audio de cada entrada
-- **`js/i18n.js`** — internacionalización (es/en)
-- **`games.json`** — quests pregeneradas para 365 días (generado por `update.js`)
-- **`update.js`** — script Node.js que regenera `games.json` (correr tras cambios en la DB o el algoritmo)
-- **`backfill.js`** — rellena los últimos 30 días en `games.json` sin sobreescribir existentes
+- **`js/i18n.js`** — internacionalización (es/en); el título de cada página sale de `<body data-title-key>`
+- **`js/supabase.js`** — `supabaseSelect()`: fetch de solo lectura a las vistas `ranking_weekly` / `ranking_global` (sin librería de Supabase)
+- **`js/ranking.js`, `js/soundtracks.js`** — scripts propios de esas páginas
+- **`games.json`** — quests pregeneradas (generado por `update.js`)
+- **`update.js`** — script Node.js que regenera `games.json`, `soundtracks.html` e `img/achievements/manifest.json` (correr tras cambios en la DB, el algoritmo, los especiales o las imágenes de logros)
 - **`check-links.js`** — verifica que las URLs de audio de `database.js` siguen activas
+- **`auth/`** — Cloudflare Worker: login (email, Google, Discord, Twitch, Steam), puntuaciones, logros
+- **`database_editor/`** — editor interno de la base de juegos (ver su `CLAUDE.md`)
 - **`GLOSARIO.md`** — terminología del proyecto (leer antes de nombrar elementos de la UI)
 
 Orden de carga de scripts en el browser (página del juego):
@@ -42,50 +50,67 @@ Cada entrada en `js/database.js`:
   id: 1,
   game: "Nombre del juego",
   cover: "URL de la portada",
-  developer: "Nombre del estudio",  // opcional
+  developer: "Nombre del estudio",  // opcional; lo usan los logros de compañía
   pop: 5,          // popularidad 1-6, usada como filtro en la selección de grupos
   year: 2025,      // año de lanzamiento
-  tags: ['rpg', 'action'],  // tags de género del juego
+  tags: ['rpg', 'adventure'],  // tags de género del juego
   tracks: [
     {
       title: "Nombre de la canción",
+      artist: "Compositor",     // opcional
       mp3Url: "URL del audio",
       startSeconds: 30,         // opcional
-      tags: ['lyrics'],         // opcional, solo en pistas vocales
+      tags: ['lyrics'],         // opcional
     }
   ]
 }
 ```
 
-Tags de juego disponibles: `rpg`, `action`, `fps`, `platformer`, `strategy`,
-`racing`, `fighting`, `puzzle`, `horror`, `adventure`, `simulation`, `rhythm`,
-`roguelike`, `metroidvania`, `sandbox`, `mmo`, `stealth`, `indie`, `visual-novel`.
+Tags de juego en uso: `action`, `adventure`, `arcade`, `fighting`, `horror`, `indie`, `japanese`, `mmo`,
+`platformer`, `puzzle`, `rhythm`, `rpg`, `sandbox`, `shooter`, `sport`, `strategy`, `war`.
 
-Tag de pista: solo existe `lyrics` (pistas con letra vocal).
+Tags de pista: `lyrics` (letra vocal), `rock`, `electronic`, `retro`, `asian`.
 
 ## Flujo de generación de quests
 
 1. `update.js` genera grupos para los próximos 365 días usando `generateGameForDate()`
+   (con el pool del especial si el día lo es)
 2. Cada grupo = 1 respuesta + 3 señuelos, seleccionados por el algoritmo ponderado
 3. `games.json` guarda solo IDs: `{ answerId, coverIds[], trackIndex }`
 4. En el browser, `daily.js` carga `games.json` y `reconstructFromIds()` reconstruye
    los objetos completos desde `GAME_DB`
-5. Tras cualquier cambio en el algoritmo o la base de datos, correr `node update.js`
+5. Tras cualquier cambio en el algoritmo, la base de datos o los especiales, correr `node update.js`.
+   Preserva los días pasados y hoy (hoy solo se regenera si es especial y su quest aún no es del especial)
 
 ## Algoritmo de selección de grupos (`js/algorithm.js`)
 
 - **Filtro duro**: señuelos con `|pop_señuelo - pop_respuesta| ≤ 1`
 - **Scoring ponderado** (`weightedPickN`): año cercano + Jaccard de effective tags + aleatoriedad
-- **Effective tags**: `game.tags` + `'lyrics'` si la pista seleccionada (respuesta)
-  o cualquier pista (señuelos) tiene ese tag
+- **Effective tags**: `game.tags` + los tags de la pista seleccionada (respuesta)
+  o de cualquier pista (señuelos)
 - **Modo normal** `{ year:0.30, tags:0.15, random:0.55 }` — predomina la aleatoriedad
 - **Modo estricto** `{ year:0.55, tags:0.35, random:0.10 }` — prima año y tags
 - Cada quest asigna aleatoriamente el modo estricto a uno de sus tres grupos
 - `update.js` carga `algorithm.js` vía archivo temporal (mismo patrón que `database.js`)
 
+## Worker y logros
+
+- Día de juego: de 03:00 UTC a 02:59 UTC (`getGameDay()` en el cliente, `_isOnTime` / `gameDay()` en el worker)
+- La partida se registra al responder la tercera columna (`_recordFinishedQuest` en `game.js`)
+- Logros de tag/pista/compañía (`tag_*`, `track_*`, `dev_*`): los cuenta el navegador (`checkTagAchievements`)
+  y el worker solo acepta los ids de `auth/src/lib/achievements.js`. Al añadir o cambiar niveles,
+  actualizar los dos archivos y las imágenes de `img/achievements/`
+- Un logro sin imagen es provisional: no se muestra ni se concede. La web lo sabe por `img/achievements/manifest.json`
+  (lo genera `update.js`: correrlo tras añadir imágenes)
+- El navegador no genera quests: solo las lee de `games.json`
+- Login con email o nombre de usuario; los nombres no distinguen mayúsculas (`ilike` en el worker)
+- Login social: `state` firmado + cookie `oq_oauth_state`; vincular usa un ticket de `/auth/link-ticket`
+- No hay entorno local: CORS solo admite oestiquest.com
+- Orden de publicación: SQL en Supabase → `npm run deploy` en `auth/` → push de la web
+
 ## Convenciones
 
 - Sin framework, sin TypeScript, sin bundler — JS vanilla en todos los archivos del juego
-- `update.js`, `backfill.js`, `check-links.js` son scripts Node.js (no se cargan en el browser)
+- `update.js` y `check-links.js` son scripts Node.js (no se cargan en el browser)
 - Los diálogos de confirmación usan `customConfirm()`, nunca `confirm()` nativo
 - `GLOSARIO.md` en la raíz define la terminología oficial de UI — consultarlo antes de nombrar elementos

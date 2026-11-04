@@ -4,7 +4,6 @@ let _rankingTab = 'weekly';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await siteI18nReady;
-  document.title = t('ranking_page_title') || 'Ranking — Oesti Quest';
   await siteAuthReady;
 
   // Tabs
@@ -27,6 +26,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 document.addEventListener('langchange', () => {
   if (!window.RANKING_PAGE) return;
-  document.title = t('ranking_page_title') || 'Ranking — Oesti Quest';
   loadRankingInto('ranking-list', _rankingTab);
 });

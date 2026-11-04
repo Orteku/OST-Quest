@@ -3,14 +3,28 @@ import { signJwt, signSession, verifyJwt } from '../lib/jwt.js';
 export const AUTH_BASE     = 'https://auth.oestiquest.com';
 export const FRONTEND_BASE = 'https://oestiquest.com';
 
-// Redirige al frontend con el JWT en el hash (lo recibe oauth-callback.html)
+// El state del login social va firmado y con un nonce que también se guarda en una cookie del worker.
+// Al volver del proveedor se exige que coincidan: así nadie puede colar en el navegador de otro un login
+// o una vinculación que empezó él (CSRF). El usuario a vincular viaja dentro del state firmado.
+const STATE_COOKIE  = 'oq_oauth_state';
+const STATE_SECONDS = 600;
+
+function stateCookie(value, maxAge) {
+  return `${STATE_COOKIE}=${value}; Path=/auth; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
+}
+
+function redirect(location, cookie) {
+  return new Response(null, { status: 302, headers: { Location: location, 'Set-Cookie': cookie } });
+}
+
+// Redirige al frontend con el JWT en el hash (lo recibe oauth-callback.html) y borra la cookie del state
 export function oauthSuccess(token, linked = false) {
   const extra = linked ? '&linked=1' : '';
-  return Response.redirect(`${FRONTEND_BASE}/oauth-callback.html#token=${token}${extra}`, 302);
+  return redirect(`${FRONTEND_BASE}/oauth-callback.html#token=${token}${extra}`, stateCookie('', 0));
 }
 
 export function oauthError(error) {
-  return Response.redirect(`${FRONTEND_BASE}/oauth-callback.html#error=${error}`, 302);
+  return redirect(`${FRONTEND_BASE}/oauth-callback.html#error=${error}`, stateCookie('', 0));
 }
 
 // Emite un JWT para el usuario dado
@@ -18,26 +32,32 @@ export async function issueToken(user, env) {
   return signSession(user.id, env.JWT_SECRET);
 }
 
-// Codifica el state OAuth. Si hay linkJwt, lo incluye para el flujo de vinculación.
-export function buildOAuthState(linkJwt) {
-  const data = { r: crypto.randomUUID() };
-  if (linkJwt) data.l = linkJwt;
-  return btoa(JSON.stringify(data));
+// Inicio del flujo: ?link=<ticket de /auth/link-ticket> si es para vincular a la cuenta actual.
+// buildUrl(state) devuelve la URL del proveedor.
+export async function startOAuth(request, env, buildUrl) {
+  const link = new URL(request.url).searchParams.get('link');
+  const linkPayload = link ? await verifyJwt(link, env.JWT_SECRET) : null;
+  // También se acepta el token de sesión, que es lo que mandaba la web antes del ticket
+  const linkUserId = linkPayload?.sub && !linkPayload.pending ? linkPayload.sub : null;
+
+  const nonce = crypto.randomUUID();
+  const state = await signJwt({ n: nonce, ...(linkUserId && { l: linkUserId }) }, env.JWT_SECRET, STATE_SECONDS);
+  return redirect(buildUrl(state), stateCookie(nonce, STATE_SECONDS));
 }
 
-// Extrae el userId a vincular del state. Devuelve null si no es un flujo de vinculación.
-export async function getLinkUserId(stateParam, env) {
-  if (!stateParam) return null;
-  try {
-    const data = JSON.parse(atob(stateParam));
-    if (!data.l) return null;
-    const payload = await verifyJwt(data.l, env.JWT_SECRET);
-    return payload?.sub ?? null;
-  } catch { return null; }
+// Al volver: { linkUserId } si el state es válido y coincide con la cookie; null si no
+export async function checkOAuthState(request, state, env) {
+  const payload = state ? await verifyJwt(state, env.JWT_SECRET) : null;
+  const cookie  = (request.headers.get('Cookie') || '')
+    .split(';').map(c => c.trim().split('=')).find(([k]) => k === STATE_COOKIE)?.[1];
+  if (!payload?.n || payload.n !== cookie) return null;
+  return { linkUserId: payload.l || null };
 }
 
 // Busca un usuario existente por proveedor OAuth. NO crea usuarios nuevos.
 // Si hay cuenta con el mismo email, vincula el proveedor y la devuelve.
+// `email` debe venir verificado por el proveedor (ver verifiedEmail): con uno sin verificar,
+// cualquiera podría entrar en la cuenta de otro poniendo su email en Discord.
 // Devuelve null si no existe ninguna cuenta — el llamador debe emitir un token pendiente.
 export async function findExistingOauthUser(db, provider, providerId, email) {
   let user = await db.getUserByProvider(provider, providerId);
@@ -52,6 +72,11 @@ export async function findExistingOauthUser(db, provider, providerId, email) {
   }
 
   return null;
+}
+
+// Email del proveedor solo si este lo ha verificado; si no, null
+export function verifiedEmail(email, verified) {
+  return email && verified === true ? email : null;
 }
 
 // JWT pendiente para nuevos usuarios OAuth (antes de que guarden su username).

@@ -45,7 +45,9 @@ function _applyDOM() {
     btn.classList.toggle('lang-dropdown__option--active', btn.dataset.lang === _lang);
   });
   document.documentElement.lang = _lang;
-  if (_t.page_title) document.title = _t.page_title;
+  // Cada página indica su clave con <body data-title-key>; sin ella se queda el <title> del HTML
+  const titleKey = document.body.dataset.titleKey;
+  if (titleKey && typeof _t[titleKey] === 'string') document.title = _t[titleKey];
   document.dispatchEvent(new Event('langchange'));
 }
 

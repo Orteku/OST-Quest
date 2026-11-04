@@ -68,6 +68,13 @@ async function authInit() {
   // Escuchar el callback del popup OAuth
   window.addEventListener('message', _handleOAuthMessage);
 
+  // Error del login social cuando no se pudo usar el popup: oauth-callback.html vuelve a /?auth_error=…
+  const authError = new URLSearchParams(location.search).get('auth_error');
+  if (authError) {
+    history.replaceState(null, '', location.pathname + location.hash);
+    showToast(authError === 'provider_already_linked' ? t('auth_error_provider_taken') : t('auth_error_generic'), 'error');
+  }
+
   // Token pendiente si el popup fue bloqueado (fallback redirect)
   const pending = sessionStorage.getItem('oauth_pending_token');
   if (pending) {
@@ -368,7 +375,9 @@ function _renderAuthModal() {
     <button class="modal__close-x" id="auth-close">&times;</button>
     <h2 class="auth-title">${t(reg ? 'auth_register' : 'auth_sign_in')}</h2>
     <div class="auth-form">
-      <input class="auth-input" type="email" id="auth-email" placeholder="${t('auth_email')}" autocomplete="email">
+      ${reg
+        ? `<input class="auth-input" type="email" id="auth-email" placeholder="${t('auth_email')}" autocomplete="email">`
+        : `<input class="auth-input" type="text" id="auth-email" placeholder="${t('auth_email_or_username')}" autocomplete="username" autocapitalize="off" spellcheck="false">`}
       <input class="auth-input" type="password" id="auth-pwd" placeholder="${t('auth_password')}" autocomplete="${reg ? 'new-password' : 'current-password'}">
       <p class="auth-err" id="auth-err" style="display:none"></p>
       <button class="btn auth-submit-btn" id="auth-submit">${t(reg ? 'auth_register_btn' : 'auth_sign_in_btn')}</button>
@@ -444,8 +453,10 @@ async function _submitEmail() {
   if (!email || !pwd) return;
   _hideErr();
 
-  const path = _authMode === 'register' ? '/auth/register' : '/auth/login';
-  const data = await _apiFetch(path, 'POST', { email, password: pwd });
+  // Para entrar vale el email o el nombre de usuario (cuentas sin email, como las de Steam, con contraseña puesta)
+  const data = _authMode === 'register'
+    ? await _apiFetch('/auth/register', 'POST', { email, password: pwd })
+    : await _apiFetch('/auth/login', 'POST', { login: email, password: pwd });
 
   if (data?.error) {
     const msg = data.error === 'invalid_credentials'     ? t('auth_error_invalid_credentials')
@@ -522,8 +533,6 @@ function _signOut() {
 
 // ─── Ranking ──────────────────────────────────────────────────────────────────
 
-let _rankTab = 'weekly';
-
 async function loadRankingInto(containerId, tab) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -531,10 +540,9 @@ async function loadRankingInto(containerId, tab) {
 
   document.getElementById('player-card')?.remove();
   const view = tab === 'weekly' ? 'ranking_weekly' : 'ranking_global';
-  const { data, error } = await _supabase
-    .from(view).select('username, streak, pts, selected_avatar').order('pts', { ascending: false }).limit(25);
+  const data = await supabaseSelect(view, { select: 'username,streak,pts,selected_avatar', order: 'pts.desc', limit: 25 });
 
-  if (error || !data?.length) {
+  if (!data?.length) {
     el.innerHTML = `<p class="rank-empty">${t('ranking_empty')}</p>`;
     return;
   }
@@ -725,7 +733,10 @@ function _countAchievementHits(history, games) {
     groups.forEach((g, i) => {
       if (results[i] !== '1') return;
       for (const tag of g.answer.tags || []) add('tag', tag);
-      for (const tag of g.answer.tracks[g.trackIndex]?.tags || []) add('track', tag);
+      for (const tag of g.answer.tracks[g.trackIndex]?.tags || []) {
+        const maxYear = typeof TRACK_ACHIEVEMENT_MAX_YEAR === 'undefined' ? undefined : TRACK_ACHIEVEMENT_MAX_YEAR[tag];
+        if (maxYear === undefined || g.answer.year <= maxYear) add('track', tag);
+      }
       const dev = (g.answer.developer || '').toLowerCase();
       for (const [key, res] of devTerms) if (res.some(re => re.test(dev))) add('dev', key);
     });
@@ -826,8 +837,7 @@ async function _migrateIfNeeded() {
 
 async function getUserWeeklyPosition() {
   if (!_profile?.username) return null;
-  const { data } = await _supabase
-    .from('ranking_weekly').select('username, pts').order('pts', { ascending: false });
+  const data = await supabaseSelect('ranking_weekly', { select: 'username,pts', order: 'pts.desc' });
   if (!data) return null;
   const idx = data.findIndex(r => r.username === _profile.username);
   return idx !== -1 ? { rank: idx + 1, pts: data[idx].pts } : null;
@@ -873,7 +883,7 @@ function _renderProfileHTML(forPage = false) {
   const emailRow = `<div class="profile-provider">
     <span class="profile-provider__icon">✉️</span>
     <span class="profile-provider__label">Email</span>
-    <span class="profile-provider__status">${providers.email ? (p.email || '') : t('auth_not_configured')}</span>
+    <span class="profile-provider__status">${_esc(p.email || (providers.email ? t('auth_password_only') : t('auth_not_configured')))}</span>
   </div>`;
 
   const _sections = `
@@ -895,6 +905,7 @@ function _renderProfileHTML(forPage = false) {
         : `<input class="auth-input" type="password" id="profile-pwd-new"  placeholder="${t('auth_new_password')}"     autocomplete="new-password">
            <input class="auth-input" type="password" id="profile-pwd-new2" placeholder="${t('auth_confirm_password')}" autocomplete="new-password">`
       }
+      <p class="auth-hint">${t('auth_password_login_hint')}</p>
       <p class="auth-err" id="profile-pwd-err" style="display:none"></p>
       <button class="btn profile-save-btn" id="profile-pwd-save">${t('auth_change_password')}</button>
     </section>
@@ -1211,16 +1222,23 @@ function _bindProfileEvents() {
   });
 }
 
-// Abre popup para vincular un proveedor OAuth a la cuenta actual
-function _linkProvider(provider) {
+// Abre popup para vincular un proveedor OAuth a la cuenta actual.
+// La URL lleva un ticket de 5 minutos, no el token de sesión. El popup se abre antes de pedirlo:
+// abierto después de esperar, el navegador lo bloquearía por no venir directamente del clic.
+async function _linkProvider(provider) {
   const w = 520, h = 620;
   const left = Math.max(0, (screen.width  - w) / 2);
   const top  = Math.max(0, (screen.height - h) / 2);
-  window.open(
-    `${AUTH_URL}/auth/${provider}?link=${encodeURIComponent(_token)}`,
-    'link-popup',
-    `width=${w},height=${h},left=${left},top=${top},scrollbars=yes`
-  );
+  const popup = window.open('', 'link-popup', `width=${w},height=${h},left=${left},top=${top},scrollbars=yes`);
+  const data  = await _apiFetch('/auth/link-ticket', 'POST');
+  if (!data?.ticket) {
+    popup?.close();
+    if (typeof showToast === 'function') showToast(t('auth_error_generic'), 'error');
+    return;
+  }
+  const url = `${AUTH_URL}/auth/${provider}?link=${encodeURIComponent(data.ticket)}`;
+  if (popup && !popup.closed) popup.location.href = url;
+  else window.location.href = url;
   // El resultado llega por postMessage (mismo listener _handleOAuthMessage)
   // Al recibir linked=1, refrescamos el modal de perfil
 }
@@ -1263,8 +1281,9 @@ async function _backfillAchievements() {
   // Especiales retroactivos: verificar localStorage (incluye Quest Log/archivo)
   if (typeof SPECIAL_EVENTS !== 'undefined' && typeof loadPlayedDays === 'function') {
     const playedDays = loadPlayedDays();
-    const existing   = granted.length ? await authGetAchievements() : (data?.granted ? [] : await authGetAchievements());
-    const haveIds    = new Set(existing.map(a => a.achievement_id));
+    // Antes, si el backfill no concedía nada, se daba la lista por vacía y se pedían otra vez
+    // en cada sesión todos los especiales ya conseguidos
+    const haveIds    = new Set((await authGetAchievements()).map(a => a.achievement_id));
     for (const sp of SPECIAL_EVENTS.filter(hasGameData)) {
       const achId = 'special_' + sp.date;
       if (haveIds.has(achId)) continue;

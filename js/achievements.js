@@ -379,22 +379,22 @@ const ACHIEVEMENTS_DB = [
     id:     'track_retro_10',
     hidden: false,
     image:  'track_retro_10.webp',
-    es: { name: 'Let\'s Go!', desc: 'Acierta 10 canciones retro en la quest del día' },
-    en: { name: 'Let\'s Go!', desc: 'Guess 10 retro songs in the daily quest' },
+    es: { name: 'Let\'s Go!', desc: 'Acierta 10 canciones retro de juegos anteriores a 2000 en la quest del día' },
+    en: { name: 'Let\'s Go!', desc: 'Guess 10 retro songs from pre-2000 games in the daily quest' },
   },
   {
     id:     'track_retro_30',
     hidden: false,
     image:  'track_retro_30.webp',
-    es: { name: '¡Salve al rey, nena!', desc: 'Acierta 30 canciones retro en la quest del día' },
-    en: { name: 'Hail to the King, Baby!', desc: 'Guess 30 retro songs in the daily quest' },
+    es: { name: '¡Salve al rey, nena!', desc: 'Acierta 30 canciones retro de juegos anteriores a 2000 en la quest del día' },
+    en: { name: 'Hail to the King, Baby!', desc: 'Guess 30 retro songs from pre-2000 games in the daily quest' },
   },
   {
     id:     'track_retro_50',
     hidden: false,
     image:  'track_retro_50.webp',
-    es: { name: 'Se ruega a los jugadores que no fallen en los pasillos', desc: 'Acierta 50 canciones retro en la quest del día' },
-    en: { name: 'Players Are Asked Not to Fail in the Corridors', desc: 'Guess 50 retro songs in the daily quest' },
+    es: { name: 'Se ruega a los jugadores que no fallen en los pasillos', desc: 'Acierta 50 canciones retro de juegos anteriores a 2000 en la quest del día' },
+    en: { name: 'Players Are Asked Not to Fail in the Corridors', desc: 'Guess 50 retro songs from pre-2000 games in the daily quest' },
   },
   {
     id:     'track_rock_10',
@@ -786,39 +786,40 @@ const DEV_ACHIEVEMENT_TERMS = {
   rockstar:     ['rockstar'],
 };
 
-// Un logro sin imagen en img/achievements/ es provisional: no se muestra ni se desbloquea desde el cliente
+// Año máximo del juego para que una pista con ese tag cuente en los logros track_{tag}_{n}.
+// retro: hay juegos de 2001 en adelante con el tag por su música que no cuentan como retro
+const TRACK_ACHIEVEMENT_MAX_YEAR = {
+  retro: 1999,
+};
+
+// Un logro sin imagen en img/achievements/ es provisional: no se muestra ni se desbloquea desde el cliente.
+// Las imágenes que hay las lista img/achievements/manifest.json, que genera update.js: una sola petición
+// en vez de una por logro. Si no se puede leer, se pregunta por cada imagen (HEAD).
 const _achImageChecks = {};
 const _achImageOk     = {};
-// Los resultados se guardan una hora en localStorage: el navegador no cachea las peticiones HEAD,
-// y sin esto cada página repetía todas las comprobaciones. Un logro nuevo tarda como mucho una hora en aparecer.
-const _ACH_IMG_CACHE_KEY = 'ostquest_ach_img';
-const _ACH_IMG_CACHE_TTL = 60 * 60 * 1000;
-const _achImgCache = (() => {
-  try {
-    const c = JSON.parse(localStorage.getItem(_ACH_IMG_CACHE_KEY));
-    if (c && Date.now() - c.ts < _ACH_IMG_CACHE_TTL) return c;
-  } catch {}
-  return { ts: Date.now(), ok: {} };
-})();
+let _achManifest = null;
 
-// Petición HEAD: pregunta si el archivo existe sin descargarlo, para no esperar a imágenes pesadas
+function _loadAchievementManifest() {
+  return _achManifest ??= fetch('img/achievements/manifest.json')
+    .then(res => res.ok ? res.json() : null)
+    .then(list => Array.isArray(list) ? new Set(list) : null)
+    .catch(() => null);
+}
+
 function achievementHasImage(a) {
   if (!a?.image || typeof fetch === 'undefined') return Promise.resolve(false);
-  if (a.image in _achImgCache.ok) {
-    _achImageOk[a.id] = _achImgCache.ok[a.image];
-    return Promise.resolve(_achImageOk[a.id]);
-  }
-  return _achImageChecks[a.id] ??= fetch('img/achievements/' + a.image, { method: 'HEAD' })
-    .then(res => {
-      _achImgCache.ok[a.image] = res.ok;
-      try { localStorage.setItem(_ACH_IMG_CACHE_KEY, JSON.stringify(_achImgCache)); } catch {}
-      _achImageOk[a.id] = res.ok;
-      return res.ok;
-    }, () => {
-      // Error de red: no se guarda en ningún sitio, la siguiente llamada vuelve a preguntar
-      delete _achImageChecks[a.id];
-      return false;
-    });
+  return _achImageChecks[a.id] ??= _loadAchievementManifest().then(manifest => {
+    if (manifest) return manifest.has(a.image);
+    // Petición HEAD: pregunta si el archivo existe sin descargarlo
+    return fetch('img/achievements/' + a.image, { method: 'HEAD' }).then(res => res.ok);
+  }).then(ok => {
+    _achImageOk[a.id] = ok;
+    return ok;
+  }, () => {
+    // Error de red: no se guarda, la siguiente llamada vuelve a preguntar
+    delete _achImageChecks[a.id];
+    return false;
+  });
 }
 
 // Versión síncrona: true solo si ya se comprobó que NO tiene imagen (lo no comprobado aún cuenta como válido)

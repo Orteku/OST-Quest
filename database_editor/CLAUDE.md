@@ -16,9 +16,17 @@ la librería de Supabase cargada desde CDN.
 ### Supabase
 Base de datos remota donde se almacena la copia "fuente de verdad" de GAME_DB.
 La conexión usa las credenciales configuradas en el propio editor.
-Tabla principal: `games` (columnas: id, game, cover, pop, year, tags, tracks).
+Tabla principal: se elige en el editor (la real es `OSTQuest`; si se deja vacío usa `games`).
+Columnas: id, game, cover, developer, pop, year, tags, tracks.
 - `tags`: tipo `text[]` (array de texto)
 - `tracks`: tipo `jsonb`
+
+Tablas para colaborar en traducciones y especiales:
+- `editor_translations` (`game_id`, `lang`, …): nombres de juegos traducidos → `locales/games-es.json`
+- `editor_specials`: eventos especiales → `js/specials.js`
+
+"Sobrescribir" borra la tabla entera y la vuelve a insertar (antes descarga una copia de `database.js`);
+para cambios normales es más seguro "Añadir nuevas" / "Modificar", que solo suben lo que ha cambiado.
 
 ### Google Apps Script (`apps_script.gs`)
 Script desplegado como aplicación web en Google Sheets. Recibe los datos del editor

@@ -1,27 +1,23 @@
 // Steam usa OpenID 2.0 (no OAuth 2.0) — el flujo es diferente
-import { AUTH_BASE, getLinkUserId, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
-import { verifyJwt } from '../lib/jwt.js';
+import { AUTH_BASE, startOAuth, checkOAuthState, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
 
 const STEAM_OPENID = 'https://steamcommunity.com/openid/login';
 const REDIRECT_URI = `${AUTH_BASE}/auth/steam/callback`;
 
 // GET /auth/steam — redirige a Steam
-export function handleSteamStart(request) {
-  const linkJwt = new URL(request.url).searchParams.get('link');
-  // Pasamos el link token como query param en return_to (Steam no soporta state estándar)
-  const returnTo = linkJwt
-    ? `${REDIRECT_URI}?link=${encodeURIComponent(linkJwt)}`
-    : REDIRECT_URI;
-
-  const params = new URLSearchParams({
-    'openid.ns':         'http://specs.openid.net/auth/2.0',
-    'openid.mode':       'checkid_setup',
-    'openid.return_to':  returnTo,
-    'openid.realm':      AUTH_BASE,
-    'openid.identity':   'http://specs.openid.net/auth/2.0/identifier_select',
-    'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
+// Steam no tiene state estándar: el state firmado va en return_to (Steam lo incluye en lo que firma)
+export function handleSteamStart(request, env) {
+  return startOAuth(request, env, state => {
+    const params = new URLSearchParams({
+      'openid.ns':         'http://specs.openid.net/auth/2.0',
+      'openid.mode':       'checkid_setup',
+      'openid.return_to':  `${REDIRECT_URI}?state=${encodeURIComponent(state)}`,
+      'openid.realm':      AUTH_BASE,
+      'openid.identity':   'http://specs.openid.net/auth/2.0/identifier_select',
+      'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
+    });
+    return `${STEAM_OPENID}?${params}`;
   });
-  return Response.redirect(`${STEAM_OPENID}?${params}`, 302);
 }
 
 // GET /auth/steam/callback
@@ -32,13 +28,9 @@ export async function handleSteamCallback(request, env, db) {
   if (params['openid.mode'] !== 'id_res') return oauthError('steam_cancelled');
 
   try {
-    // Extraer link token si viene en la URL
-    let linkUserId = null;
-    const linkJwt = url.searchParams.get('link');
-    if (linkJwt) {
-      const payload = await verifyJwt(linkJwt, env.JWT_SECRET);
-      if (payload?.sub) linkUserId = payload.sub;
-    }
+    const checked = await checkOAuthState(request, url.searchParams.get('state'), env);
+    if (!checked) return oauthError('invalid_state');
+    const { linkUserId } = checked;
 
     // Verificar con Steam que la respuesta es legítima
     const verifyParams = new URLSearchParams({ ...params, 'openid.mode': 'check_authentication' });

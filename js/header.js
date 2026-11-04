@@ -15,8 +15,6 @@ const _ICON_ARCHIVE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 const _ICON_STATS   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;
 const _ICON_SUN     = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
 const _ICON_MOON    = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-const _FLAG_ES_SVG  = `<svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg>`;
-const _FLAG_EN_SVG  = `<svg class="lang-flag-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#012169"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="white" stroke-width="4"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="#c8102e" stroke-width="2"/><rect x="8.5" y="0" width="3" height="14" fill="white"/><rect x="0" y="5.5" width="20" height="3" fill="white"/><rect x="9.25" y="0" width="1.5" height="14" fill="#c8102e"/><rect x="0" y="6.25" width="20" height="1.5" fill="#c8102e"/></svg>`;
 
 // ─── Marcado ──────────────────────────────────────────────────────────────────
 
@@ -60,13 +58,13 @@ function _siteControlsHTML() {
     </div>` : ''}
     <div class="lang-dropdown" id="lang-dropdown">
       <button class="lang-dropdown__btn" id="lang-dropdown-btn" aria-haspopup="true" aria-expanded="false">
-        <span id="lang-dropdown-flag">${_FLAG_ES_SVG}</span>
+        <span id="lang-dropdown-flag">${_FLAG_ES}</span>
         <span id="lang-dropdown-label">Español</span>
         <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="lang-dropdown__chevron"><path d="M1 1l4 4 4-4"/></svg>
       </button>
       <div class="lang-dropdown__menu" id="lang-dropdown-menu">
-        <button class="lang-dropdown__option" data-lang="es">${_FLAG_ES_SVG} Español</button>
-        <button class="lang-dropdown__option" data-lang="en">${_FLAG_EN_SVG} English</button>
+        <button class="lang-dropdown__option" data-lang="es">${_FLAG_ES} Español</button>
+        <button class="lang-dropdown__option" data-lang="en">${_FLAG_EN} English</button>
       </div>
     </div>
   </div>`;
@@ -394,8 +392,16 @@ function _startCountdownTicker() {
   const el = document.getElementById('header-countdown');
   if (!el) return;
   _updateCountdownLabel();
+  // Al cambiar el día de juego (contador a cero) se avisa con "gamedaychange": game.js carga la quest nueva.
+  // Se compara el día y no el contador: con la pestaña en segundo plano los temporizadores se retrasan
+  let day = getGameDay();
   (function tick() {
     el.textContent = formatCountdown(timeUntilNextGame());
+    if (getGameDay() !== day) {
+      day = getGameDay();
+      _updateCountdownLabel();
+      document.dispatchEvent(new Event('gamedaychange'));
+    }
     setTimeout(tick, 1000);
   })();
 }

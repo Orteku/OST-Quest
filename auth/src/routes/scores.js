@@ -4,6 +4,12 @@ import { checkServerAchievements, getServerProgress } from '../lib/achievements.
 
 const RESULTS_RE = /^[01]{3}$/;
 const DATE_RE    = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_MS     = 24 * 3_600_000;
+
+// Día de juego (cambia a las 03:00 UTC, igual que el cliente) desplazado `offset` días
+function gameDay(offset = 0) {
+  return new Date(Date.now() - 3 * 3_600_000 + offset * DAY_MS).toISOString().slice(0, 10);
+}
 
 // GET /scores/stats — estadísticas calculadas desde la BD (sin localStorage)
 export async function handleGetStats(request, env, db) {
@@ -27,8 +33,14 @@ export async function handleSubmitScore(request, env, db) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
 
-  const { gameDate, score, stats } = body;
+  const { gameDate, score } = body;
   if (!gameDate || score === undefined) return json({ error: 'missing_fields' }, 400, request);
+  if (!Number.isInteger(score) || score < 0 || score > 3) return json({ error: 'invalid_score' }, 400, request);
+  // Solo la quest del día. Se admite un día de margen por el reloj del jugador o una partida
+  // empezada justo antes del cambio de día; sin esto se podían sumar puntos con fechas inventadas.
+  if (!DATE_RE.test(gameDate) || ![gameDay(-1), gameDay(), gameDay(1)].includes(gameDate)) {
+    return json({ error: 'invalid_date' }, 400, request);
+  }
 
   // Cada quest se puntúa una sola vez: si ya hay resultado (otro dispositivo, almacenamiento borrado…), se conserva
   if (await db.hasScoreForDate(payload.sub, gameDate)) {
@@ -106,11 +118,12 @@ export async function handleMigrateScores(request, env, db) {
   const { played } = body;
   if (!played || typeof played !== 'object') return json({ error: 'invalid_played' }, 400, request);
 
-  // Solo partidas jugadas en su día (ts = momento en que se jugó): las del Quest Log no suman puntos
+  // Solo partidas jugadas en su día (ts = momento en que se jugó): las del Quest Log no suman puntos.
+  // Un ts del futuro no puede ser real (se da una hora de margen por el reloj del jugador)
   const rows = [];
   for (const date of Object.keys(played).filter(d => DATE_RE.test(d))) {
     const res = played[date];
-    if (![0, 1, 2, 3].includes(res?.score) || !res.ts) continue;
+    if (![0, 1, 2, 3].includes(res?.score) || !res.ts || res.ts > Date.now() + 3_600_000) continue;
     const playedAt = new Date(res.ts).toISOString();
     if (!db._isOnTime(date, playedAt)) continue;
     const pts = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;

@@ -1,110 +1,144 @@
 # Oesti Quest
 
-Juego diario de bandas sonoras de videojuegos. Escucha un fragmento y elige el juego correcto entre 4 portadas. La misma quest para todo el mundo, se renueva a las 03:00 UTC.
+Juego diario de bandas sonoras de videojuegos. Escucha un fragmento y elige el juego correcto entre 4 portadas,
+en tres columnas. La misma quest para todo el mundo; se renueva a las 03:00 UTC (04:00 en España, 05:00 en verano).
+
+Web estática (HTML/CSS/JS puro, sin framework ni bundler) publicada en GitHub Pages, con un Cloudflare Worker
+para cuentas, puntuaciones y logros, y Supabase como base de datos.
 
 ## Estructura del proyecto
 
 ```
 ostquest/
-├── index.html              # Página principal
-├── soundtracks.html        # Lista de canciones
-├── ranking.html            # Ranking de jugadores
-├── privacy.html            # Política de privacidad
-├── terms.html              # Términos de servicio
+├── index.html              # Juego (<body data-page="game">)
+├── profile.html            # Perfil: tarjeta, ajustes de cuenta y trofeos
+├── ranking.html            # Ranking semanal y global
+├── soundtracks.html        # Lista de canciones (HTML estático generado por update.js)
+├── about.html, privacy.html, terms.html
+├── oauth-callback.html     # Recibe el token del login social y lo pasa a la ventana principal
 ├── games.json              # Quests pregeneradas (generado por update.js)
-├── sitemap.xml
-├── robots.txt
-├── update.js               # Regenera games.json (Node.js)
-├── backfill.js             # Rellena los últimos 30 días sin sobreescribir
-├── check-links.js          # Verifica que las URLs de audio siguen activas
-├── css/
-│   └── style.css
+├── sitemap.xml, robots.txt, CNAME
+├── update.js               # Regenera games.json, soundtracks.html y la lista de imágenes de logros (Node.js)
+├── check-links.js          # Comprueba que las URLs de audio siguen activas (Node.js)
+├── css/style.css           # Todos los estilos
 ├── js/
-│   ├── database.js         # GAME_DB: 500+ juegos con portadas, audio, tags, pop, year
-│   ├── i18n.js             # Internacionalización (es / en)
-│   ├── daily.js            # Carga de games.json, lógica de fecha, persistencia, Quest Log
-│   ├── algorithm.js        # Selección ponderada de grupos (compartido con update.js)
-│   ├── assets.js           # Extrae portada y URL de audio de cada entrada
-│   ├── player.js           # Reproductor de audio HTML5
-│   ├── supabase.js         # Cliente Supabase (scores, stats, ranking)
-│   ├── auth.js             # Autenticación (email, Google, Discord, Twitter, Twitch)
-│   └── game.js             # Controlador principal: juego, modales, modo GM
+│   ├── database.js         # GAME_DB: ~800 juegos con portada, pistas, tags, pop y año
+│   ├── i18n.js             # Idiomas (es / en) y traducción de nombres de juegos
+│   ├── specials.js         # Eventos especiales (también lo usa update.js)
+│   ├── achievements.js     # Definición de los logros
+│   ├── daily.js            # Fechas, carga de games.json, persistencia en localStorage
+│   ├── algorithm.js        # Selección de señuelos y generación de quests (update.js y modo GM)
+│   ├── assets.js           # Portada y audio de cada entrada
+│   ├── player.js           # Reproductor de audio HTML5 (precarga, fragmento de 30 s, fundido)
+│   ├── supabase.js         # Lectura de las vistas del ranking (fetch a la API de Supabase)
+│   ├── auth.js             # Sesión, perfil, ranking, logros y avisos de logro
+│   ├── header.js           # Header, footer, controles, Quest Log, estadísticas, tema y arranque
+│   ├── game.js             # Juego, modales de partida y modo GM (solo en index.html)
+│   ├── ranking.js          # Página de ranking
+│   └── soundtracks.js      # Página de canciones
 ├── locales/
-│   ├── es.json             # Textos en español
-│   └── en.json             # Textos en inglés
-├── auth/                   # Cloudflare Worker (backend de autenticación)
-│   └── src/
-│       ├── index.js        # Router principal
-│       ├── routes/         # email.js, oauth.js, profile.js, score.js, ranking.js
-│       ├── lib/            # jwt.js, password.js, mailer.js, cors.js, db.js
-│       └── wrangler.toml
-└── database_editor/        # Herramienta interna para editar database.js
+│   ├── es.json, en.json    # Textos de la interfaz
+│   └── games-es.json       # Nombres de juegos traducidos al español
+├── img/                    # banner, logo, achievements/ (logros + manifest.json), specials/ (banner y favicon de eventos)
+├── fx/                     # Sonidos e imágenes de efectos (wasted, línea, logro)
+├── auth/                   # Cloudflare Worker (ver más abajo)
+└── database_editor/        # Herramienta interna para editar la base de juegos
 ```
 
-**Orden de carga de scripts en el browser:**
-`database.js` → `i18n.js` → `daily.js` → `algorithm.js` → `assets.js` → `player.js` → `supabase.js` → `auth.js` → `game.js`
+**Orden de carga de scripts** (página del juego):
+`database.js` → `i18n.js` → `specials.js` → `achievements.js` → `daily.js` → `algorithm.js`
+→ `assets.js` → `player.js` → `supabase.js` → `auth.js` → `header.js` → `game.js`
 
-## Despliegue
+Las demás páginas cargan lo común (`i18n`, `specials`, `achievements`, `daily`, `supabase`, `auth`, `header`) más su
+script propio. El header no está en el HTML: cada página tiene `<div id="site-header">`, `<div id="site-controls">` y
+`<footer id="site-footer">`, que rellena `header.js`. El título de la pestaña sale de `<body data-title-key="…">`.
 
-Proyecto estático (HTML/CSS/JS puro, sin bundler). Publicado en GitHub Pages.
+## Desarrollo y despliegue
 
-### Servidor local (desarrollo)
-```bash
-python -m http.server 8000
-# Abrir http://localhost:8000
+No hay entorno local: el Worker solo acepta peticiones de oestiquest.com (`auth/src/lib/cors.js`).
+
+### Orden al publicar cambios que tocan varias partes
+1. **SQL** en Supabase (si hay cambios de tablas o vistas)
+2. **Worker**: `cd auth && npm run deploy`
+3. **Web**: push a GitHub Pages
+
+### Worker (`auth/`)
 ```
-
-### Backend (Cloudflare Worker)
-```bash
-cd auth
-npx wrangler deploy
+auth/src/
+├── index.js              # Router
+├── lib/
+│   ├── achievements.js   # Niveles de logros por tag/compañía y logros que concede el servidor
+│   ├── cors.js           # Orígenes y métodos permitidos
+│   ├── db.js             # Acceso a Supabase (service key)
+│   ├── jwt.js            # JWT HMAC; sesión de 30 días renovada al entrar
+│   ├── mailer.js         # Correos (Resend)
+│   └── password.js       # PBKDF2
+└── routes/
+    ├── email.js          # Registro, login, cambio y recuperación de contraseña
+    ├── oauth.js          # Utilidades comunes del login social
+    ├── google.js, discord.js, twitch.js, steam.js
+    ├── user.js           # Perfil, nombre, vincular/desvincular, borrar cuenta, logros, tarjeta pública
+    └── scores.js         # Puntuaciones, historial, estadísticas, migración
 ```
-El Worker gestiona autenticación, scores y ranking. Se conecta a Supabase como base de datos.
+Secretos (`npx wrangler secret put …`): `JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, credenciales de
+Google, Discord y Twitch, y `RESEND_API_KEY`. Ver `auth/.dev.vars.example`.
 
 ## Cómo funciona
 
 ### Juego diario
-Las quests están pregeneradas en `games.json`. Al cargar la página se lee la entrada correspondiente a la fecha actual (UTC, el día cambia a las 03:00 UTC). `games.json` almacena solo IDs (`answerId`, `coverIds[]`, `trackIndex`); el browser reconstruye los objetos completos desde `GAME_DB` en `database.js`.
+`games.json` guarda para cada día solo IDs (`answerId`, `coverIds[]`, `trackIndex`); el navegador reconstruye la quest
+desde `GAME_DB`. El día de juego cambia a las 03:00 UTC (`getGameDay()` en el cliente, `_isOnTime` / `gameDay()` en el worker); si la
+página está abierta en ese momento, se recarga sola con la quest nueva. El resultado se guarda en cuanto se responde la
+tercera columna. El navegador no genera quests: si `games.json` no carga, avisa del error.
+
+### Eventos especiales (`js/specials.js`)
+Fechas fijas (`YYYY-MM-DD`) o anuales (`MM-DD`), con rango opcional (`dateTo`). Un especial con pool (`gameIds`,
+`tag` o `search`) genera la quest solo con esos juegos, no cuenta en la numeración de quests y da un logro
+`special_{fecha}`. Sin pool es solo visual (color, banner y favicon de `img/specials/`).
 
 ### Audio
-Usa la API de audio HTML5. Las URLs apuntan principalmente a Archive.org y KHInsider. El reproductor aplica prewarm silencioso al cargar la quest; si falla, reintenta hasta 3 veces con backoff (3 s / 8 s / 15 s). Si el usuario pulsa play y el audio aún no está listo, se realiza un intento fresco.
+HTML5 `<audio>`. Las URLs apuntan sobre todo a Archive.org y KHInsider (vgmtreasurechest). Las tres pistas de la
+quest se precargan; si falla la precarga, se reintenta hasta 3 veces (3 s / 8 s / 15 s). Cada pista suena 30 s
+desde `startSeconds`, con fundido en los últimos 3 s.
 
-### Grupos equilibrados
-Cada grupo de 4 portadas (1 respuesta + 3 señuelos) se selecciona con el algoritmo de `algorithm.js`:
+### Selección de señuelos (`js/algorithm.js`)
 - **Filtro duro**: `|pop_señuelo - pop_respuesta| ≤ 1`
-- **Scoring ponderado**: proximidad de año + Jaccard de effective tags + aleatoriedad
-- **Modo normal** (`year: 0.30, tags: 0.15, random: 0.55`) — predomina la aleatoriedad
-- **Modo estricto** (`year: 0.55, tags: 0.35, random: 0.10`) — prima año y tags
-- Cada quest asigna aleatoriamente el modo estricto a uno de sus tres grupos
+- **Puntuación**: proximidad de año + Jaccard de effective tags + aleatoriedad
+- **Modo normal** `{ year: 0.30, tags: 0.15, random: 0.55 }` y **modo estricto** `{ year: 0.55, tags: 0.35, random: 0.10 }`;
+  cada quest pone uno de sus tres grupos en modo estricto
 
-**Escala de popularidad (1-6):**
-- **6** — Iconos absolutos, conocidos más allá del gaming. *Mario, Zelda, GTA*
-- **5** — Grandes éxitos, cualquier gamer los conoce. *Elden Ring, The Witcher 3*
-- **4** — Muy conocidos dentro del hobby. *Hollow Knight, Persona 5*
-- **3** — Conocidos por aficionados. *Transistor, Ace Combat 04*
-- **2** — Nicho o muy retro. *Lufia II...*
-- **1** — Reservado para juegos muy desconocidos
+**Popularidad (1-6):** 6 iconos fuera del gaming (Mario, GTA) · 5 grandes éxitos (Elden Ring) · 4 muy conocidos en el
+hobby (Hollow Knight) · 3 conocidos por aficionados (Transistor) · 2 nicho o muy retro · 1 muy desconocidos.
 
-### Progreso y estadísticas
-- El progreso de cada partida se guarda en `localStorage` (`ostquest_prog_YYYY-MM-DD`)
-- Las estadísticas globales se guardan en `ostquest_stats` (local) y en Supabase (si hay sesión)
-- El Quest Log muestra todos los días desde el inicio del juego (`QUEST_START`)
-- Las partidas del Quest Log no afectan a estadísticas ni racha
+### Cuentas, puntos y ranking
+Login con email/contraseña, Google, Discord, Twitch o Steam. Con contraseña se puede entrar con el email o con el
+nombre de usuario (útil en cuentas de Steam, que no tienen email). Los nombres no distinguen mayúsculas.
+La sesión dura 30 días desde la última visita. El login social usa un `state` firmado más una cookie del worker, y
+para vincular una red se pide antes un ticket de 5 minutos (`/auth/link-ticket`) en vez de poner la sesión en la URL.
+Las partidas jugadas sin sesión en su día se suben al iniciarla; las del Quest Log no suman puntos.
 
-### Autenticación y ranking
-El backend es un Cloudflare Worker (`auth/`) que se conecta a Supabase. Métodos de login: email/contraseña, Google, Discord, Twitter/X y Twitch. Al iniciar sesión, las estadísticas locales se migran a la cuenta. El ranking es semanal (lunes–domingo) y global.
+Puntos por quest: 100 (3/3) · 66 (2/3) · 33 (1/3), +10 si se lleva una racha de 2 o más días seguidos.
+Ranking semanal (lunes a domingo) y global, leídos de las vistas `ranking_weekly` y `ranking_global`.
 
-La puntuación por quest es: 100 pts (3/3) · 66 pts (2/3) · 33 pts (1/3). La racha activa suma +10 pts por quest perfecta consecutiva.
+### Logros (`js/achievements.js`)
+Un logro sin imagen en `img/achievements/` es provisional: no se muestra ni se concede. La web sabe qué imágenes hay
+por `img/achievements/manifest.json`, que genera `update.js`: **después de añadir imágenes de logros hay que correrlo**.
+- **Servidor**: registro, racha de 7, 30 quests, aniversario, quests perfectas y podio semanal.
+- **Navegador**: aciertos por tag de juego (`tag_*`), por tag de pista (`track_*`) y por compañía (`dev_*`). El worker
+  solo acepta los ids de `auth/src/lib/achievements.js`: al añadir o cambiar niveles hay que tocar los dos archivos.
+  Las compañías se buscan por palabra completa en `developer` (`DEV_ACHIEVEMENT_TERMS`); los tags de pista pueden
+  tener un año máximo (`TRACK_ACHIEVEMENT_MAX_YEAR`, p. ej. retro hasta 1999).
+- **Secretos** (`easter_*`), compartir y especiales: los pide el navegador.
 
-## Actualizar la base de datos
+## Actualizar la base de juegos
 
-Tras añadir o modificar juegos en `database.js`:
-
+Tras cambiar `database.js`, el algoritmo o los especiales:
 ```bash
 node update.js
 ```
-
-El script preserva todos los días hasta hoy y regenera desde mañana en adelante con la base de datos actualizada (365 días futuros).
+Conserva los días pasados y hoy (salvo que hoy sea un especial cuya quest aún no sea del especial) y regenera los
+365 siguientes. También rehace la lista estática de `soundtracks.html` y `img/achievements/manifest.json`.
+`games.json` se escribe con un día por línea (la mitad de tamaño y diffs legibles).
 
 ## Estructura de una entrada en GAME_DB
 
@@ -112,24 +146,26 @@ El script preserva todos los días hasta hoy y regenera desde mañana en adelant
 {
   id: 116,
   game: "Nombre del juego",
-  cover: "https://images.igdb.com/igdb/image/upload/t_cover_big/CODIGO.jpg",
-  pop: 4,         // Popularidad 1-6
-  year: 2020,     // Año de lanzamiento
-  tags: ['rpg', 'action'],
+  cover: "https://images.igdb.com/igdb/image/upload/t_cover_big/CODIGO.webp",
+  developer: "Estudio, Distribuidora",   // opcional; lo usan los logros de compañía
+  pop: 4,                                // popularidad 1-6
+  year: 2020,
+  tags: ['rpg', 'adventure'],
   tracks: [
     {
       title: "Nombre de la canción",
+      artist: "Compositor",              // opcional
       mp3Url: "https://archive.org/download/...",
-      startSeconds: 30,       // opcional
-      tags: ['lyrics'],       // opcional, solo si la pista tiene letra vocal
+      startSeconds: 30,                  // opcional
+      tags: ['lyrics'],                  // opcional
     }
   ]
 }
 ```
 
-Tags de juego disponibles: `rpg`, `action`, `fps`, `platformer`, `strategy`, `racing`, `fighting`, `puzzle`, `horror`, `adventure`, `simulation`, `rhythm`, `roguelike`, `metroidvania`, `sandbox`, `mmo`, `stealth`, `indie`, `visual-novel`.
+Tags de juego: `action`, `adventure`, `arcade`, `fighting`, `horror`, `indie`, `japanese`, `mmo`, `platformer`,
+`puzzle`, `rhythm`, `rpg`, `sandbox`, `shooter`, `sport`, `strategy`, `war`.
+Tags de pista: `lyrics`, `rock`, `electronic`, `retro`, `asian`.
 
-**Cómo encontrar portadas en IGDB:**
-1. Busca el juego en [igdb.com](https://www.igdb.com)
-2. Copia el código de la URL de la portada (ej. `co4jni`)
-3. URL: `https://images.igdb.com/igdb/image/upload/t_cover_big/CODIGO.jpg`
+**Portadas de IGDB:** busca el juego en [igdb.com](https://www.igdb.com), copia el código de la portada (ej. `co4jni`) y
+usa `https://images.igdb.com/igdb/image/upload/t_cover_big/CODIGO.webp`.

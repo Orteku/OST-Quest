@@ -35,116 +35,27 @@ console.log(`📦 Base de datos cargada: ${GAME_DB.length} juegos`);
 
 // ── Cargar eventos especiales ─────────────────────────────────────────────────
 
-const { getSpecialForDate, hasGameData } = require('./js/specials.js');
+const { getSpecialForDate, hasGameData, getSpecialPool } = require('./js/specials.js');
 
 // ── Cargar algoritmo compartido ───────────────────────────────────────────────
 
 const algoSrc     = fs.readFileSync(path.join(__dirname, 'js', 'algorithm.js'), 'utf8');
 const tmpAlgoPath = path.join(__dirname, '_tmp_algo.js');
-fs.writeFileSync(tmpAlgoPath, algoSrc + '\nmodule.exports = { WEIGHTS, getYearScore, getTagScore, effectiveTags, weightedPickN };');
-let WEIGHTS, getYearScore, getTagScore, effectiveTags, weightedPickN;
+fs.writeFileSync(tmpAlgoPath, algoSrc + '\nmodule.exports = { generateGameForDate };');
+let generateGameForDate;
 try {
-  ({ WEIGHTS, getYearScore, getTagScore, effectiveTags, weightedPickN } = require(tmpAlgoPath));
+  ({ generateGameForDate } = require(tmpAlgoPath));
 } finally {
   fs.unlinkSync(tmpAlgoPath);
   delete require.cache[tmpAlgoPath];
 }
 
-// ── RNG y utilidades ──────────────────────────────────────────────────────────
-
-function seededRng(seed) {
-  let s = seed;
-  return function () {
-    s |= 0; s = s + 0x6D2B79F5 | 0;
-    let t = Math.imul(s ^ s >>> 15, 1 | s);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-function dateToSeed(dateStr) {
-  let hash = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function seededShuffle(arr, rng) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 // ── Generación ────────────────────────────────────────────────────────────────
-
-function generateGameForDate(dateStr, pool = GAME_DB) {
-  const seed = dateToSeed(dateStr);
-  const rng  = seededRng(seed);
-  const used = new Set();
-  const groups = [];
-  const shuffled = seededShuffle(pool, rng);
-
-  const strictGroupIndex = Math.floor(rng() * 3);
-
-  for (let gi = 0; gi < 3; gi++) {
-    let answer = null;
-    for (const g of shuffled) {
-      if (!used.has(g.id)) { answer = g; break; }
-    }
-    if (!answer) break;
-    used.add(answer.id);
-
-    const trackIndex    = Math.floor(rng() * answer.tracks.length);
-    const answerEffTags = effectiveTags(answer, answer.tracks[trackIndex]);
-
-    const weights    = gi === strictGroupIndex ? WEIGHTS.strict : WEIGHTS.normal;
-    const candidates = pool.filter(g => !used.has(g.id) && Math.abs(g.pop - answer.pop) <= 1);
-
-    let distractors = weightedPickN(candidates, answer, answerEffTags, weights, rng, 3);
-
-    if (distractors.length < 3) {
-      const distIds = new Set(distractors.map(d => d.id));
-      const fallback = pool.filter(g => !used.has(g.id) && !distIds.has(g.id));
-      const extra    = weightedPickN(fallback, answer, answerEffTags, WEIGHTS.normal, rng, 3 - distractors.length);
-      distractors    = [...distractors, ...extra];
-    }
-
-    distractors.forEach(d => used.add(d.id));
-    groups.push({
-      answerId: answer.id,
-      coverIds: seededShuffle([answer, ...distractors], rng).map(g => g.id),
-      trackIndex,
-    });
-  }
-
-  return groups;
-}
 
 function getPoolForDate(dateStr) {
   const special = getSpecialForDate(dateStr);
-  if (!special || !hasGameData(special)) return GAME_DB;
-  const pool = special.gameIds && special.gameIds.length
-    ? GAME_DB.filter(g => special.gameIds.includes(g.id))
-    : special.tag
-      ? GAME_DB.filter(g =>
-          (g.tags && g.tags.includes(special.tag)) ||
-          g.tracks.some(tr => tr.tags && tr.tags.includes(special.tag))
-        )
-      : special.search
-        ? (() => {
-            const terms = special.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-            return GAME_DB.filter(g => terms.some(term =>
-              (g.game      && g.game.toLowerCase().includes(term)) ||
-              (g.developer && g.developer.toLowerCase().includes(term)) ||
-              (g.tags      && g.tags.some(tag => tag.toLowerCase().includes(term)))
-            ));
-          })()
-        : GAME_DB;
+  const pool    = getSpecialPool(special, GAME_DB);
+  if (!pool) return GAME_DB;
   if (pool.length < 4) {
     console.warn(`⚠️  Especial "${special.label}" (${dateStr}): solo ${pool.length} juegos en DB, se usará DB completa`);
     return GAME_DB;
@@ -223,7 +134,9 @@ for (let i = 0; i < 365; i++) {
 
 // ── Guardar ───────────────────────────────────────────────────────────────────
 
-fs.writeFileSync(gamesPath, JSON.stringify(result, null, 2), 'utf8');
+// Un día por línea: pesa la mitad que con sangría y los cambios siguen viéndose bien en git
+const daysJson = Object.keys(result).sort().map(d => `  ${JSON.stringify(d)}: ${JSON.stringify(result[d])}`);
+fs.writeFileSync(gamesPath, `{\n${daysJson.join(',\n')}\n}\n`, 'utf8');
 
 console.log(`\n✅ games.json actualizado:`);
 console.log(`   📌 Preservados (hasta hoy):      ${preserved} días`);
@@ -277,6 +190,15 @@ if (si === -1 || ei === -1) {
   console.log(`🎵 soundtracks.html generado (${GAME_DB.length} juegos)`);
 }
 
+// ── Lista de imágenes de logros ───────────────────────────────────────────────
+// La web la usa para saber qué logros tienen imagen (los que no, son provisionales) con una sola petición.
+// Hay que volver a correr update.js al añadir imágenes de logros.
+
+const achDir   = path.join(__dirname, 'img', 'achievements');
+const achFiles = fs.readdirSync(achDir).filter(f => /\.(webp|png)$/i.test(f)).sort();
+fs.writeFileSync(path.join(achDir, 'manifest.json'), JSON.stringify(achFiles) + '\n', 'utf8');
+console.log(`🏆 img/achievements/manifest.json: ${achFiles.length} imágenes de logros`);
+
 // ── Generar placeholder en ranking.html ───────────────────────────────────────
 
 const rkPath   = path.join(__dirname, 'ranking.html');
@@ -295,4 +217,4 @@ if (rsi === -1 || rei === -1) {
   console.log('🏆 ranking.html actualizado');
 }
 
-console.log(`\n👉 Haz commit de games.json, database.js, soundtracks.html y ranking.html para publicar los cambios.\n`);
+console.log(`\n👉 Haz commit de games.json, database.js, soundtracks.html, ranking.html e img/achievements/manifest.json para publicar los cambios.\n`);

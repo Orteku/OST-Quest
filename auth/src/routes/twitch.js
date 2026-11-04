@@ -1,4 +1,4 @@
-import { AUTH_BASE, buildOAuthState, getLinkUserId, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
+import { AUTH_BASE, startOAuth, checkOAuthState, findExistingOauthUser, issuePendingToken, issueToken, oauthSuccess, oauthError } from './oauth.js';
 
 const TOKEN_URL    = 'https://id.twitch.tv/oauth2/token';
 const USERINFO_URL = 'https://api.twitch.tv/helix/users';
@@ -6,15 +6,16 @@ const REDIRECT_URI = `${AUTH_BASE}/auth/twitch/callback`;
 
 // GET /auth/twitch
 export function handleTwitchStart(request, env) {
-  const linkJwt = new URL(request.url).searchParams.get('link');
-  const params = new URLSearchParams({
-    client_id:     env.TWITCH_CLIENT_ID,
-    redirect_uri:  REDIRECT_URI,
-    response_type: 'code',
-    scope:         'user:read:email',
-    state:         buildOAuthState(linkJwt),
+  return startOAuth(request, env, state => {
+    const params = new URLSearchParams({
+      client_id:     env.TWITCH_CLIENT_ID,
+      redirect_uri:  REDIRECT_URI,
+      response_type: 'code',
+      scope:         'user:read:email',
+      state,
+    });
+    return `https://id.twitch.tv/oauth2/authorize?${params}`;
   });
-  return Response.redirect(`https://id.twitch.tv/oauth2/authorize?${params}`, 302);
 }
 
 // GET /auth/twitch/callback
@@ -25,7 +26,9 @@ export async function handleTwitchCallback(request, env, db) {
   if (!code) return oauthError('no_code');
 
   try {
-    const linkUserId = await getLinkUserId(state, env);
+    const checked = await checkOAuthState(request, state, env);
+    if (!checked) return oauthError('invalid_state');
+    const { linkUserId } = checked;
 
     const tokenRes = await fetch(TOKEN_URL, {
       method:  'POST',

@@ -26,7 +26,16 @@ async function initGame(dateStr, archiveMode) {
   document.getElementById('gm-panel').style.display = 'none';
 
   showLoadingScreen(true);
-  currentGroups = await generateDailyGame(dateStr);
+  const groups = await generateDailyGame(dateStr);
+  if (!groups) {
+    // Se queda la pantalla de carga con el aviso; sin quest no hay nada que jugar
+    document.querySelector('#loading-screen .loading-spinner')?.remove();
+    const text = document.querySelector('#loading-screen .loading-text');
+    text.dataset.i18n = 'load_error';  // que un cambio de idioma no vuelva a poner "Cargando…"
+    text.textContent  = t('load_error');
+    return;
+  }
+  currentGroups = groups;
 
   // Restaurar progreso guardado (solo día actual, no archivo)
   const saved = loadDayProgress(dateStr);
@@ -54,8 +63,10 @@ async function initGame(dateStr, archiveMode) {
   _prewarmAnswerAudio(1);
   _prewarmAnswerAudio(2);
 
-  // Si ya estaba terminado al recargar, mostrar end modal directamente
+  // Si ya estaba terminado al recargar, mostrar end modal directamente.
+  // Partidas terminadas antes de que el resultado se guardara al responder: se guardan ahora
   if (saved && colStates.every(s => s.solved)) {
+    _recordFinishedQuest();
     gameFinished = true;
     setTimeout(() => openEndModal(colStates.filter(s => s.correct).length), 300);
   }
@@ -818,6 +829,7 @@ function resolveGuess(gi, pickedCv, pickedPos) {
   if (gi + 1 < 3) { colStates[gi + 1].locked = false; _prewarmAnswerAudio(gi + 1); }
 
   saveDayProgress(currentDateStr, colStates);
+  if (colStates.every(s => s.solved)) _recordFinishedQuest();
   updateScoreDisplay();
   showScorePopup(correct);
   setTimeout(() => openResultModal(gi, pickedCv, correct), 60);
@@ -854,18 +866,22 @@ function checkFinished() {
     }
   }
 
-  setTimeout(() => {
-    recordDailyResult(currentDateStr, score, 3, colStates.map(s => s.correct ? '1' : '0').join(''));
-    if (!isArchiveMode && currentDateStr !== '__gm__'
-        && typeof authUnlockAchievement === 'function'
-        && typeof SPECIAL_EVENTS !== 'undefined') {
-      const sp = SPECIAL_EVENTS.find(e => hasGameData(e) &&
-        (currentDateStr === e.date || currentDateStr.endsWith('-' + e.date))
-      );
-      if (sp) authUnlockAchievement('special_' + sp.date);
-    }
-    openEndModal(score);
-  }, isLine ? 1800 : 400);
+  setTimeout(() => openEndModal(score), isLine ? 1800 : 400);
+}
+
+// Guarda el resultado en cuanto se responde la última columna, sin esperar a cerrar el modal de
+// resultado: quien cierra la pestaña ahí perdía la partida (ni estadísticas, ni puntos, ni logros).
+// Solo una vez por quest; la partida del modo GM no se guarda.
+function _recordFinishedQuest() {
+  if (currentDateStr === '__gm__' || loadPlayedDays()[currentDateStr]) return;
+  const score = colStates.filter(s => s.correct).length;
+  recordDailyResult(currentDateStr, score, 3, colStates.map(s => s.correct ? '1' : '0').join(''));
+  if (!isArchiveMode && typeof authUnlockAchievement === 'function' && typeof SPECIAL_EVENTS !== 'undefined') {
+    const sp = SPECIAL_EVENTS.find(e => hasGameData(e) &&
+      (currentDateStr === e.date || currentDateStr.endsWith('-' + e.date))
+    );
+    if (sp) authUnlockAchievement('special_' + sp.date);
+  }
 }
 
 function triggerLineEffect(pos) {
@@ -990,21 +1006,7 @@ function openGmPanel() {
   const byId = Object.fromEntries(GAME_DB.map(g => [g.id, g]));
 
   function _getGmPool(sp) {
-    if (!sp) return GAME_DB;
-    if (sp.gameIds && sp.gameIds.length) return GAME_DB.filter(g => sp.gameIds.includes(g.id));
-    if (sp.tag) return GAME_DB.filter(g =>
-      (g.tags && g.tags.includes(sp.tag)) ||
-      g.tracks.some(tr => tr.tags && tr.tags.includes(sp.tag))
-    );
-    if (sp.search) {
-      const terms = sp.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-      return GAME_DB.filter(g => terms.some(term =>
-        (g.game      && g.game.toLowerCase().includes(term)) ||
-        (g.developer && g.developer.toLowerCase().includes(term)) ||
-        (g.tags      && g.tags.some(tag => tag.toLowerCase().includes(term)))
-      ));
-    }
-    return GAME_DB;
+    return getSpecialPool(sp, GAME_DB) || GAME_DB;
   }
 
   function _rebuildGmSelects(pool) {
@@ -1205,6 +1207,12 @@ function goToToday() {
   applySpecialTheme(getSpecialForDate(today));
   initGame(today, false);
 }
+
+// Pestaña abierta al cambiar el día: se recarga para pasar a la quest nueva. Si no, se seguiría jugando
+// la de ayer, que ya no puntúa. En el Quest Log y el modo GM no: ahí se juega una quest elegida a propósito.
+document.addEventListener('gamedaychange', () => {
+  if (!isArchiveMode) location.reload();
+});
 
 function onModalBackdropClose() {
   renderAll();
