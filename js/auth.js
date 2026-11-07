@@ -344,7 +344,6 @@ function _openDrop() {
     authGetAchievements().then(async unlocked => {
       const el = document.getElementById('auth-drop-achievements');
       if (!el) return;
-      const lang    = document.documentElement.lang || 'es';
       const visible = (await Promise.all(unlocked.map(u => achievementHasImage(getAchievement(u.achievement_id)))))
         .reduce((acc, ok, i) => ok ? [...acc, unlocked[i]] : acc, []);
       const recent  = visible.slice(-5).reverse();
@@ -352,8 +351,7 @@ function _openDrop() {
       el.innerHTML = recent.map(u => {
         const a = getAchievement(u.achievement_id);
         if (!a) return '';
-        const label = getAchievementLabel(a, lang);
-        return `<img class="auth-drop__ach-icon" src="img/achievements/${_esc(a.image)}" alt="" title="${_esc(label.name)}">`;
+        return `<img class="auth-drop__ach-icon" src="img/achievements/${_esc(a.image)}" ${_achIconAttrs(a)}>`;
       }).join('');
     });
   }
@@ -656,12 +654,11 @@ function _openPlayerCard(btn, row) {
     const oks      = await Promise.all(unlocked.map(achievementHasImage));
     if (!card.isConnected) return;
     card.querySelector('[data-played]').textContent = failed ? '—' : res.played;
-    const lang   = document.documentElement.lang || 'es';
     const recent = unlocked.filter((a, i) => oks[i]).slice(-3).reverse();
     const icons  = card.querySelector('[data-trophies]');
     if (!recent.length) { icons.textContent = '—'; return; }
     icons.innerHTML = recent.map(a =>
-      `<img class="auth-drop__ach-icon" src="img/achievements/${_esc(a.image)}" alt="" title="${_esc(getAchievementLabel(a, lang).name)}">`
+      `<img class="auth-drop__ach-icon" src="img/achievements/${_esc(a.image)}" ${_achIconAttrs(a)}>`
     ).join('');
   });
 }
@@ -966,14 +963,12 @@ function _renderProfileCardHTML(unlocked = []) {
   // Últimos 3 logros desbloqueados (sin los provisionales)
   let recentHtml = '';
   if (unlocked.length && typeof ACHIEVEMENTS_DB !== 'undefined') {
-    const lang   = document.documentElement.lang || 'es';
     const recent = unlocked.filter(u => !achievementImageMissing(getAchievement(u.achievement_id))).slice(-3).reverse();
     recentHtml = `<div class="pcard__recent-achievements">${
       recent.map(u => {
         const a = getAchievement(u.achievement_id);
         if (!a) return '';
-        const label = getAchievementLabel(a, lang);
-        return `<img class="pcard__achievement-icon" src="img/achievements/${_esc(a.image)}" alt="${_esc(label.name)}" title="${_esc(label.name)}">`;
+        return `<img class="pcard__achievement-icon" src="img/achievements/${_esc(a.image)}" ${_achIconAttrs(a)}>`;
       }).join('')
     }</div>`;
   }
@@ -1381,12 +1376,15 @@ function _renderAchievementToast({ id, a }) {
   }
 
   const lang = document.documentElement.lang || 'es';
-  const name = a ? _esc(getAchievementLabel(a, lang).name) : _esc(id);
+  const label = a ? getAchievementLabel(a, lang) : null;
+  const name  = label ? _esc(label.name) : _esc(id);
+  // La descripción dice por qué se ha conseguido (con tantos logros, el nombre solo no basta)
+  const desc  = label?.desc ? `<div class="achievement-toast__desc">${_esc(label.desc)}</div>` : '';
   const img  = a ? `<img class="achievement-toast__img" src="img/achievements/${_esc(a.image)}" alt="">` : `<div class="achievement-toast__img-ph">🏆</div>`;
 
   const el = document.createElement('div');
   el.className = 'achievement-toast';
-  el.innerHTML = `${img}<div class="achievement-toast__body"><div class="achievement-toast__label">${t('achievement_unlocked')}</div><div class="achievement-toast__name">${name}</div></div>`;
+  el.innerHTML = `${img}<div class="achievement-toast__body"><div class="achievement-toast__label">${t('achievement_unlocked')}</div><div class="achievement-toast__name">${name}</div>${desc}</div>`;
   stack.appendChild(el);
 
   // Un solo sonido por tanda
@@ -1406,7 +1404,7 @@ function _renderAchievementToast({ id, a }) {
       _achToastsVisible--;
       _pumpAchievementToasts();
     }, 350);
-  }, 4500);
+  }, 6500);  // con la descripción hay más que leer
 }
 
 async function authGetAchievements() {
@@ -1661,7 +1659,9 @@ function _bindAchievementEvents() {
   }
 }
 
-function _bindAchievementTooltip() {
+// Tooltip de logro (nombre, descripción y progreso), encima del elemento o debajo si no cabe.
+// Lo usan la rejilla de trofeos y los iconos de trofeos recientes
+function _showAchTip(el, name, desc, progress = '') {
   let tip = document.getElementById('ach-tooltip');
   if (!tip) {
     tip = document.createElement('div');
@@ -1669,24 +1669,52 @@ function _bindAchievementTooltip() {
     tip.className = 'ach-tooltip';
     document.body.appendChild(tip);
   }
+  const prog = progress ? `<div class="ach-tooltip__progress">${t('ach_progress')}: ${_esc(progress)}</div>` : '';
+  tip.innerHTML = `<div class="ach-tooltip__name">${_esc(name)}</div>${desc ? `<div class="ach-tooltip__desc">${_esc(desc)}</div>` : ''}${prog}`;
+  tip.style.display = 'block';
+  const r  = el.getBoundingClientRect();
+  const tw = tip.offsetWidth;
+  const th = tip.offsetHeight;
+  let left = r.left + window.scrollX + r.width / 2 - tw / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+  const topAbove = r.top + window.scrollY - th - 8;
+  tip.style.left = left + 'px';
+  tip.style.top  = (topAbove > 0 ? topAbove : r.bottom + window.scrollY + 8) + 'px';
+}
 
+function _hideAchTip() {
+  const tip = document.getElementById('ach-tooltip');
+  if (tip) tip.style.display = 'none';
+}
+
+// Atributos de un icono de trofeo reciente (menú de usuario, tarjeta del perfil, tarjeta de jugador):
+// el tooltip se monta con ellos, con un solo listener para todos aunque los iconos se pinten después
+function _achIconAttrs(a) {
+  const { name, desc } = getAchievementLabel(a, document.documentElement.lang || 'es');
+  return `alt="${_esc(name)}" data-ach-name="${_esc(name)}" data-ach-desc="${_esc(desc || '')}"`;
+}
+
+document.addEventListener('mouseover', e => {
+  const icon = e.target.closest?.('[data-ach-name]');
+  if (!icon) return;
+  _showAchTip(icon, icon.dataset.achName, icon.dataset.achDesc);
+  icon.addEventListener('mouseleave', _hideAchTip, { once: true });
+});
+// En móvil no hay ratón: al tocar el icono se muestra unos segundos; tocar fuera lo cierra
+let _achTipTimer = null;
+document.addEventListener('click', e => {
+  const icon = e.target.closest?.('[data-ach-name]');
+  clearTimeout(_achTipTimer);
+  if (!icon) { _hideAchTip(); return; }
+  _showAchTip(icon, icon.dataset.achName, icon.dataset.achDesc);
+  _achTipTimer = setTimeout(_hideAchTip, 3500);
+});
+
+function _bindAchievementTooltip() {
   // En la vista detallada el nombre y la descripción ya se ven: sin tooltip
   document.querySelectorAll('.achievement-card:not(.achievement-row)').forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      const prog = card.dataset.progress
-        ? `<div class="ach-tooltip__progress">${t('ach_progress')}: ${_esc(card.dataset.progress)}</div>` : '';
-      tip.innerHTML = `<div class="ach-tooltip__name">${_esc(card.dataset.name)}</div><div class="ach-tooltip__desc">${_esc(card.dataset.desc)}</div>${prog}`;
-      tip.style.display = 'block';
-      const r  = card.getBoundingClientRect();
-      const tw = tip.offsetWidth;
-      const th = tip.offsetHeight;
-      let left = r.left + window.scrollX + r.width / 2 - tw / 2;
-      left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
-      const topAbove = r.top + window.scrollY - th - 8;
-      tip.style.left = left + 'px';
-      tip.style.top  = (topAbove > 0 ? topAbove : r.bottom + window.scrollY + 8) + 'px';
-    });
-    card.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    card.addEventListener('mouseenter', () => _showAchTip(card, card.dataset.name, card.dataset.desc, card.dataset.progress));
+    card.addEventListener('mouseleave', _hideAchTip);
   });
 
   document.querySelectorAll('.achievement-card[data-konami]').forEach(card => {
