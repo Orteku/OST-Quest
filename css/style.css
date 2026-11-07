@@ -1754,6 +1754,23 @@ body.theme--light .auth-drop__name { color: #4a6c10; border-color: #d0cec6; }
   color: #c05050; cursor: pointer; transition: color 0.12s;
 }
 .auth-drop__signout-btn:hover { color: #e06060; }
+/* Nombre + botón del bestiario (rol GM) */
+.auth-drop__name-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.auth-drop__name-row .auth-drop__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard__username { display: flex; align-items: center; gap: 9px; }
+
+/* Botón del bestiario: libro dorado, como un tomo antiguo */
+.gm-book {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 6px;
+  color: #d4a84b; background: rgba(212, 168, 75, 0.12); border: 1px solid rgba(212, 168, 75, 0.35);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.gm-book svg { width: 14px; height: 14px; }
+.gm-book:hover { color: #f0c868; background: rgba(212, 168, 75, 0.22); border-color: rgba(212, 168, 75, 0.6); }
+body.theme--light .gm-book { color: #8a6418; background: rgba(138, 100, 24, 0.10); border-color: rgba(138, 100, 24, 0.35); }
+body.theme--light .gm-book:hover { color: #6e4f10; background: rgba(138, 100, 24, 0.18); }
+
 /* Sobreescribir el .auth-drop__name original (diseñado para el dropdown simple) */
 .auth-drop--card .auth-drop__name {
   padding: 0;

@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 // Mapa provider → columna en player_accounts
 const PROVIDER_COL = { google: 'google_id', discord: 'discord_id', twitch: 'twitch_id', steam: 'steam_id' };
 
+// Copia en Supabase de js/database.js que edita el editor (knowledge/bestiary.html)
+const EDITOR_GAMES_TABLE = 'OSTQuest';
+
 export function createDb(env) {
   const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -239,6 +242,34 @@ export function createDb(env) {
     async setAvatar(userId, avatarFilename) {
       return check(await supabase.from('player_accounts')
         .update({ selected_avatar: avatarFilename }).eq('id', userId));
+    },
+
+    // ── Editor de la base de juegos (solo GM, ver routes/gm.js) ───────────────
+    async getEditorGames() {
+      return check(await supabase.from(EDITOR_GAMES_TABLE).select('*').order('id')) || [];
+    },
+    // Sobrescribir: borra la tabla y la vuelve a llenar (el editor descarga antes una copia)
+    async replaceEditorGames(rows) {
+      await check(await supabase.from(EDITOR_GAMES_TABLE).delete().gte('id', 0));
+      return check(await supabase.from(EDITOR_GAMES_TABLE).insert(rows));
+    },
+    async upsertEditorGames(rows) {
+      return check(await supabase.from(EDITOR_GAMES_TABLE).upsert(rows, { onConflict: 'id' }));
+    },
+    async getEditorTranslations(lang) {
+      return check(await supabase.from('editor_translations').select('*').eq('lang', lang)) || [];
+    },
+    async upsertEditorTranslations(rows) {
+      return check(await supabase.from('editor_translations').upsert(rows, { onConflict: 'game_id,lang' }));
+    },
+    async getEditorSpecials() {
+      return check(await supabase.from('editor_specials').select('*').order('date')) || [];
+    },
+    // Borra los quitados, actualiza los que tienen id e inserta los nuevos
+    async saveEditorSpecials({ deleteIds, update, insert }) {
+      if (deleteIds.length) await check(await supabase.from('editor_specials').delete().in('id', deleteIds));
+      if (update.length)    await check(await supabase.from('editor_specials').upsert(update, { onConflict: 'id' }));
+      if (insert.length)    await check(await supabase.from('editor_specials').insert(insert));
     },
 
     // ── Tokens de reset de contraseña ────────────────────────────────────────

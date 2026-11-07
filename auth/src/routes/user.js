@@ -46,6 +46,7 @@ export async function handleGetMe(request, env, db) {
     username:        user.username,
     provider:        user.provider,
     selected_avatar: user.selected_avatar || null,
+    is_gm:           user.is_gm === true,  // solo para mostrar el enlace al bestiario; el editor lo comprueba aparte
     providers: {
       email:   !!user.password_hash,
       google:  !!user.google_id,

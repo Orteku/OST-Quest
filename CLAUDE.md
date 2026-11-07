@@ -29,7 +29,7 @@ un Cloudflare Worker (`auth/`) con Supabase como base de datos.
 - **`update.js`** — script Node.js que regenera `games.json`, `soundtracks.html` e `img/achievements/manifest.json` (correr tras cambios en la DB, el algoritmo, los especiales o las imágenes de logros)
 - **`check-links.js`** — verifica que las URLs de audio de `database.js` siguen activas
 - **`auth/`** — Cloudflare Worker: login (email, Google, Discord, Twitch, Steam), puntuaciones, logros
-- **`database_editor/`** — editor interno de la base de juegos (ver su `CLAUDE.md`)
+- **`knowledge/`** — bestiario (`bestiary.html`): editor interno de la base de juegos, solo rol GM (ver su `CLAUDE.md`)
 - **`GLOSARIO.md`** — terminología del proyecto (leer antes de nombrar elementos de la UI)
 
 Orden de carga de scripts en el browser (página del juego):
@@ -105,6 +105,11 @@ Tags de pista: `lyrics` (letra vocal), `rock`, `electronic`, `retro`, `asian`.
 - El navegador no genera quests: solo las lee de `games.json`
 - Login con email o nombre de usuario; los nombres no distinguen mayúsculas (`ilike` en el worker)
 - Login social: `state` firmado + cookie `oq_oauth_state`; vincular usa un ticket de `/auth/link-ticket`
+- Límite de intentos (`lib/ratelimit.js`, bindings de `wrangler.jsonc`): 20/min por IP y 5/min por cuenta
+  en login, registro, recuperación y cambio de contraseña
+- **Rol GM** (`is_gm` en `player_accounts`, se activa a mano en Supabase): da acceso al editor de la base
+  de juegos (bestiario, `knowledge/bestiary.html`, rutas `/gm/*`). Sesión propia de 12 h (`purpose: 'gm'`); el worker mira
+  `is_gm` en cada petición. No tiene nada que ver con el modo GM del juego (`?gm`), que es abierto a propósito
 - No hay entorno local: CORS solo admite oestiquest.com
 - Orden de publicación: SQL en Supabase → `npm run deploy` en `auth/` → push de la web
 
@@ -112,5 +117,7 @@ Tags de pista: `lyrics` (letra vocal), `rock`, `electronic`, `retro`, `asian`.
 
 - Sin framework, sin TypeScript, sin bundler — JS vanilla en todos los archivos del juego
 - `update.js` y `check-links.js` son scripts Node.js (no se cargan en el browser)
+- Enlaces internos, canónicas y sitemap sin `.html` (`ranking`, `profile`…): GitHub Pages sirve `ranking.html`
+  igual, y `header.js` quita el `.html` de la barra si se entra por un enlace antiguo
 - Los diálogos de confirmación usan `customConfirm()`, nunca `confirm()` nativo
 - `GLOSARIO.md` en la raíz define la terminología oficial de UI — consultarlo antes de nombrar elementos

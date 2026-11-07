@@ -42,7 +42,7 @@ ostquest/
 ├── img/                    # banner, logo, achievements/ (logros + manifest.json), specials/ (banner y favicon de eventos)
 ├── fx/                     # Sonidos e imágenes de efectos (wasted, línea, logro)
 ├── auth/                   # Cloudflare Worker (ver más abajo)
-└── database_editor/        # Herramienta interna para editar la base de juegos
+└── knowledge/              # Bestiario (bestiary.html): editor interno de la base de juegos, solo rol GM
 ```
 
 **Orden de carga de scripts** (página del juego):
@@ -78,6 +78,7 @@ auth/src/
     ├── oauth.js          # Utilidades comunes del login social
     ├── google.js, discord.js, twitch.js, steam.js
     ├── user.js           # Perfil, nombre, vincular/desvincular, borrar cuenta, logros, tarjeta pública
+    └── gm.js             # Editor de la base de juegos (solo cuentas con rol GM)
     └── scores.js         # Puntuaciones, historial, estadísticas, migración
 ```
 Secretos (`npx wrangler secret put …`): `JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, credenciales de

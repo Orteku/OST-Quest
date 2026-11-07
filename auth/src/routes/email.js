@@ -2,6 +2,7 @@ import { hashPassword, verifyPassword } from '../lib/password.js';
 import { signSession, verifyJwt } from '../lib/jwt.js';
 import { sendPasswordResetEmail } from '../lib/mailer.js';
 import { json } from '../lib/cors.js';
+import { attemptAllowed } from '../lib/ratelimit.js';
 
 function generateHexToken(len = 32) {
   return [...crypto.getRandomValues(new Uint8Array(len))]
@@ -18,6 +19,7 @@ export async function handleRegister(request, env, db) {
   if (password.length < 6)   return json({ error: 'password_too_short' }, 400, request);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
                               return json({ error: 'invalid_email' }, 400, request);
+  if (!await attemptAllowed(request, env)) return json({ error: 'too_many_attempts' }, 429, request);
 
   const existing = await db.getUserByEmail(email.toLowerCase());
   if (existing) return json({ error: 'email_already_registered' }, 409, request);
@@ -34,23 +36,31 @@ export async function handleRegister(request, env, db) {
   return json({ token, user: { id: user.id, username: user.username } }, 201, request);
 }
 
+// Comprueba email o nombre de usuario + contraseña, con límite de intentos.
+// Devuelve [user, null] o [null, respuesta de error]. La usan el login normal y el del editor (gm.js)
+export async function checkCredentials(request, env, db, body) {
+  const login = String(body?.login ?? body?.email ?? '').trim();
+  const password = body?.password;
+  if (!login || !password) return [null, json({ error: 'email_and_password_required' }, 400, request)];
+  if (!await attemptAllowed(request, env, login)) return [null, json({ error: 'too_many_attempts' }, 429, request)];
+
+  const user = login.includes('@')
+    ? await db.getUserByEmail(login.toLowerCase())
+    : /^[a-zA-Z0-9_]{3,20}$/.test(login) ? await db.getUserByUsername(login) : null;
+  if (!user || !user.password_hash || !await verifyPassword(password, user.password_hash)) {
+    return [null, json({ error: 'invalid_credentials' }, 401, request)];
+  }
+  return [user, null];
+}
+
 // POST /auth/login  { login, password }  (login = email o nombre de usuario; `email` se acepta por compatibilidad)
 // Con nombre de usuario pueden entrar también las cuentas sin email (p. ej. Steam) que se pongan contraseña
 export async function handleLogin(request, env, db) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
 
-  const login = String(body.login ?? body.email ?? '').trim();
-  const { password } = body;
-  if (!login || !password) return json({ error: 'email_and_password_required' }, 400, request);
-
-  const user = login.includes('@')
-    ? await db.getUserByEmail(login.toLowerCase())
-    : /^[a-zA-Z0-9_]{3,20}$/.test(login) ? await db.getUserByUsername(login) : null;
-  if (!user || !user.password_hash) return json({ error: 'invalid_credentials' }, 401, request);
-
-  const valid = await verifyPassword(password, user.password_hash);
-  if (!valid) return json({ error: 'invalid_credentials' }, 401, request);
+  const [user, err] = await checkCredentials(request, env, db, body);
+  if (err) return err;
 
   const token = await signSession(user.id, env.JWT_SECRET);
   return json({ token, user: { id: user.id, username: user.username } }, 200, request);
@@ -63,6 +73,8 @@ export async function handleForgotPassword(request, env, db) {
 
   const { email } = body;
   if (!email) return json({ error: 'email_required' }, 400, request);
+  // Sin límite se podría llenar de correos el buzón de alguien
+  if (!await attemptAllowed(request, env, email)) return json({ error: 'too_many_attempts' }, 429, request);
 
   const user = await db.getUserByEmail(email.toLowerCase());
   // Devolvemos OK igualmente para no revelar si el email existe
@@ -100,6 +112,7 @@ export async function handleChangePassword(request, env, db) {
   // Si ya tiene contraseña, verificar la actual
   if (user.password_hash) {
     if (!currentPassword) return json({ error: 'current_password_required' }, 400, request);
+    if (!await attemptAllowed(request, env, user.id)) return json({ error: 'too_many_attempts' }, 429, request);
     const valid = await verifyPassword(currentPassword, user.password_hash);
     if (!valid) return json({ error: 'invalid_current_password' }, 401, request);
   }

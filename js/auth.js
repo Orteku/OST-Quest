@@ -248,6 +248,16 @@ function _renderAuthBtn() {
 
 // ─── Dropdown (usuario logado) ────────────────────────────────────────────────
 
+const _ICON_BOOK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>`;
+
+// Botón del bestiario (editor de la base de juegos) junto al nombre, solo en cuentas con rol GM.
+// Es solo un enlace: el permiso lo comprueba el worker en cada petición del editor
+function _gmBookHTML() {
+  if (_profile?.is_gm !== true) return '';
+  const label = _esc(t('gm_bestiary'));
+  return `<a class="gm-book" href="knowledge/bestiary" title="${label}" aria-label="${label}">${_ICON_BOOK}</a>`;
+}
+
 function _loadLocalStats() {
   try { return JSON.parse(localStorage.getItem('ostquest_stats')) || {}; } catch { return {}; }
 }
@@ -282,9 +292,9 @@ function _openDrop() {
       <div class="auth-drop__avatar">${_profile.selected_avatar ? `<img class="auth-drop__avatar-img" src="img/achievements/${_esc(_profile.selected_avatar)}" alt="">` : initial}</div>
       <div class="auth-drop__body">
         <div class="auth-drop__body-top">
-          <div class="auth-drop__name">${_esc(_profile.username)}</div>
+          <div class="auth-drop__name-row"><div class="auth-drop__name">${_esc(_profile.username)}</div>${_gmBookHTML()}</div>
           <div class="auth-drop__controls">
-            <a class="auth-drop__config-link" href="profile.html">
+            <a class="auth-drop__config-link" href="profile">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               ${t('auth_profile')}
             </a>
@@ -302,7 +312,7 @@ function _openDrop() {
     <div class="auth-drop__trofeos">
       <div class="auth-drop__trofeos-head">
         <span class="auth-drop__trofeos-title">${t('drop_recent_trophies')}</span>
-        <a class="auth-drop__trofeos-link" href="profile.html">${t('drop_see_all')}</a>
+        <a class="auth-drop__trofeos-link" href="profile">${t('drop_see_all')}</a>
       </div>
       <div class="auth-drop__trofeos-icons" id="auth-drop-achievements"></div>
     </div>
@@ -461,6 +471,7 @@ async function _submitEmail() {
   if (data?.error) {
     const msg = data.error === 'invalid_credentials'     ? t('auth_error_invalid_credentials')
               : data.error === 'email_already_registered' ? t('auth_error_email_taken')
+              : data.error === 'too_many_attempts'        ? t('auth_error_too_many')
               : t('auth_error_generic');
     _showErr(msg);
     return;
@@ -962,7 +973,7 @@ function _renderProfileCardHTML(unlocked = []) {
         ? `<img class="pcard__avatar-img" src="img/achievements/${_esc(p.selected_avatar)}" alt="">`
         : initial}</div>
       <div class="pcard__body">
-        <div class="pcard__username">${_esc(p.username || '')}</div>
+        <div class="pcard__username">${_esc(p.username || '')}${_gmBookHTML()}</div>
         <div class="pcard__stats">
           <div class="pcard__stat"><span class="pcard__stat-value">${played}</span><span class="pcard__stat-label">${t('stat_played')}</span></div>
           <div class="pcard__stat"><span class="pcard__stat-value">${accuracy}%</span><span class="pcard__stat-label">${t('stat_accuracy')}</span></div>

@@ -9,6 +9,12 @@
 
 const IS_GAME_PAGE = document.body.dataset.page === 'game';
 
+// Direcciones sin extensión (oestiquest.com/ranking): GitHub Pages sirve ranking.html igual.
+// Si se entra por un enlace antiguo con .html (o por /index.html), solo se limpia la barra de direcciones
+if (/\.html$/.test(location.pathname)) {
+  history.replaceState(null, '', location.pathname.replace(/(index)?\.html$/, '') + location.search + location.hash);
+}
+
 // ─── Iconos ───────────────────────────────────────────────────────────────────
 
 const _ICON_ARCHIVE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`;
@@ -82,8 +88,8 @@ function _siteFooterHTML() {
         Support me on Ko-fi
       </a>
     </div>
-    <p data-i18n-html="footer_credit_legal">Música provista por <a href="https://archive.org" target="_blank" rel="noopener">Archive.org</a> y <a href="https://downloads.khinsider.com" target="_blank" rel="noopener">KHInsider</a> · Desarrollado por Orteku en colaboración con Vyrka · <a href="privacy.html">Privacidad</a> · <a href="terms.html">Términos</a></p>
-    <p data-i18n-html="footer_soundtracks_line">¿Tienes alguna sugerencia? Consulta la <a href="soundtracks.html">lista de canciones</a> · <a href="about.html">Sobre el proyecto</a> · <a href="ranking.html">Ranking</a> · Contacto: <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a></p>`;
+    <p data-i18n-html="footer_credit_legal">Música provista por <a href="https://archive.org" target="_blank" rel="noopener">Archive.org</a> y <a href="https://downloads.khinsider.com" target="_blank" rel="noopener">KHInsider</a> · Desarrollado por Orteku en colaboración con Vyrka · <a href="privacy">Privacidad</a> · <a href="terms">Términos</a></p>
+    <p data-i18n-html="footer_soundtracks_line">¿Tienes alguna sugerencia? Consulta la <a href="soundtracks">lista de canciones</a> · <a href="about">Sobre el proyecto</a> · <a href="ranking">Ranking</a> · Contacto: <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a></p>`;
 }
 
 // Se ejecuta al cargar el script (va al final del <body>, el DOM ya existe) y antes de aplicar
@@ -184,7 +190,7 @@ function openStatsModal() {
         <div id="stats-rank-info" class="stats-rank-info">
           <p class="rank-empty">${t('ranking_loading')}</p>
         </div>
-        <a href="ranking.html" class="stats-rank-link">${t('ranking_view_full')} →</a>
+        <a href="ranking" class="stats-rank-link">${t('ranking_view_full')} →</a>
       </div>
       <button class="btn btn--new" id="close-stats-btn">${t('btn_close')}</button>
     </div>`;

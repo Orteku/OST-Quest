@@ -6,6 +6,7 @@ import { handleDiscordStart, handleDiscordCallback } from './routes/discord.js';
 import { handleTwitchStart, handleTwitchCallback } from './routes/twitch.js';
 import { handleSteamStart, handleSteamCallback } from './routes/steam.js';
 import { handleGetMe, handleSetUsername, handleUnlink, handleDeleteAccount, handleGetAchievements, handleUnlockAchievement, handleSetAvatar, handleBackfillAchievements, handleGetPublicPlayer, handleLinkTicket } from './routes/user.js';
+import { handleGmLogin, handleGmGetGames, handleGmSaveGames, handleGmGetTranslations, handleGmSaveTranslations, handleGmGetSpecials, handleGmSaveSpecials } from './routes/gm.js';
 import { handleSubmitScore, handleMigrateScores, handleGetStats, handleGetResults, handleFillResults, handleGetHistory } from './routes/scores.js';
 
 export default {
@@ -60,6 +61,16 @@ export default {
       if (path === '/scores/history' && method === 'GET')  return handleGetHistory(request, env, db);
       if (path === '/scores/results' && method === 'GET')  return handleGetResults(request, env, db);
       if (path === '/scores/results' && method === 'POST') return handleFillResults(request, env, db);
+
+      // ── Editor de la base de juegos (rol GM) ────────────────────────────
+      if (path === '/gm/login'          && method === 'POST') return handleGmLogin(request, env, db);
+      if (path === '/gm/games'          && method === 'GET')  return handleGmGetGames(request, env, db);
+      if (path === '/gm/games/replace'  && method === 'POST') return handleGmSaveGames(request, env, db, 'replace');
+      if (path === '/gm/games/upsert'   && method === 'POST') return handleGmSaveGames(request, env, db, 'upsert');
+      if (path === '/gm/translations'   && method === 'GET')  return handleGmGetTranslations(request, env, db);
+      if (path === '/gm/translations'   && method === 'POST') return handleGmSaveTranslations(request, env, db);
+      if (path === '/gm/specials'       && method === 'GET')  return handleGmGetSpecials(request, env, db);
+      if (path === '/gm/specials'       && method === 'POST') return handleGmSaveSpecials(request, env, db);
 
       // ── Datos públicos (tarjeta de jugador del ranking) ─────────────────
       const playerMatch = method === 'GET' && path.match(/^\/public\/player\/([a-zA-Z0-9_]{1,40})$/);

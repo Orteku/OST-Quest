@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Database Editor - OST Quest</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <!-- Herramienta interna (rol GM): que no aparezca en buscadores -->
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Bestiario — Oesti Quest</title>
   <style>
     :root {
       color-scheme: dark;
@@ -537,10 +538,11 @@
 <header>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <div style="display:flex;align-items:center;gap:10px">
-      <a href="../index.html" style="color:var(--accent);text-decoration:none;font-size:26px;line-height:1">←</a>
-      <h1 style="margin:0">Database Editor</h1>
+      <a href="/" style="color:var(--accent);text-decoration:none;font-size:26px;line-height:1">←</a>
+      <h1 style="margin:0">Bestiario</h1>
     </div>
     <div style="display:flex;gap:6px">
+      <a href="/?gm" target="_blank" rel="noopener" style="background:#d4a017;color:#1a1400;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Modo GM</a>
       <a href="https://www.youtube.com" target="_blank" rel="noopener" style="background:#ff0000;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">YouTube</a>
       <a href="https://www.igdb.com" target="_blank" rel="noopener" style="background:#8c44b0;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">IGDB</a>
       <a href="https://downloads.khinsider.com/" target="_blank" rel="noopener" style="background:#111;color:#fff;border:1px solid #444;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Khinside</a>
@@ -595,15 +597,17 @@
     </div>
   </div>
   <div id="supabasePanel" class="sheets-panel">
-    <div class="sheets-row">
-      <span class="sheets-label">URL proyecto:</span>
-      <input id="supabaseUrl" class="sheets-url-input" placeholder="https://xxxx.supabase.co" />
-      <span class="sheets-label" style="margin-left:4px">Tabla:</span>
-      <input id="supabaseTableInput" style="width:90px;font-size:13px" placeholder="games" value="games" />
+    <!-- Acceso con una cuenta de Oesti Quest con rol GM: el worker hace las lecturas y escrituras -->
+    <div class="sheets-row" id="gmLoginRow">
+      <span class="sheets-label">Cuenta GM:</span>
+      <input id="gmLogin" class="sheets-url-input" placeholder="Email o nombre de usuario" autocomplete="username" />
+      <input id="gmPassword" class="sheets-url-input" type="password" placeholder="Contraseña" autocomplete="current-password" />
+      <button id="gmLoginBtn" class="primary">Entrar</button>
     </div>
-    <div class="sheets-row">
-      <span class="sheets-label">Clave anon:</span>
-      <input id="supabaseKey" class="sheets-url-input" type="password" placeholder="eyJhbGci..." />
+    <div class="sheets-row" id="gmSessionRow" style="display:none">
+      <span class="sheets-label">Cuenta GM:</span>
+      <span id="gmUser"></span>
+      <button id="gmLogoutBtn">Salir</button>
     </div>
     <div class="sheets-row">
       <button id="doImportSupabase" class="primary">Cargar desde Supabase</button>
@@ -1958,36 +1962,94 @@
 
   // ── Supabase ──────────────────────────────────────────────────────────────
 
-  const SUPA_STORAGE_KEY = "ostquest_supabase";
-  const savedSupa = JSON.parse(localStorage.getItem(SUPA_STORAGE_KEY) || "{}");
-  if (savedSupa.url)    $("supabaseUrl").value        = savedSupa.url;
-  if (savedSupa.key)    $("supabaseKey").value        = savedSupa.key;
-  if (savedSupa.table)  $("supabaseTableInput").value = savedSupa.table;
+  // El editor no habla con Supabase directamente: lo hace el worker, solo para cuentas con rol GM.
+  // La sesión de GM dura 12 horas y no sirve para el juego (ni la del juego para el editor).
+  const GM_API       = "https://auth.oestiquest.com";
+  const GM_TOKEN_KEY = "ostquest_gm_token";
+  const GM_USER_KEY  = "ostquest_gm_user";
+  // Antes se guardaba aquí la URL y la clave de Supabase: ya no se usan y no deben quedarse en el navegador
+  localStorage.removeItem("ostquest_supabase");
+
+  function updateGmSession() {
+    const user = localStorage.getItem(GM_USER_KEY);
+    const on   = !!localStorage.getItem(GM_TOKEN_KEY);
+    $("gmLoginRow").style.display   = on ? "none" : "";
+    $("gmSessionRow").style.display = on ? "" : "none";
+    $("gmUser").textContent = user || "";
+  }
+  function clearGmSession() {
+    localStorage.removeItem(GM_TOKEN_KEY);
+    localStorage.removeItem(GM_USER_KEY);
+    updateGmSession();
+  }
+  updateGmSession();
+
+  // path: ruta del worker; body: si se pasa, la petición es POST con ese JSON
+  async function gmApi(path, body) {
+    const token = localStorage.getItem(GM_TOKEN_KEY);
+    if (!token) {
+      $("supabasePanel").classList.add("open");
+      throw new Error("Entra con tu cuenta GM (botón ↓ Supabase)");
+    }
+    const res = await fetch(GM_API + path, {
+      method: body ? "POST" : "GET",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401 || res.status === 403) {
+      clearGmSession();
+      $("supabasePanel").classList.add("open");
+      throw new Error(data.error === "not_gm" ? "Esta cuenta ya no es GM" : "La sesión de GM ha caducado: vuelve a entrar");
+    }
+    if (!res.ok) throw new Error(data.message || data.error || `Error ${res.status}`);
+    return data;
+  }
+
+  async function gmLogin() {
+    const status = $("supabaseStatus");
+    const login = $("gmLogin").value.trim();
+    const password = $("gmPassword").value;
+    if (!login || !password) return;
+    status.textContent = "Entrando..."; status.className = "sheets-status";
+    try {
+      const res = await fetch(GM_API + "/gm/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error({
+          invalid_credentials: "Usuario o contraseña incorrectos",
+          not_gm:              "Esta cuenta no tiene el rol GM",
+          too_many_attempts:   "Demasiados intentos: espera un minuto",
+        }[data.error] || data.error || `Error ${res.status}`);
+      }
+      localStorage.setItem(GM_TOKEN_KEY, data.token);
+      localStorage.setItem(GM_USER_KEY, data.username || login);
+      $("gmPassword").value = "";
+      updateGmSession();
+      status.textContent = "✓ Sesión de GM iniciada"; status.className = "sheets-status ok";
+    } catch (err) {
+      status.textContent = "Error: " + err.message; status.className = "sheets-status error";
+    }
+  }
+
+  $("gmLoginBtn").addEventListener("click", gmLogin);
+  $("gmPassword").addEventListener("keydown", e => { if (e.key === "Enter") gmLogin(); });
+  $("gmLogoutBtn").addEventListener("click", clearGmSession);
 
   $("supabaseBtn").addEventListener("click", () => {
     $("supabasePanel").classList.toggle("open");
   });
-
-  function getSupaClient() {
-    const url = $("supabaseUrl").value.trim();
-    const key = $("supabaseKey").value.trim();
-    if (!url || !key) throw new Error("Introduce la URL del proyecto y la clave anon");
-    localStorage.setItem(SUPA_STORAGE_KEY, JSON.stringify({
-      url, key,
-      table: $("supabaseTableInput").value.trim() || "games",
-    }));
-    return supabase.createClient(url, key);
-  }
 
   $("doImportSupabase").addEventListener("click", async () => {
     const status = $("supabaseStatus");
     status.textContent = "Cargando...";
     status.className = "sheets-status";
     try {
-      const client = getSupaClient();
-      const table = $("supabaseTableInput").value.trim() || "games";
-      const { data, error } = await client.from(table).select("*").order("id");
-      if (error) throw error;
+      const data = await gmApi("/gm/games");
       const incoming = normalizeDb(data);
       if (db.length > 0) {
         const totalTracks = arr => arr.reduce((s, x) => s + x.tracks.length, 0);
@@ -2027,10 +2089,8 @@
     status.textContent = "Comprobando...";
     status.className = "sheets-status";
     try {
-      const clientCheck = getSupaClient();
-      const table = $("supabaseTableInput").value.trim() || "games";
-      const { data: currentData, error: countError } = await clientCheck.from(table).select("id, tracks");
-      if (!countError && currentData) {
+      const currentData = await gmApi("/gm/games");
+      if (currentData) {
         const totalTracks = arr => arr.reduce((s, x) => s + (Array.isArray(x.tracks) ? x.tracks.length : 1), 0);
         const warnings = [];
         if (db.length < currentData.length) warnings.push(`${currentData.length - db.length} entrada(s) menos (${db.length} vs ${currentData.length} en Supabase)`);
@@ -2048,12 +2108,7 @@
     status.textContent = "Guardando...";
     status.className = "sheets-status";
     try {
-      const client = getSupaClient();
-      const table = $("supabaseTableInput").value.trim() || "games";
-      const { error: delError } = await client.from(table).delete().gte("id", 0);
-      if (delError) throw delError;
-      const { error: insError } = await client.from(table).insert(db);
-      if (insError) throw insError;
+      await gmApi("/gm/games/replace", { rows: db });
       setSupaBaseline(db);
       status.textContent = `✓ ${db.length} entradas guardadas en Supabase`;
       status.className = "sheets-status ok";
@@ -2104,10 +2159,7 @@
     const stamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}-${String(now.getHours()).padStart(2,"0")}${String(now.getMinutes()).padStart(2,"0")}`;
     download(`database-${stamp}.js`, toJs(), "text/javascript;charset=utf-8");
     try {
-      const client = getSupaClient();
-      const table = $("supabaseTableInput").value.trim() || "games";
-      const { error } = await client.from(table).upsert(entries, { onConflict: "id" });
-      if (error) throw error;
+      await gmApi("/gm/games/upsert", { rows: entries });
       entries.forEach(item => _supaBaseline.set(item.id, JSON.stringify(item)));
       updateSupaDiffBtns();
       status.textContent = `✓ ${label}`;
@@ -2402,10 +2454,8 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     const status = $("transStatus");
     status.textContent = 'Cargando...'; status.className = 'sheets-status';
     try {
-      const client = getSupaClient();
       const lang = $("transLang").value;
-      const { data, error } = await client.from('editor_translations').select('*').eq('lang', lang);
-      if (error) throw error;
+      const data = await gmApi('/gm/translations?lang=' + encodeURIComponent(lang));
       _translations.clear();
       for (const row of (data || [])) _translations.set(Number(row.game_id), row.name);
       _translationsLoaded = true;
@@ -2426,13 +2476,9 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     const status = $("transStatus");
     status.textContent = 'Guardando...'; status.className = 'sheets-status';
     try {
-      const client = getSupaClient();
       const lang = $("transLang").value;
-    const rows = [..._translations.entries()].map(([game_id, name]) => ({ game_id, lang, name }));
-      if (rows.length) {
-        const { error } = await client.from('editor_translations').upsert(rows, { onConflict: 'game_id,lang' });
-        if (error) throw error;
-      }
+      const rows = [..._translations.entries()].map(([game_id, name]) => ({ game_id, lang, name }));
+      if (rows.length) await gmApi('/gm/translations', { rows });
       _transDirty = false;
       $("transDirtyPill").style.display = 'none';
       status.textContent = `✓ ${rows.length} traducciones guardadas`;
@@ -2641,9 +2687,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     const status = $("specialsStatus");
     status.textContent = 'Cargando...'; status.className = 'sheets-status';
     try {
-      const client = getSupaClient();
-      const { data, error } = await client.from('editor_specials').select('*').order('date');
-      if (error) throw error;
+      const data = await gmApi('/gm/specials');
       _specials = (data || []).map(parseSpecialFromRow);
       _specialsLoadedIds = new Set(_specials.map(e => e.id).filter(Boolean));
       _specialsLoaded = true;
@@ -2664,31 +2708,16 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     const status = $("specialsStatus");
     status.textContent = 'Guardando...'; status.className = 'sheets-status';
     try {
-      const client = getSupaClient();
       const currentIds = new Set(_specials.filter(e => e.id !== undefined).map(e => e.id));
       const toDelete = [..._specialsLoadedIds].filter(id => !currentIds.has(id));
-      if (toDelete.length) {
-        const { error } = await client.from('editor_specials').delete().in('id', toDelete);
-        if (error) throw error;
-      }
       const toRow = ev => ({ date: ev.date, date_to: ev.dateTo || null, label: ev.label, name: ev.name, color: ev.color, tag: ev.tag || null, game_ids: ev.gameIds || [], search: ev.search || null });
       const withId    = _specials.filter(e => e.id !== undefined).map(ev => ({ ...toRow(ev), id: ev.id }));
       const withoutId = _specials.filter(e => e.id === undefined).map(toRow);
-      if (withId.length) {
-        const { error } = await client.from('editor_specials').upsert(withId, { onConflict: 'id' });
-        if (error) throw error;
-      }
-      if (withoutId.length) {
-        const { error } = await client.from('editor_specials').insert(withoutId);
-        if (error) throw error;
-      }
-      if (withId.length || withoutId.length) {
-        const { data: refreshed, error: refErr } = await client.from('editor_specials').select('*').order('date');
-        if (refErr) throw refErr;
-        _specials = (refreshed || []).map(parseSpecialFromRow);
-        _specialsLoadedIds = new Set(_specials.map(e => e.id).filter(Boolean));
-        renderSpecials();
-      }
+      // El worker borra, actualiza e inserta, y devuelve la lista ya guardada (con los ids nuevos)
+      const refreshed = await gmApi('/gm/specials', { deleteIds: toDelete, update: withId, insert: withoutId });
+      _specials = (refreshed || []).map(parseSpecialFromRow);
+      _specialsLoadedIds = new Set(_specials.map(e => e.id).filter(Boolean));
+      renderSpecials();
       _specialsDirty = false;
       $("specialsDirtyPill").style.display = 'none';
       status.textContent = `✓ ${_specials.length} eventos guardados`;

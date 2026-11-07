@@ -689,7 +689,7 @@ function openEndModal(score) {
           ? `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="end-register-btn">${t('register_cta_link')}</button></p>`
           : `<div class="stats-rank-section">
               <div id="end-rank-info" class="stats-rank-info"><p class="rank-empty">${t('ranking_loading')}</p></div>
-              <a href="ranking.html" class="stats-rank-link">${t('ranking_view_full')} →</a>
+              <a href="ranking" class="stats-rank-link">${t('ranking_view_full')} →</a>
             </div>`
         }
       ` : ''}
