@@ -130,6 +130,7 @@
   "auth_migration_done": "History saved to your account",
   "auth_profile": "Settings",
   "gm_bestiary": "Bestiary",
+  "gm_bestiary_needs_password": "You need a password to open the bestiary. Set one in Settings.",
   "auth_connected_accounts": "Connected accounts",
   "auth_connect": "Connect",
   "auth_disconnect": "Disconnect",

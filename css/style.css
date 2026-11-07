@@ -1770,6 +1770,14 @@ body.theme--light .auth-drop__name { color: #4a6c10; border-color: #d0cec6; }
 .gm-book:hover { color: #f0c868; background: rgba(212, 168, 75, 0.22); border-color: rgba(212, 168, 75, 0.6); }
 body.theme--light .gm-book { color: #8a6418; background: rgba(138, 100, 24, 0.10); border-color: rgba(138, 100, 24, 0.35); }
 body.theme--light .gm-book:hover { color: #6e4f10; background: rgba(138, 100, 24, 0.18); }
+/* GM sin contraseña: no puede entrar al bestiario hasta ponerse una */
+.gm-book--locked, .gm-book--locked:hover {
+  padding: 0; cursor: not-allowed;
+  color: #e06060; background: rgba(224, 96, 96, 0.12); border-color: rgba(224, 96, 96, 0.4);
+}
+body.theme--light .gm-book--locked, body.theme--light .gm-book--locked:hover {
+  color: #b02020; background: rgba(176, 32, 32, 0.08); border-color: rgba(176, 32, 32, 0.35);
+}
 
 /* Sobreescribir el .auth-drop__name original (diseñado para el dropdown simple) */
 .auth-drop--card .auth-drop__name {

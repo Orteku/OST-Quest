@@ -129,6 +129,7 @@
   "auth_migration_done": "Historial guardado en tu cuenta",
   "auth_profile": "Configuración",
   "gm_bestiary": "Bestiario",
+  "gm_bestiary_needs_password": "Para entrar en el bestiario necesitas una contraseña. Ponla en Configuración.",
   "auth_connected_accounts": "Cuentas vinculadas",
   "auth_connect": "Conectar",
   "auth_disconnect": "Desconectar",

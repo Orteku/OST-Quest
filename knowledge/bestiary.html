@@ -464,6 +464,7 @@
     }
     .sheets-panel.open { display: flex; }
     .sheets-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .gm-session { display: inline-flex; gap: 8px; align-items: center; margin-left: auto; }
     .sheets-label { font-size: 12px; color: var(--muted); white-space: nowrap; min-width: 80px; }
     .sheets-url-input { flex: 1; min-width: 300px; font-size: 13px; }
     .sheets-status { font-size: 12px; color: var(--muted); }
@@ -604,15 +605,15 @@
       <input id="gmPassword" class="sheets-url-input" type="password" placeholder="Contraseña" autocomplete="current-password" />
       <button id="gmLoginBtn" class="primary">Entrar</button>
     </div>
-    <div class="sheets-row" id="gmSessionRow" style="display:none">
-      <span class="sheets-label">Cuenta GM:</span>
-      <span id="gmUser"></span>
-      <button id="gmLogoutBtn">Salir</button>
-    </div>
     <div class="sheets-row">
       <button id="doImportSupabase" class="primary">Cargar desde Supabase</button>
       <button id="doSaveSupabase">Guardar en Supabase</button>
       <span id="supabaseStatus" class="sheets-status"></span>
+      <span id="gmSessionRow" class="gm-session" style="display:none">
+        <span class="sheets-label">Cuenta GM:</span>
+        <span id="gmUser"></span>
+        <button id="gmLogoutBtn">Salir</button>
+      </span>
     </div>
     <div class="sheets-row" id="supaBaseDiffRow" style="border-top:1px solid var(--line);padding-top:8px;margin-top:4px">
       <span class="sheets-label" style="color:var(--muted);font-size:12px">Sync parcial:</span>

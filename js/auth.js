@@ -251,11 +251,22 @@ function _renderAuthBtn() {
 const _ICON_BOOK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>`;
 
 // Botón del bestiario (editor de la base de juegos) junto al nombre, solo en cuentas con rol GM.
-// Es solo un enlace: el permiso lo comprueba el worker en cada petición del editor
+// Es solo un enlace: el permiso lo comprueba el worker en cada petición del editor.
+// El bestiario se entra con contraseña: sin ella, el libro sale en rojo y avisa (al pasar el ratón o al pulsarlo)
 function _gmBookHTML() {
   if (_profile?.is_gm !== true) return '';
+  if (!_profile.providers?.email) {
+    const msg = _esc(t('gm_bestiary_needs_password'));
+    return `<button type="button" class="gm-book gm-book--locked" title="${msg}" aria-label="${msg}" aria-disabled="true"
+      onclick="event.stopPropagation(); showToast(this.title, 'warn')">${_ICON_BOOK}</button>`;
+  }
   const label = _esc(t('gm_bestiary'));
   return `<a class="gm-book" href="knowledge/bestiary" title="${label}" aria-label="${label}">${_ICON_BOOK}</a>`;
+}
+
+// Tras ponerse contraseña, el libro del bestiario pasa de rojo a normal sin recargar
+function _refreshGmBook() {
+  document.querySelectorAll('.gm-book').forEach(el => { el.outerHTML = _gmBookHTML(); });
 }
 
 function _loadLocalStats() {
@@ -1142,6 +1153,7 @@ function _bindProfilePageEvents() {
     if (data?.error === 'invalid_current_password') { setErr(t('auth_error_invalid_credentials')); return; }
     if (data?.error) { setErr(t('auth_error_generic')); return; }
     _profile = { ..._profile, providers: { ..._profile?.providers, email: true } };
+    _refreshGmBook();
     localStorage.setItem(_USER_KEY, JSON.stringify(_profile));
     if (typeof showToast === 'function') showToast(t('auth_saved'));
     if (curEl) curEl.value = '';
@@ -1208,6 +1220,7 @@ function _bindProfileEvents() {
 
     // Actualizar perfil para reflejar que ahora tiene email/password
     _profile = { ..._profile, providers: { ..._profile?.providers, email: true } };
+    _refreshGmBook();
     localStorage.setItem(_USER_KEY, JSON.stringify(_profile));
     if (typeof showToast === 'function') showToast(t('auth_saved'));
     if (curEl) curEl.value = '';
