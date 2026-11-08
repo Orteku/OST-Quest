@@ -28,6 +28,12 @@ function rowsFrom(body) {
     ? rows : null;
 }
 
+// Lista de ids de juego a borrar (opcional en el cuerpo: si falta, no se borra nada)
+function gameIdsFrom(value) {
+  const ids = value ?? [];
+  return Array.isArray(ids) && ids.length <= MAX_ROWS && ids.every(id => Number.isInteger(id) && id >= 0) ? ids : null;
+}
+
 // Id de una fila de editor_specials (número o texto, según cómo se creó la columna)
 function isRowId(id) {
   return Number.isInteger(id) || (typeof id === 'string' && id.length > 0 && id.length <= 64);
@@ -55,18 +61,17 @@ export async function handleGmGetGames(request, env, db) {
   return json(await db.getEditorGames(), 200, request);
 }
 
-// POST /gm/games/replace  { rows }  — "Sobrescribir"
-// POST /gm/games/upsert   { rows }  — "Añadir nuevas" / "Modificar"
-export async function handleGmSaveGames(request, env, db, mode) {
+// POST /gm/games/upsert  { rows, deleteIds }  — "Guardar": sube los juegos nuevos y modificados y borra los quitados
+export async function handleGmSaveGames(request, env, db) {
   const [, err] = await requireGm(request, env, db);
   if (err) return err;
-  const rows = rowsFrom(await readBody(request));
-  if (!rows || !rows.every(r => Number.isInteger(r.id) && r.id >= 0)) return json({ error: 'invalid_rows' }, 400, request);
-  // Una tabla vacía dejaría el juego sin base de datos la próxima vez que se exporte
-  if (mode === 'replace' && !rows.length) return json({ error: 'empty_rows' }, 400, request);
-  if (mode === 'replace') await db.replaceEditorGames(rows);
-  else if (rows.length) await db.upsertEditorGames(rows);
-  return json({ ok: true, count: rows.length }, 200, request);
+  const body      = await readBody(request);
+  const rows      = rowsFrom(body);
+  const deleteIds = gameIdsFrom(body?.deleteIds);
+  if (!rows || !deleteIds || !rows.every(r => Number.isInteger(r.id) && r.id >= 0)) return json({ error: 'invalid_rows' }, 400, request);
+  if (deleteIds.length) await db.deleteEditorGames(deleteIds);
+  if (rows.length)      await db.upsertEditorGames(rows);
+  return json({ ok: true, count: rows.length, deleted: deleteIds.length }, 200, request);
 }
 
 // GET /gm/translations?lang=es
@@ -78,16 +83,23 @@ export async function handleGmGetTranslations(request, env, db) {
   return json(await db.getEditorTranslations(lang), 200, request);
 }
 
-// POST /gm/translations  { rows: [{ game_id, lang, name }] }
+// POST /gm/translations  { rows: [{ game_id, lang, name }], lang, deleteIds: [game_id] }
+// deleteIds borra las traducciones de esos juegos en el idioma lang
 export async function handleGmSaveTranslations(request, env, db) {
   const [, err] = await requireGm(request, env, db);
   if (err) return err;
-  const rows = rowsFrom(await readBody(request));
-  if (!rows || !rows.every(r => Number.isInteger(Number(r.game_id)) && LANG_RE.test(r.lang) && typeof r.name === 'string')) {
+  const body      = await readBody(request);
+  const rows      = rowsFrom(body);
+  const deleteIds = gameIdsFrom(body?.deleteIds);
+  if (!rows || !deleteIds || !rows.every(r => Number.isInteger(Number(r.game_id)) && LANG_RE.test(r.lang) && typeof r.name === 'string')) {
     return json({ error: 'invalid_rows' }, 400, request);
   }
+  if (deleteIds.length) {
+    if (!LANG_RE.test(body?.lang || '')) return json({ error: 'invalid_lang' }, 400, request);
+    await db.deleteEditorTranslations(body.lang, deleteIds);
+  }
   if (rows.length) await db.upsertEditorTranslations(rows);
-  return json({ ok: true, count: rows.length }, 200, request);
+  return json({ ok: true, count: rows.length, deleted: deleteIds.length }, 200, request);
 }
 
 // GET /gm/specials

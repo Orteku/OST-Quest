@@ -65,8 +65,7 @@ export default {
       // ── Editor de la base de juegos (rol GM) ────────────────────────────
       if (path === '/gm/login'          && method === 'POST') return handleGmLogin(request, env, db);
       if (path === '/gm/games'          && method === 'GET')  return handleGmGetGames(request, env, db);
-      if (path === '/gm/games/replace'  && method === 'POST') return handleGmSaveGames(request, env, db, 'replace');
-      if (path === '/gm/games/upsert'   && method === 'POST') return handleGmSaveGames(request, env, db, 'upsert');
+      if (path === '/gm/games/upsert'   && method === 'POST') return handleGmSaveGames(request, env, db);
       if (path === '/gm/translations'   && method === 'GET')  return handleGmGetTranslations(request, env, db);
       if (path === '/gm/translations'   && method === 'POST') return handleGmSaveTranslations(request, env, db);
       if (path === '/gm/specials'       && method === 'GET')  return handleGmGetSpecials(request, env, db);

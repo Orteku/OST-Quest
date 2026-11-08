@@ -248,16 +248,17 @@ export function createDb(env) {
     async getEditorGames() {
       return check(await supabase.from(EDITOR_GAMES_TABLE).select('*').order('id')) || [];
     },
-    // Sobrescribir: borra la tabla y la vuelve a llenar (el editor descarga antes una copia)
-    async replaceEditorGames(rows) {
-      await check(await supabase.from(EDITOR_GAMES_TABLE).delete().gte('id', 0));
-      return check(await supabase.from(EDITOR_GAMES_TABLE).insert(rows));
+    async deleteEditorGames(ids) {
+      return check(await supabase.from(EDITOR_GAMES_TABLE).delete().in('id', ids));
     },
     async upsertEditorGames(rows) {
       return check(await supabase.from(EDITOR_GAMES_TABLE).upsert(rows, { onConflict: 'id' }));
     },
     async getEditorTranslations(lang) {
       return check(await supabase.from('editor_translations').select('*').eq('lang', lang)) || [];
+    },
+    async deleteEditorTranslations(lang, gameIds) {
+      return check(await supabase.from('editor_translations').delete().eq('lang', lang).in('game_id', gameIds));
     },
     async upsertEditorTranslations(rows) {
       return check(await supabase.from('editor_translations').upsert(rows, { onConflict: 'game_id,lang' }));

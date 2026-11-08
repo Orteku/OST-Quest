@@ -30,8 +30,11 @@ Tablas para colaborar en traducciones y especiales:
 - `editor_translations` (`game_id`, `lang`, …): nombres de juegos traducidos → `locales/games-es.json`
 - `editor_specials`: eventos especiales → `js/specials.js`
 
-"Sobrescribir" borra la tabla entera y la vuelve a insertar (antes descarga una copia de `database.js`);
-para cambios normales es más seguro "Añadir nuevas" / "Modificar", que solo suben lo que ha cambiado.
+Las tres pestañas (Juegos, Traducciones, Especiales) tienen el mismo menú: cargar, guardar, descargar y
+subir archivo. "Guardar" compara con lo que había en Supabase al cargar y solo sube lo nuevo y lo modificado
+y borra lo quitado (pidiendo confirmación si hay borrados); bajo el botón se ve el resumen de lo pendiente.
+Se compara con lo cargado, no con lo que hay al guardar, para no borrar lo que otra persona haya añadido
+mientras tanto. En Juegos, cada guardado descarga antes una copia de `database.js`.
 
 ### Google Apps Script (`apps_script.gs`)
 Script desplegado como aplicación web en Google Sheets. Recibe los datos del editor
