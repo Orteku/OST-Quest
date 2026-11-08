@@ -36,17 +36,6 @@
       padding: 14px 16px;
       backdrop-filter: blur(8px);
     }
-    h1 {
-      margin: 0 0 10px;
-      font-size: 22px;
-      letter-spacing: .2px;
-    }
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
     button, input, select, textarea {
       border: 1px solid var(--line);
       background: var(--panel2);
@@ -153,7 +142,6 @@
       opacity: .45;
       cursor: not-allowed;
     }
-    input[type="file"] { max-width: 290px; }
     #search {
       min-width: 0;
     }
@@ -162,18 +150,6 @@
       max-width: 1700px;
       margin: 0 auto;
     }
-    code { color: #d8e3ff; }
-    .info {
-      color: var(--muted);
-      margin: 10px 0 14px;
-      line-height: 1.45;
-    }
-    .stats {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 10px 0 14px;
-    }
     .pill {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -181,7 +157,6 @@
       padding: 6px 10px;
       color: var(--muted);
     }
-    .pill strong { color: var(--text); }
     .pill.warn { border-color: #ffd166; color: #ffe7a0; }
     .search-stats {
       font-size: 13px;
@@ -190,8 +165,7 @@
       align-self: center;
       padding: 0 2px;
     }
-    .search-stats strong { color: var(--text); }
-    .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line); font-size:13px; position:sticky; top:var(--header-h, 0px); z-index:9; }
+    .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line); font-size:13px; }
     .pagination-bar button { padding:4px 10px; font-size:12px; }
     .pagination-bar button:disabled { opacity:0.35; cursor:default; pointer-events:none; }
     .pg-icon { width:28px; height:28px; padding:0; font-size:16px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
@@ -210,9 +184,7 @@
       border-radius: 12px;
       padding: 10px;
       align-items: start;
-      min-height: 140px;
     }
-    .list.filtering .row.hidden { display: none; }
     .cover-box {
       display: grid;
       gap: 6px;
@@ -323,17 +295,8 @@
     button.btn-playing { background: #22c55e; border-color: #22c55e; color: #000; }
     .track-btns { display: flex; gap: 4px; align-items: end; }
     .meta-fields select, .year-input { width: 100%; min-width: 0; }
-    .compact select { padding: 6px 8px; }
     input.field-error { border-color: var(--danger) !important; }
     input.field-warn  { border-color: var(--warn) !important; }
-    .compact .row {
-      grid-template-columns: 96px 1fr;
-      padding: 8px;
-      gap: 8px;
-    }
-    .compact .cover-preview { width: 86px; border-radius: 7px; }
-    .compact .meta-fields { gap: 6px; }
-    .compact input { padding: 6px 8px; }
     .add-panel {
       margin: 16px 0;
       background: #15191f;
@@ -446,14 +409,6 @@
       line-height: 1;
     }
     #gpClose:hover { color: var(--text); background: var(--panel2); }
-    .notice {
-      border-left: 4px solid var(--warn);
-      background: #211d12;
-      padding: 10px 12px;
-      color: #ffe7a0;
-      border-radius: 8px;
-      margin: 10px 0;
-    }
     .sheets-panel {
       display: none;
       flex-direction: column;
@@ -470,7 +425,6 @@
     body:not(.has-db) .needs-db, body:not(.has-trans) .needs-trans, body:not(.has-specials) .needs-specials { display: none !important; }
     .pane-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; }
     .pane-sticky { position: sticky; top: var(--header-h, 0px); z-index: 9; background: var(--bg); margin: -16px 0 12px; padding-top: 6px; }
-    .pane-sticky .pagination-bar { position: static; }
     .header-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
     .header-title { display: flex; align-items: center; gap: 12px; }
     .home-logo { display: inline-flex; border-radius: 8px; transition: transform .15s; }
@@ -481,12 +435,11 @@
     .gm-account { display: flex; align-items: center; gap: 8px; margin-left: auto; }
     .gm-account-row { display: inline-flex; align-items: center; gap: 8px; }
     .header-links { display: flex; gap: 6px; }
+    .ext-link { color: #fff; border: none; border-radius: 8px; padding: 7px 12px; font-weight: 650; text-decoration: none; font-size: 14px; }
     .tab-tools { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
     .tab-tools.active { display: flex; }
     .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .tools-row .btn-group { margin: 0; }
     .tools-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .tools-group > .sheets-status, .tools-group > .pill { align-self: center; }
     .tools-group > .sheets-status:empty { display: none; }
     body.has-db [data-for="db"] .load-group,
     body.has-trans [data-for="traducciones"] .load-group,
@@ -507,7 +460,7 @@
       .meta-fields > button[data-action="reloadCover"] { display: none; }
     }
     @media (max-width: 720px) {
-      .row, .compact .row {
+      .row {
         grid-template-columns: 1fr;
       }
       .cover-box {
@@ -565,7 +518,7 @@
     .sp-id-chip strong { color: var(--text); }
   </style>
 </head>
-<body data-tab="db">
+<body>
 <header>
   <div class="header-top">
     <div class="header-title">
@@ -587,12 +540,12 @@
       <span id="gmStatus" class="sheets-status"></span>
     </div>
     <div class="header-links">
-      <a href="/?gm" target="_blank" rel="noopener" style="background:#d4a017;color:#1a1400;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Modo GM</a>
-      <a href="https://www.youtube.com" target="_blank" rel="noopener" style="background:#ff0000;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">YouTube</a>
-      <a href="https://www.igdb.com" target="_blank" rel="noopener" style="background:#8c44b0;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">IGDB</a>
-      <a href="https://downloads.khinsider.com/" target="_blank" rel="noopener" style="background:#111;color:#fff;border:1px solid #444;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Khinside</a>
-      <a href="https://archive.org/details/audio" target="_blank" rel="noopener" style="background:#555;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Archive.org</a>
-      <a href="https://docs.google.com/spreadsheets/d/1PzT5tdB6yQn9c9_R-YObqTqyaN4jRJxqTT4HEm1nh-s/edit?gid=1895228238#gid=1895228238" target="_blank" rel="noopener" style="background:#1e8e3e;color:#fff;border:none;border-radius:8px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;font-size:14px">Sheets</a>
+      <a href="/?gm" target="_blank" rel="noopener" class="ext-link" style="background:#d4a017;color:#1a1400">Modo GM</a>
+      <a href="https://www.youtube.com" target="_blank" rel="noopener" class="ext-link" style="background:#ff0000">YouTube</a>
+      <a href="https://www.igdb.com" target="_blank" rel="noopener" class="ext-link" style="background:#8c44b0">IGDB</a>
+      <a href="https://downloads.khinsider.com/" target="_blank" rel="noopener" class="ext-link" style="background:#111;border:1px solid #444">Khinside</a>
+      <a href="https://archive.org/details/audio" target="_blank" rel="noopener" class="ext-link" style="background:#555">Archive.org</a>
+      <a href="https://docs.google.com/spreadsheets/d/1PzT5tdB6yQn9c9_R-YObqTqyaN4jRJxqTT4HEm1nh-s/edit?gid=1895228238#gid=1895228238" target="_blank" rel="noopener" class="ext-link" style="background:#1e8e3e">Sheets</a>
     </div>
   </div>
   <div class="tab-bar">
@@ -809,7 +762,6 @@
 (() => {
   let db = [];
   let dirty = false;
-  let compact = false;
   let originalFilename = "database.js";
 
   const $ = (id) => document.getElementById(id);
@@ -838,13 +790,9 @@
     dirty = value;
     $("dirtyPill").style.display = dirty ? "" : "none";
     setTabDirty('db', dirty);
-    if (typeof updateDbPending === "function") {
-      clearTimeout(_diffTimer);
-      _diffTimer = setTimeout(updateDbPending, 400);
-    }
-    if (typeof setTabDiff === "function") {
-      if (value) setTabDiff('db', true);
-    }
+    clearTimeout(_diffTimer);
+    _diffTimer = setTimeout(updateDbPending, 400);
+    if (value) setTabDiff('db', true);
   }
 
   function escapeHtml(value) {
@@ -865,17 +813,13 @@
     return String(value || "").trim();
   }
 
-  function trackSourceVal(track) {
-    return track.mp3Url || '';
-  }
-
   function normalizeAudioUrl(url) {
     return url.replace('archive.org/details/', 'archive.org/download/');
   }
 
   function tracksSectionHtml(tracks) {
     const rows = tracks.map((track, ti) => {
-      const srcVal   = escapeHtml(trackSourceVal(track));
+      const srcVal   = escapeHtml(track.mp3Url || '');
       const stVal    = escapeHtml(secondsToTime(track.startSeconds));
       const titleVal  = escapeHtml(track.title || "");
       const artistVal = escapeHtml(track.artist || "");
@@ -1100,7 +1044,7 @@
   // Revalida solo los rows con índices afectados — O(k) en vez de O(n)
   function revalidateByIndices(indices, field) {
     indices.forEach(idx => {
-      const row = list.querySelector(`.row[data-index="${idx}"][data-filled]`);
+      const row = list.querySelector(`.row[data-index="${idx}"]`);
       if (!row) return;
       const item = db[idx];
       if (field === 'cover') {
@@ -1165,15 +1109,16 @@
     `;
   }
 
-  function rowSearchAttrs(item) {
+  // Textos en minúsculas por los que filtra el buscador, uno por cada opción de "searchField"
+  function searchTexts(item) {
     return {
-      'data-search': `${item.game} ${item.developer || ""} ${item.tracks.map(t => `${t.title} ${t.mp3Url} ${t.artist} ${(t.tags||[]).join(" ")}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
-      'data-sg':   item.game.toLowerCase(),
-      'data-st':   item.tracks.map(t => `${t.title} ${t.artist}`).join(" ").toLowerCase(),
-      'data-stag': `${(item.tags||[]).join(" ")} ${item.tracks.map(t => (t.tags||[]).join(" ")).join(" ")}`.toLowerCase(),
-      'data-sy':   String(item.year),
-      'data-su':   item.tracks.map(t => t.mp3Url).join(" ").toLowerCase(),
-      'data-sar':  item.tracks.map(t => t.artist || "").join(" ").toLowerCase(),
+      all:    `${item.game} ${item.developer || ""} ${item.tracks.map(t => `${t.title} ${t.mp3Url} ${t.artist} ${(t.tags||[]).join(" ")}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
+      game:   item.game.toLowerCase(),
+      tracks: item.tracks.map(t => `${t.title} ${t.artist}`).join(" ").toLowerCase(),
+      tags:   `${(item.tags||[]).join(" ")} ${item.tracks.map(t => (t.tags||[]).join(" ")).join(" ")}`.toLowerCase(),
+      year:   String(item.year),
+      url:    item.tracks.map(t => t.mp3Url).join(" ").toLowerCase(),
+      artist: item.tracks.map(t => t.artist || "").join(" ").toLowerCase(),
     };
   }
 
@@ -1181,7 +1126,7 @@
   const PAGE_SIZE = 50;
   let _page = 0;
   let _filteredIndices = null; // null = sin filtro (todos)
-  let _searchIndex = [];       // rowSearchAttrs pre-computado por índice de db
+  let _searchIndex = [];       // searchTexts pre-calculado por índice de db
 
   function updatePaginationBar(totalVisible, totalPages) {
     const display  = db.length === 0 ? 'none' : '';
@@ -1210,41 +1155,22 @@
     const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     _page = Math.min(_page, pages - 1);
     const slice = all.slice(_page * PAGE_SIZE, (_page + 1) * PAGE_SIZE);
-    list.innerHTML = slice.map(index => {
-      const a = _searchIndex[index] || rowSearchAttrs(db[index]);
-      return `<article class="row" data-index="${index}" data-search="${escapeHtml(a['data-search'])}" data-sg="${escapeHtml(a['data-sg'])}" data-st="${escapeHtml(a['data-st'])}" data-stag="${escapeHtml(a['data-stag'])}" data-sy="${escapeHtml(a['data-sy'])}" data-su="${escapeHtml(a['data-su'])}" data-sar="${escapeHtml(a['data-sar'])}"></article>`;
-    }).join('');
-    list.querySelectorAll('.row').forEach(fillRow);
+    list.innerHTML = slice.map(index => `<article class="row" data-index="${index}">${buildRowContent(db[index])}</article>`).join('');
+    list.querySelectorAll('.row').forEach(row => validateRow(row, db[Number(row.dataset.index)], Number(row.dataset.index)));
     updatePaginationBar(total, pages);
   }
 
-  function updateRowSearch(row, index) {
-    const attrs = rowSearchAttrs(db[index]);
-    _searchIndex[index] = attrs;
-    for (const [k, v] of Object.entries(attrs)) row.setAttribute(k, v);
+  function updateSearchIndex(index) {
+    _searchIndex[index] = searchTexts(db[index]);
   }
 
-  function fillRow(row) {
-    if (row.dataset.filled) return;
-    row.dataset.filled = "1";
-    const index = Number(row.dataset.index);
-    row.innerHTML = buildRowContent(db[index]);
-    validateRow(row, db[index], index);
-  }
-
-  function fillAllRows() {
-    list.querySelectorAll(".row:not([data-filled])").forEach(fillRow);
-  }
-
-  function render() {
-    document.body.classList.toggle("compact", compact);
-    _page = 0;
-    _filteredIndices = null;
-    list.classList.remove("filtering");
-    _searchIndex = db.map(item => rowSearchAttrs(item));
-    renderPage();
+  // keepPage: tras borrar o duplicar una entrada se queda en la misma página en vez de volver a la primera
+  function render(keepPage = false) {
+    _searchIndex = db.map(searchTexts);
     rebuildIndexes();
-    applySearch();
+    filterDb();
+    if (!keepPage) _page = 0;
+    renderPage();
     updateStats();
   }
 
@@ -1259,7 +1185,7 @@
       track.tags = input.value.split(',').map(t => t.trim()).filter(Boolean);
       const suggestions = input.closest('.tags-row')?.querySelector('.tag-suggestions');
       if (suggestions) suggestions.innerHTML = trackTagSuggestionsHtml(track.tags);
-      updateRowSearch(row, index);
+      updateSearchIndex(index);
       setDirty(true);
       return;
     }
@@ -1339,13 +1265,9 @@
       }
     }
 
-    updateRowSearch(row, index);
+    updateSearchIndex(index);
     setDirty(true);
     updateStats();
-  }
-
-  function stopAllMedia() {
-    $("gpAudio").pause();
   }
 
   let _gpIndex = -1;
@@ -1367,7 +1289,7 @@
   function loadTrackInPlayer(track, gameName, coverUrl, element) {
     if (!track?.mp3Url) return;
     clearActivePlayBtn();
-    stopAllMedia();
+    $("gpAudio").pause();
 
     const isContainer = element?.classList?.contains('track-btns');
     if (isContainer) {
@@ -1419,7 +1341,7 @@
         link.href = db[index].cover;
         link.style.color = "";
       } else {
-        link.textContent = "sin enlace";
+        link.textContent = "sin cover";
         link.removeAttribute("href");
         link.style.color = "var(--muted)";
       }
@@ -1464,7 +1386,7 @@
             track.tags = tags;
             chip.classList.add('active');
           }
-          updateRowSearch(row, index);
+          updateSearchIndex(index);
           setDirty(true);
         }
       } else {
@@ -1482,7 +1404,7 @@
             db[index].tags = tags;
             chip.classList.add('active');
           }
-          updateRowSearch(row, index);
+          updateSearchIndex(index);
           setDirty(true);
         }
       }
@@ -1505,7 +1427,7 @@
     } else if (action === "reloadCover") {
       reloadRowCover(row);
     } else if (action === "addTrack") {
-      db[index].tracks.push({ title: "", mp3Url: "", startSeconds: 0 });
+      db[index].tracks.push({ title: "", artist: "", mp3Url: "", startSeconds: 0, tags: [] });
       setDirty(true);
       row.querySelector(".tracks-section").innerHTML = tracksSectionHtml(db[index].tracks);
     } else if (action === "removeTrack") {
@@ -1527,37 +1449,42 @@
       }
     } else if (action === "duplicate") {
       const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
-      db.splice(index + 1, 0, { ...db[index], id: maxId + 1, game: db[index].game + " (copia)", tracks: db[index].tracks.map(t => ({ ...t })) });
+      const src = db[index];
+      db.splice(index + 1, 0, { ...src, id: maxId + 1, game: src.game + " (copia)", tags: [...src.tags], tracks: src.tracks.map(t => ({ ...t, tags: [...(t.tags || [])] })) });
+      if (_gpIndex > index) _gpIndex++;
       setDirty(true);
-      render();
+      render(true);
     } else if (action === "delete") {
       customConfirm(`¿Eliminar "${db[index].game}"?`, { ok: "Eliminar", okDanger: true }).then(ok => {
         if (!ok) return;
         db.splice(index, 1);
+        if (_gpIndex === index) _gpIndex = -1;
+        else if (_gpIndex > index) _gpIndex--;
         setDirty(true);
-        render();
+        render(true);
       });
     }
   });
 
-  const SEARCH_ATTR = { all: 'data-search', game: 'data-sg', tracks: 'data-st', artist: 'data-sar', tags: 'data-stag', year: 'data-sy', url: 'data-su' };
-
-  function applySearch() {
+  // Calcula _filteredIndices según el buscador (null = sin filtro)
+  function filterDb() {
     const q = $("search").value.trim().toLowerCase();
     if (!q) {
       _filteredIndices = null;
-      list.classList.remove("filtering");
     } else {
-      const attr      = SEARCH_ATTR[$("searchField").value] || 'data-search';
+      const field     = $("searchField").value;
       const emptyMode = q === '<empty>';
-      list.classList.add("filtering");
       _filteredIndices = db.reduce((acc, _, i) => {
-        const hay   = (_searchIndex[i]?.[attr] || '').trim();
+        const hay   = (_searchIndex[i]?.[field] || '').trim();
         const match = emptyMode ? hay === '' : q.split(/\s+/).every(w => hay.includes(w));
         if (match) acc.push(i);
         return acc;
       }, []);
     }
+  }
+
+  function applySearch() {
+    filterDb();
     _page = 0;
     renderPage();
     updateStats();
@@ -1666,7 +1593,7 @@
     $("newMp3Url").value = "";
     $("newStart").value = "0:00";
     $("newTags").value = "";
-    $("newPop").value = 6;
+    $("newPop").value = 5;
     $("newYear").value = new Date().getFullYear();
     ["newCover", "newMp3Url", "newGame", "newYear"].forEach(id =>
       $(id).classList.remove('field-error', 'field-warn')
@@ -1680,7 +1607,7 @@
     const artist = $("newArtist").value.trim();
     const sourceVal = $("newMp3Url").value.trim();
     const startSeconds = timeToSeconds($("newStart").value);
-    const pop = Math.max(1, Math.min(10, Number($("newPop").value) || 6));
+    const pop = Math.max(1, Math.min(6, Number($("newPop").value) || 5));
     const year = Number($("newYear").value) || new Date().getFullYear();
 
     if (!game) return alert("Falta el nombre del juego.");
@@ -1703,10 +1630,9 @@
     _addToIdx(_coverIdx, newItem.cover, newIndex);
     newItem.tracks.forEach(t => _addToIdx(_audioIdx, t.mp3Url, newIndex));
     _addToIdx(_gyIdx, _gyKey(newItem.game, newItem.year), newIndex);
-    _searchIndex[newIndex] = rowSearchAttrs(newItem);
+    _searchIndex[newIndex] = searchTexts(newItem);
     // ir a la última página (sin filtro) para ver la entrada recién añadida
     _filteredIndices = null;
-    list.classList.remove("filtering");
     $("search").value = "";
     $("searchClear").style.display = "none";
     const lastPage = Math.max(0, Math.ceil(db.length / PAGE_SIZE) - 1);
@@ -1716,15 +1642,7 @@
     updateStats();
     $("clearNew").click();
     $("addPanel").classList.remove("open");
-    requestAnimationFrame(() => {
-      const last = list.querySelector('.row:last-child');
-      if (last) {
-        fillRow(last);
-        requestAnimationFrame(() => last.scrollIntoView({ behavior: "smooth", block: "center" }));
-      } else {
-        $("paginationBar2").scrollIntoView({ behavior: "smooth", block: "end" });
-      }
-    });
+    requestAnimationFrame(() => list.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "center" }));
   });
 
   function loadText(text, filename) {
@@ -1768,7 +1686,6 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 500);
-    setDirty(false);
   }
 
   $("downloadJs").addEventListener("click", () => {
@@ -1841,10 +1758,20 @@
 
   $("gpLocator").addEventListener("click", () => {
     if (_gpIndex < 0) return;
-    const row = list.querySelector(`.row[data-index="${_gpIndex}"]`);
-    if (!row) return;
-    fillRow(row);
-    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    let row = list.querySelector(`.row[data-index="${_gpIndex}"]`);
+    if (!row) {
+      let pos = (_filteredIndices ?? db.map((_, i) => i)).indexOf(_gpIndex);
+      if (pos < 0) {  // la búsqueda actual la oculta: se quita la búsqueda
+        $("search").value = "";
+        $("searchClear").style.display = "none";
+        applySearch();
+        pos = _gpIndex;
+      }
+      _page = Math.floor(pos / PAGE_SIZE);
+      renderPage();
+      row = list.querySelector(`.row[data-index="${_gpIndex}"]`);
+    }
+    row?.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
   function goToPage(newPage, scrollToTop) {
@@ -1868,12 +1795,7 @@
   $("lastPage2") .addEventListener("click", () => goToPage(Infinity, false));
 
   $("scrollTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-  $("scrollBottom").addEventListener("click", () => {
-    fillAllRows();
-    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
-  });
-
-  $("newYear").value = new Date().getFullYear();
+  $("scrollBottom").addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
 
   function syncHeaderHeight() {
     const h = document.querySelector('header');
@@ -1943,7 +1865,7 @@
 
       db = normalizeDb(raw);
       originalFilename = "database";
-      setDirty(false);
+      setDirty(!!_supaBaseline);
       render();
 
       status.textContent = `✓ ${db.length} entradas importadas`;
@@ -2073,6 +1995,11 @@
     return data;
   }
 
+  // true si no hay cambios sin guardar o si se acepta perderlos
+  async function confirmDiscard(isDirty, tabName) {
+    return !isDirty || customConfirm(`Tienes cambios sin guardar en ${tabName}. Si cargas desde Supabase se perderán.`, { ok: "Cargar y perderlos", okDanger: true });
+  }
+
   async function gmLogin() {
     const status = $("gmStatus");
     const login = $("gmLogin").value.trim();
@@ -2112,9 +2039,10 @@
     status.textContent = "Cargando...";
     status.className = "sheets-status";
     try {
+      if (!await confirmDiscard(dirty, "Juegos")) { status.textContent = ""; return; }
       const data = await gmApi("/gm/games");
       const incoming = normalizeDb(data);
-      if (db.length > 0) {
+      if (db.length > 0 && !dirty) {
         const totalTracks = arr => arr.reduce((s, x) => s + x.tracks.length, 0);
         const warnings = [];
         if (incoming.length < db.length) warnings.push(`${db.length - incoming.length} entrada(s) menos (${incoming.length} vs ${db.length} en memoria)`);
@@ -2130,8 +2058,9 @@
       render();
       status.textContent = `✓ ${db.length} entradas cargadas`;
       status.className = "sheets-status ok";
-      $("transLoad").click();
-      $("specialsLoad").click();
+      // Las otras pestañas se recargan solas salvo que tengan cambios sin guardar
+      if (!_transDirty) $("transLoad").click();
+      if (!_specialsDirty) $("specialsLoad").click();
       checkDbDiff();
     } catch (err) {
       status.textContent = "Error: " + err.message;
@@ -2196,6 +2125,7 @@
       }
       const { newEntries, modifiedEntries, deletedIds } = getSupaDiff();
       if (!newEntries.length && !modifiedEntries.length && !deletedIds.length) {
+        setDirty(false);
         status.textContent = "No hay cambios que guardar";
         status.className = "sheets-status";
         return;
@@ -2216,6 +2146,7 @@
       await gmApi("/gm/games/upsert", { rows, deleteIds: deletedIds });
       rows.forEach(item => _supaBaseline.set(item.id, JSON.stringify(item)));
       deletedIds.forEach(id => _supaBaseline.delete(id));
+      setDirty(false);
       updateDbPending();
       status.textContent = `✓ Guardado: ${pendingText(newEntries.length, modifiedEntries.length, deletedIds.length)}`;
       status.className = "sheets-status ok";
@@ -2241,18 +2172,7 @@
     download(`${base}.csv`, lines.join("\n"), "text/csv;charset=utf-8");
   });
 
-  // ── Descarga sin tocar el estado dirty de la BD ─────────────────────────
-  function downloadRaw(filename, content, mime) {
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
-  }
-
-  // ── Pestañas ─────────────────────────────────────────────────────────────
-  // ── GitHub diff indicators ────────────────────────────────────────────────
+  // ── Indicadores de pestaña: cambios sin guardar y diferencias con GitHub ──
 
   function setTabDirty(tab, value) {
     document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.classList.toggle('tab-dirty', value);
@@ -2271,7 +2191,7 @@
     } catch { return null; }
   }
 
-  function generateTranslationsJson(lang) {
+  function generateTranslationsJson() {
     const obj = {};
     [..._translations.entries()]
       .sort((a, b) => a[0] - b[0])
@@ -2381,7 +2301,6 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     if (db.length === 0) return;
     const github = await getGithubRaw('js/database.js');
     if (github === null) return;
-    await new Promise(r => setTimeout(r, 0));
     setTabDiff('db', normalizeEol(toJs()) !== normalizeEol(github));
   }
 
@@ -2393,10 +2312,10 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     let hasDiff;
     try {
       const ghObj = JSON.parse(github);
-      const localObj = JSON.parse(generateTranslationsJson(lang));
+      const localObj = JSON.parse(generateTranslationsJson());
       hasDiff = JSON.stringify(localObj) !== JSON.stringify(ghObj);
     } catch {
-      hasDiff = normalizeEol(generateTranslationsJson(lang)) !== normalizeEol(github);
+      hasDiff = normalizeEol(generateTranslationsJson()) !== normalizeEol(github);
     }
     setTabDiff('traducciones', hasDiff);
   }
@@ -2413,17 +2332,16 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       const ghEvents = new Function(
         github.replace(/if\s*\(typeof\s+module[^\n]*/g, '') + '; return SPECIAL_EVENTS;'
       )();
-      const canon = specialCanon;
       const byDate = arr => [...arr].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-      hasDiff = JSON.stringify(byDate(_specials).map(canon)) !== JSON.stringify(byDate(ghEvents || []).map(canon));
+      hasDiff = JSON.stringify(byDate(_specials).map(specialCanon)) !== JSON.stringify(byDate(ghEvents || []).map(specialCanon));
     } catch {
       hasDiff = normalizeEol(generateSpecialsJs()) !== normalizeEol(github);
     }
     setTabDiff('especiales', hasDiff);
   }
 
+  // ── Pestañas ─────────────────────────────────────────────────────────────
   function switchTab(tab) {
-    document.body.dataset.tab = tab;
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
     document.querySelectorAll(".tab-pane").forEach(p => p.classList.toggle("active", p.id === `tab-${tab}`));
     document.querySelectorAll(".tab-tools").forEach(t => t.classList.toggle("active", t.dataset.for === tab));
@@ -2493,12 +2411,15 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
 
   $("transSearch").addEventListener("input", renderTranslations);
   $("transOnlyWith").addEventListener("change", renderTranslations);
-  $("transLang").addEventListener("change", () => {
+  let _transLang = $("transLang").value;
+  $("transLang").addEventListener("change", async () => {
+    if (!await confirmDiscard(_transDirty, "Traducciones")) { $("transLang").value = _transLang; return; }
+    _transLang = $("transLang").value;
     _translations.clear();
     _translationsLoaded = false;
     _transBaseline = null;
     setTransDirty(false);
-    $("transLoad").click();
+    loadTranslations();
   });
 
   $("transList").addEventListener("input", e => {
@@ -2512,6 +2433,10 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
   });
 
   $("transLoad").addEventListener("click", async () => {
+    if (await confirmDiscard(_transDirty, "Traducciones")) loadTranslations();
+  });
+
+  async function loadTranslations() {
     const status = $("transStatus");
     status.textContent = 'Cargando...'; status.className = 'sheets-status';
     try {
@@ -2531,7 +2456,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       status.className = 'sheets-status error';
       console.error(err);
     }
-  });
+  }
 
   $("transSave").addEventListener("click", async () => {
     const status = $("transStatus");
@@ -2596,7 +2521,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
 
   $("transDownload").addEventListener("click", () => {
     const lang = $("transLang").value;
-    downloadRaw(`games-${lang}.json`, generateTranslationsJson(lang), 'application/json;charset=utf-8');
+    download(`games-${lang}.json`, generateTranslationsJson(), 'application/json;charset=utf-8');
     $("transStatus").textContent = `✓ games-${lang}.json descargado`;
     $("transStatus").className = 'sheets-status ok';
     setTabDiff('traducciones', false);
@@ -2604,7 +2529,6 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
 
   // ── Especiales ────────────────────────────────────────────────────────────
   let _specials = [];
-  let _specialsLoadedIds = new Set();
   let _specialsDirty = false;
   let _specialsLoaded = false;
   let _specialsBaseline = null;  // id → evento tal como está en Supabase
@@ -2617,15 +2541,19 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
   }
   function setSpecialsBaseline(list) {
     _specialsBaseline = new Map(list.filter(e => e.id !== undefined).map(e => [e.id, specialCanon(e)]));
-    _specialsLoadedIds = new Set(_specialsBaseline.keys());
+  }
+  function getSpecialsDiff() {
+    if (!_specialsBaseline) return null;
+    const ids = new Set(_specials.map(e => e.id).filter(id => id !== undefined));
+    return {
+      added:     _specials.filter(e => e.id === undefined || !_specialsBaseline.has(e.id)).length,
+      modified:  _specials.filter(e => _specialsBaseline.has(e.id) && _specialsBaseline.get(e.id) !== specialCanon(e)).length,
+      deleteIds: [..._specialsBaseline.keys()].filter(id => !ids.has(id)),
+    };
   }
   function updateSpecialsPending() {
-    if (!_specialsBaseline) { $("specialsPending").textContent = ""; return; }
-    const ids = new Set(_specials.map(e => e.id).filter(id => id !== undefined));
-    const added    = _specials.filter(e => e.id === undefined || !_specialsBaseline.has(e.id)).length;
-    const modified = _specials.filter(e => _specialsBaseline.has(e.id) && _specialsBaseline.get(e.id) !== specialCanon(e)).length;
-    const deleted  = [..._specialsBaseline.keys()].filter(id => !ids.has(id)).length;
-    $("specialsPending").textContent = pendingText(added, modified, deleted);
+    const d = getSpecialsDiff();
+    $("specialsPending").textContent = d ? pendingText(d.added, d.modified, d.deleteIds.length) : "";
   }
   function setSpecialsDirty(value) {
     _specialsDirty = value;
@@ -2645,9 +2573,8 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     }
   }
 
-  const GAME_TAGS_FALLBACK = ['rpg','action','fps','platformer','strategy','racing','fighting','puzzle','horror','adventure','simulation','rhythm','roguelike','metroidvania','sandbox','mmo','stealth','indie','visual-novel'];
+  // Tags de juego y de canción que hay en la base de datos (vacío si no hay juegos cargados)
   function getGameTagList() {
-    if (db.length === 0) return GAME_TAGS_FALLBACK;
     const tags = new Set();
     db.forEach(item => {
       (item.tags || []).forEach(t => tags.add(t));
@@ -2690,10 +2617,11 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     return chips.join('');
   }
 
-  function specialCardHtml(ev, i) {
+  function specialCardHtml(ev, i, tagList) {
     const gameIdsStr = (ev.gameIds || []).join(', ');
-    const tagChips = getGameTagList().map(t =>
-      `<span class="tag-chip${ev.tag === t ? ' active' : ''}" data-sp-tag="${t}" data-index="${i}">${t}</span>`
+    const tags = ev.tag && !tagList.includes(ev.tag) ? [...tagList, ev.tag] : tagList;
+    const tagChips = tags.map(t =>
+      `<span class="tag-chip${ev.tag === t ? ' active' : ''}" data-sp-tag="${escapeHtml(t)}" data-index="${i}">${escapeHtml(t)}</span>`
     ).join('');
     return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
       <div class="special-card-header">
@@ -2742,7 +2670,8 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       container.innerHTML = '<p style="color:var(--muted);padding:16px 0">No hay eventos. Pulsa "+ Añadir evento" o carga desde Supabase.</p>';
       return;
     }
-    container.innerHTML = _specials.map((ev, i) => specialCardHtml(ev, i)).join('');
+    const tagList = getGameTagList();
+    container.innerHTML = _specials.map((ev, i) => specialCardHtml(ev, i, tagList)).join('');
   }
 
   $("specialsList").addEventListener("input", e => {
@@ -2811,7 +2740,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
   });
 
   $("specialsAdd").addEventListener("click", () => {
-    _specials.push({ date: '', label: '', name: '', color: '#888888', tag: '', gameIds: [], search: '' });
+    _specials.push({ date: '', dateTo: '', label: '', name: '', color: '#888888', tag: '', gameIds: [], search: '' });
     setSpecialsDirty(true);
     renderSpecials();
     requestAnimationFrame(() => {
@@ -2821,6 +2750,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
   });
 
   $("specialsLoad").addEventListener("click", async () => {
+    if (!await confirmDiscard(_specialsDirty, "Especiales")) return;
     const status = $("specialsStatus");
     status.textContent = 'Cargando...'; status.className = 'sheets-status';
     try {
@@ -2849,10 +2779,8 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
         adoptSpecialIds(_specials, server);
         setSpecialsBaseline(server);
       }
-      const currentIds = new Set(_specials.filter(e => e.id !== undefined).map(e => e.id));
-      const toDelete = [..._specialsLoadedIds].filter(id => !currentIds.has(id));
-      const changed = _specials.some(e => e.id === undefined || _specialsBaseline.get(e.id) !== specialCanon(e));
-      if (!toDelete.length && !changed) {
+      const { added, modified, deleteIds: toDelete } = getSpecialsDiff();
+      if (!added && !modified && !toDelete.length) {
         status.textContent = 'No hay cambios que guardar';
         status.className = 'sheets-status';
         return;
@@ -2874,7 +2802,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       _specialsLoaded = true;
       renderSpecials();
       setSpecialsDirty(false);
-      status.textContent = `✓ ${_specials.length} eventos guardados`;
+      status.textContent = `✓ Guardado: ${pendingText(added, modified, toDelete.length)}`;
       status.className = 'sheets-status ok';
     } catch (err) {
       status.textContent = 'Error: ' + err.message;
@@ -2915,7 +2843,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
   });
 
   $("specialsDownload").addEventListener("click", () => {
-    downloadRaw('specials.js', generateSpecialsJs(), 'text/javascript;charset=utf-8');
+    download('specials.js', generateSpecialsJs(), 'text/javascript;charset=utf-8');
     $("specialsStatus").textContent = '✓ specials.js descargado';
     $("specialsStatus").className = 'sheets-status ok';
     setTabDiff('especiales', false);
