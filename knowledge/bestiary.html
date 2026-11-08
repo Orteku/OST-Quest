@@ -465,9 +465,19 @@
     .sheets-panel.open { display: flex; }
     .sheets-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .gm-login-input { width: 190px; font-size: 13px; }
-    body:not(.gm-on) .gm-only { display: none !important; }
+    .gm-gate { display: inline-flex; }
+    .gm-only:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+    body:not(.has-db) .needs-db, body:not(.has-trans) .needs-trans, body:not(.has-specials) .needs-specials { display: none !important; }
+    .pane-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; }
+    .pane-sticky { position: sticky; top: var(--header-h, 0px); z-index: 9; background: var(--bg); margin: -16px 0 12px; padding-top: 6px; }
+    .pane-sticky .pagination-bar { position: static; }
     .header-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-    .header-title { display: flex; align-items: center; gap: 10px; }
+    .header-title { display: flex; align-items: center; gap: 12px; }
+    .home-logo { display: inline-flex; border-radius: 8px; transition: transform .15s; }
+    .home-logo:hover { transform: scale(1.08); }
+    .home-logo img { display: block; }
+    .banner-title { margin: 0; line-height: 0; }
+    .banner-title img { display: block; height: 44px; width: auto; }
     .gm-account { display: flex; align-items: center; gap: 8px; margin-left: auto; }
     .gm-account-row { display: inline-flex; align-items: center; gap: 8px; }
     .header-links { display: flex; gap: 6px; }
@@ -475,6 +485,7 @@
     .tab-tools.active { display: flex; }
     .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .tools-row .btn-group { margin: 0; }
+    .tools-row.save-row { align-items: flex-start; }
     .tab-tools .sheets-panel { margin-top: 0; }
     .save-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
     .pending-summary { font-size: 11px; color: var(--muted); white-space: nowrap; }
@@ -509,9 +520,9 @@
       .add-track-row2 { grid-template-columns: 1fr 65px; }
     }
     /* ── Tabs ──────────────────────────────── */
-    .tab-bar { display: flex; gap: 4px; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 8px; }
-    .tab-btn { background: none; border: 1px solid transparent; color: var(--muted); padding: 6px 16px; border-radius: 8px; font-weight: 650; }
-    .tab-btn.active { background: var(--panel2); border-color: var(--line); color: var(--text); }
+    .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-top: 4px; padding-left: 8px; }
+    .tab-btn { background: none; border: 1px solid transparent; border-bottom: none; color: var(--muted); padding: 7px 18px; border-radius: 8px 8px 0 0; font-weight: 650; margin-bottom: -1px; }
+    .tab-btn.active { background: var(--bg); border-color: var(--line); border-bottom: 1px solid var(--bg); color: var(--text); }
     .tab-btn:hover:not(.active) { color: var(--text); background: var(--panel); }
     .tab-btn.tab-diff::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
     .tab-pane { display: none; }
@@ -552,8 +563,8 @@
 <header>
   <div class="header-top">
     <div class="header-title">
-      <a href="/" style="color:var(--accent);text-decoration:none;font-size:26px;line-height:1">←</a>
-      <h1 style="margin:0">Bestiario</h1>
+      <a href="/" class="home-logo" title="Volver a OestiQuest"><img src="/img/logo.png" alt="OestiQuest" width="36" height="36" /></a>
+      <h1 class="banner-title"><img src="/knowledge/banner.png" alt="Bestiario" width="132" height="44" /></h1>
     </div>
     <!-- Acceso con una cuenta de Oesti Quest con rol GM: el worker hace las lecturas y escrituras -->
     <div class="gm-account">
@@ -586,17 +597,10 @@
 
   <div class="tab-tools active" data-for="db">
     <div class="tools-row">
-      <button id="dbLoad" class="primary gm-only">Cargar desde Supabase</button>
-      <span class="save-wrap gm-only"><button id="dbSave">Guardar en Supabase</button><span id="dbPending" class="pending-summary"></span></span>
-      <div class="btn-group">
-        <button id="downloadJs" class="primary">Descargar JS</button>
-        <button id="downloadJson">JSON</button>
-        <button id="downloadCsv">CSV</button>
-      </div>
+      <span class="gm-gate"><button id="dbLoad" class="primary gm-only">Cargar desde Supabase</button></span>
       <button id="dbUpload">Subir archivo</button>
       <input id="fileInput" type="file" accept=".js,.txt,.json" hidden />
       <button id="sheetsBtn">↓ Google Sheets</button>
-      <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       <span id="dbStatus" class="sheets-status"></span>
     </div>
     <div id="sheetsPanel" class="sheets-panel">
@@ -617,68 +621,69 @@
         <span id="saveStatus" class="sheets-status"></span>
       </div>
     </div>
-    <div class="tools-row">
-      <button id="toggleAdd" class="success">Añadir entrada</button>
-      <div style="display:flex;gap:0;flex:1;min-width:200px">
-        <input id="search" type="search" placeholder="Buscar..." style="flex:1;border-radius:8px 0 0 8px;border-right:0" />
-        <button id="searchClear" title="Limpiar búsqueda" style="display:none;border-radius:0;border-left:0;border-right:0;padding:8px 7px;color:var(--muted)">✕</button>
-        <select id="searchField" style="border-radius:0 8px 8px 0;padding:8px 6px;min-width:0;width:auto;font-size:13px">
-          <option value="all">Todo</option>
-          <option value="game">Título</option>
-          <option value="tracks">Canción</option>
-          <option value="artist">Artista</option>
-          <option value="tags">Tags</option>
-          <option value="year">Año</option>
-          <option value="url">URL</option>
-        </select>
+    <div class="tools-row save-row needs-db">
+      <span class="save-wrap"><span class="gm-gate"><button id="dbSave" class="gm-only">Guardar en Supabase</button></span><span id="dbPending" class="pending-summary"></span></span>
+      <div class="btn-group">
+        <button id="downloadJs" class="primary">Descargar JS</button>
+        <button id="downloadJson">JSON</button>
+        <button id="downloadCsv">CSV</button>
       </div>
-      <span id="searchStats" class="search-stats"></span>
+      <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
     </div>
   </div>
 
   <div class="tab-tools" data-for="traducciones">
     <div class="tools-row">
-      <button id="transLoad" class="primary gm-only">Cargar desde Supabase</button>
-      <span class="save-wrap gm-only"><button id="transSave">Guardar en Supabase</button><span id="transPending" class="pending-summary"></span></span>
-      <button id="transDownload">Descargar JSON</button>
+      <span class="gm-gate"><button id="transLoad" class="primary gm-only">Cargar desde Supabase</button></span>
       <button id="transUpload">Subir archivo</button>
       <input id="transFileInput" type="file" accept=".json" hidden />
-      <select id="transLang" style="width:auto">
+      <select id="transLang" style="width:auto" title="Idioma">
         <option value="es">Español</option>
       </select>
-      <span id="transDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       <span id="transStatus" class="sheets-status"></span>
     </div>
-    <div class="tools-row">
-      <input id="transSearch" placeholder="Buscar juego..." style="flex:1;min-width:140px" />
-      <label class="lyrics-check"><input type="checkbox" id="transOnlyWith" checked /> Solo con traducción</label>
-      <span id="transCount" style="color:var(--muted);font-size:12px;white-space:nowrap"></span>
+    <div class="tools-row save-row needs-trans">
+      <span class="save-wrap"><span class="gm-gate"><button id="transSave" class="gm-only">Guardar en Supabase</button></span><span id="transPending" class="pending-summary"></span></span>
+      <button id="transDownload">Descargar JSON</button>
+      <span id="transDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
     </div>
   </div>
 
   <div class="tab-tools" data-for="especiales">
     <div class="tools-row">
-      <button id="specialsLoad" class="primary gm-only">Cargar desde Supabase</button>
-      <span class="save-wrap gm-only"><button id="specialsSave">Guardar en Supabase</button><span id="specialsPending" class="pending-summary"></span></span>
-      <button id="specialsDownload">Descargar specials.js</button>
+      <span class="gm-gate"><button id="specialsLoad" class="primary gm-only">Cargar desde Supabase</button></span>
       <button id="specialsUpload">Subir archivo</button>
       <input id="specialsFileInput" type="file" accept=".js,.txt" hidden />
-      <span id="specialsDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       <span id="specialsStatus" class="sheets-status"></span>
     </div>
-    <div class="tools-row">
-      <button id="specialsAdd" class="success">+ Añadir evento</button>
-      <div class="sp-id-search">
-        <span style="color:var(--muted);font-size:12px;white-space:nowrap">Buscar ID:</span>
-        <input id="spIdSearch" placeholder="Nombre del juego..." style="flex:1;min-width:140px" />
-        <div id="spIdResults" class="sp-id-results" style="flex-basis:100%"></div>
-      </div>
+    <div class="tools-row save-row needs-specials">
+      <span class="save-wrap"><span class="gm-gate"><button id="specialsSave" class="gm-only">Guardar en Supabase</button></span><span id="specialsPending" class="pending-summary"></span></span>
+      <button id="specialsDownload">Descargar specials.js</button>
+      <span id="specialsDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
     </div>
   </div>
 </header>
 
 <main>
   <div id="tab-db" class="tab-pane active">
+  <div class="pane-sticky">
+  <div class="pane-tools needs-db">
+    <button id="toggleAdd" class="success">Añadir entrada</button>
+    <div style="display:flex;gap:0;flex:1;min-width:200px">
+      <input id="search" type="search" placeholder="Buscar..." style="flex:1;border-radius:8px 0 0 8px;border-right:0" />
+      <button id="searchClear" title="Limpiar búsqueda" style="display:none;border-radius:0;border-left:0;border-right:0;padding:8px 7px;color:var(--muted)">✕</button>
+      <select id="searchField" style="border-radius:0 8px 8px 0;padding:8px 6px;min-width:0;width:auto;font-size:13px">
+        <option value="all">Todo</option>
+        <option value="game">Título</option>
+        <option value="tracks">Canción</option>
+        <option value="artist">Artista</option>
+        <option value="tags">Tags</option>
+        <option value="year">Año</option>
+        <option value="url">URL</option>
+      </select>
+    </div>
+    <span id="searchStats" class="search-stats"></span>
+  </div>
   <div id="paginationBar" class="pagination-bar" style="display:none">
     <button id="firstPage"  class="pg-icon" title="Primera página" disabled>«</button>
     <button id="prevPage"   class="pg-icon" title="Anterior"        disabled>‹</button>
@@ -686,6 +691,7 @@
     <button id="nextPage"   class="pg-icon" title="Siguiente"       disabled>›</button>
     <button id="lastPage"   class="pg-icon" title="Última página"   disabled>»</button>
     <span id="pageRange"></span>
+  </div>
   </div>
   <div id="list" class="list"></div>
   <div id="paginationBar2" class="pagination-bar" style="display:none">
@@ -732,12 +738,25 @@
   </div><!-- /tab-db -->
 
   <div id="tab-traducciones" class="tab-pane">
+    <div class="pane-sticky pane-tools needs-trans">
+      <input id="transSearch" placeholder="Buscar juego..." style="flex:1;min-width:140px" />
+      <label class="lyrics-check"><input type="checkbox" id="transOnlyWith" checked /> Solo con traducción</label>
+      <span id="transCount" style="color:var(--muted);font-size:12px;white-space:nowrap"></span>
+    </div>
     <div id="transList" class="trans-list">
       <p style="color:var(--muted);padding:16px 0">Carga las traducciones desde Supabase para empezar.</p>
     </div>
   </div><!-- /tab-traducciones -->
 
   <div id="tab-especiales" class="tab-pane">
+    <div class="pane-sticky pane-tools needs-specials">
+      <button id="specialsAdd" class="success">+ Añadir evento</button>
+      <div class="sp-id-search">
+        <span style="color:var(--muted);font-size:12px;white-space:nowrap">Buscar ID:</span>
+        <input id="spIdSearch" placeholder="Nombre del juego..." style="flex:1;min-width:140px" />
+        <div id="spIdResults" class="sp-id-results" style="flex-basis:100%"></div>
+      </div>
+    </div>
     <div id="specialsList">
       <p style="color:var(--muted);padding:16px 0">Carga los eventos desde Supabase o añade uno nuevo.</p>
     </div>
@@ -1092,6 +1111,7 @@
     const q       = $("search").value.trim();
     const visible = _filteredIndices !== null ? _filteredIndices.length : total;
     $("searchStats").textContent = total === 0 ? "" : q ? `${visible} de ${total}` : `${total} entradas`;
+    document.body.classList.toggle("has-db", total > 0);
   }
 
   function coverHtml(item) {
@@ -2009,7 +2029,10 @@
     clearTimeout(_gmExpiryTimer);
     // setTimeout no admite más de ~24,8 días; la sesión dura 12 h
     if (on) _gmExpiryTimer = setTimeout(updateGmSession, Math.min(gmTokenExpiry(token) - Date.now() + 1000, 2 ** 31 - 1));
-    document.body.classList.toggle("gm-on", on);
+    document.querySelectorAll(".gm-only").forEach(btn => {
+      btn.disabled = !on;
+      btn.closest(".gm-gate").title = on ? "" : "Inicia sesión con tu cuenta GM primero";
+    });
     $("gmLoginRow").style.display   = on ? "none" : "";
     $("gmSessionRow").style.display = on ? "" : "none";
     $("gmUser").textContent = user || "";
@@ -2429,6 +2452,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
   }
   function setTransDirty(value) {
     _transDirty = value;
+    document.body.classList.toggle("has-trans", _translationsLoaded);
     $("transDirtyPill").style.display = value ? '' : 'none';
     updateTransPending();
   }
@@ -2550,6 +2574,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
         const name = String((typeof v === 'string' ? v : v?.game) ?? '').trim();
         if (Number(id) > 0 && name) _translations.set(Number(id), name);
       }
+      _translationsLoaded = true;
       setTransDirty(true);
       renderTranslations();
       status.textContent = `✓ ${_translations.size} traducciones leídas de ${file.name} (sin guardar)`;
@@ -2595,6 +2620,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
   }
   function setSpecialsDirty(value) {
     _specialsDirty = value;
+    document.body.classList.toggle("has-specials", _specialsLoaded);
     $("specialsDirtyPill").style.display = value ? '' : 'none';
     updateSpecialsPending();
   }
@@ -2867,6 +2893,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       }));
       adoptSpecialIds(list, _specials);
       _specials = list;
+      _specialsLoaded = true;
       renderSpecials();
       setSpecialsDirty(true);
       status.textContent = `✓ ${list.length} eventos leídos de ${file.name} (sin guardar)`;
