@@ -485,7 +485,13 @@
     .tab-tools.active { display: flex; }
     .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .tools-row .btn-group { margin: 0; }
-    .tools-row.save-row { align-items: flex-start; }
+    .tools-row { align-items: flex-start; }
+    .tools-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+    .tools-group > .sheets-status, .tools-group > .pill { align-self: center; }
+    .tools-group > .sheets-status:empty { display: none; }
+    body.has-db [data-for="db"] .load-group,
+    body.has-trans [data-for="traducciones"] .load-group,
+    body.has-specials [data-for="especiales"] .load-group { margin-left: auto; }
     .tab-tools .sheets-panel { margin-top: 0; }
     .save-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
     .pending-summary { font-size: 11px; color: var(--muted); white-space: nowrap; }
@@ -597,11 +603,22 @@
 
   <div class="tab-tools active" data-for="db">
     <div class="tools-row">
-      <span class="gm-gate"><button id="dbLoad" class="primary gm-only">Cargar desde Supabase</button></span>
-      <button id="dbUpload">Subir archivo</button>
-      <input id="fileInput" type="file" accept=".js,.txt,.json" hidden />
-      <button id="sheetsBtn">↓ Google Sheets</button>
-      <span id="dbStatus" class="sheets-status"></span>
+      <div class="tools-group save-group needs-db">
+        <span class="save-wrap"><span class="gm-gate"><button id="dbSave" class="gm-only">Guardar en Supabase</button></span><span id="dbPending" class="pending-summary"></span></span>
+        <div class="btn-group">
+          <button id="downloadJs" class="primary">Descargar JS</button>
+          <button id="downloadJson">JSON</button>
+          <button id="downloadCsv">CSV</button>
+        </div>
+        <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+      </div>
+      <div class="tools-group load-group">
+        <span id="dbStatus" class="sheets-status"></span>
+        <span class="gm-gate"><button id="dbLoad" class="primary gm-only">Cargar desde Supabase</button></span>
+        <button id="dbUpload">Subir archivo</button>
+        <input id="fileInput" type="file" accept=".js,.txt,.json" hidden />
+        <button id="sheetsBtn">↓ Google Sheets</button>
+      </div>
     </div>
     <div id="sheetsPanel" class="sheets-panel">
       <div class="sheets-row">
@@ -621,45 +638,40 @@
         <span id="saveStatus" class="sheets-status"></span>
       </div>
     </div>
-    <div class="tools-row save-row needs-db">
-      <span class="save-wrap"><span class="gm-gate"><button id="dbSave" class="gm-only">Guardar en Supabase</button></span><span id="dbPending" class="pending-summary"></span></span>
-      <div class="btn-group">
-        <button id="downloadJs" class="primary">Descargar JS</button>
-        <button id="downloadJson">JSON</button>
-        <button id="downloadCsv">CSV</button>
-      </div>
-      <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
-    </div>
   </div>
 
   <div class="tab-tools" data-for="traducciones">
     <div class="tools-row">
-      <span class="gm-gate"><button id="transLoad" class="primary gm-only">Cargar desde Supabase</button></span>
-      <button id="transUpload">Subir archivo</button>
-      <input id="transFileInput" type="file" accept=".json" hidden />
-      <select id="transLang" style="width:auto" title="Idioma">
-        <option value="es">Español</option>
-      </select>
-      <span id="transStatus" class="sheets-status"></span>
-    </div>
-    <div class="tools-row save-row needs-trans">
-      <span class="save-wrap"><span class="gm-gate"><button id="transSave" class="gm-only">Guardar en Supabase</button></span><span id="transPending" class="pending-summary"></span></span>
-      <button id="transDownload">Descargar JSON</button>
-      <span id="transDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+      <div class="tools-group save-group needs-trans">
+        <span class="save-wrap"><span class="gm-gate"><button id="transSave" class="gm-only">Guardar en Supabase</button></span><span id="transPending" class="pending-summary"></span></span>
+        <button id="transDownload">Descargar JSON</button>
+        <span id="transDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+      </div>
+      <div class="tools-group load-group">
+        <span id="transStatus" class="sheets-status"></span>
+        <span class="gm-gate"><button id="transLoad" class="primary gm-only">Cargar desde Supabase</button></span>
+        <button id="transUpload">Subir archivo</button>
+        <input id="transFileInput" type="file" accept=".json" hidden />
+        <select id="transLang" style="width:auto" title="Idioma">
+          <option value="es">Español</option>
+        </select>
+      </div>
     </div>
   </div>
 
   <div class="tab-tools" data-for="especiales">
     <div class="tools-row">
-      <span class="gm-gate"><button id="specialsLoad" class="primary gm-only">Cargar desde Supabase</button></span>
-      <button id="specialsUpload">Subir archivo</button>
-      <input id="specialsFileInput" type="file" accept=".js,.txt" hidden />
-      <span id="specialsStatus" class="sheets-status"></span>
-    </div>
-    <div class="tools-row save-row needs-specials">
-      <span class="save-wrap"><span class="gm-gate"><button id="specialsSave" class="gm-only">Guardar en Supabase</button></span><span id="specialsPending" class="pending-summary"></span></span>
-      <button id="specialsDownload">Descargar specials.js</button>
-      <span id="specialsDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+      <div class="tools-group save-group needs-specials">
+        <span class="save-wrap"><span class="gm-gate"><button id="specialsSave" class="gm-only">Guardar en Supabase</button></span><span id="specialsPending" class="pending-summary"></span></span>
+        <button id="specialsDownload">Descargar specials.js</button>
+        <span id="specialsDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+      </div>
+      <div class="tools-group load-group">
+        <span id="specialsStatus" class="sheets-status"></span>
+        <span class="gm-gate"><button id="specialsLoad" class="primary gm-only">Cargar desde Supabase</button></span>
+        <button id="specialsUpload">Subir archivo</button>
+        <input id="specialsFileInput" type="file" accept=".js,.txt" hidden />
+      </div>
     </div>
   </div>
 </header>
