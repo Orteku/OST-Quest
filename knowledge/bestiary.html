@@ -485,15 +485,14 @@
     .tab-tools.active { display: flex; }
     .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .tools-row .btn-group { margin: 0; }
-    .tools-row { align-items: flex-start; }
-    .tools-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+    .tools-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .tools-group > .sheets-status, .tools-group > .pill { align-self: center; }
     .tools-group > .sheets-status:empty { display: none; }
     body.has-db [data-for="db"] .load-group,
     body.has-trans [data-for="traducciones"] .load-group,
     body.has-specials [data-for="especiales"] .load-group { margin-left: auto; }
     .tab-tools .sheets-panel { margin-top: 0; }
-    .save-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+    .save-wrap { display: inline-flex; align-items: center; gap: 8px; }
     .pending-summary { font-size: 11px; color: var(--muted); white-space: nowrap; }
     .pending-summary:empty { display: none; }
     .sheets-label { font-size: 12px; color: var(--muted); white-space: nowrap; min-width: 80px; }
@@ -530,6 +529,7 @@
     .tab-btn { background: none; border: 1px solid transparent; border-bottom: none; color: var(--muted); padding: 7px 18px; border-radius: 8px 8px 0 0; font-weight: 650; margin-bottom: -1px; }
     .tab-btn.active { background: var(--bg); border-color: var(--line); border-bottom: 1px solid var(--bg); color: var(--text); }
     .tab-btn:hover:not(.active) { color: var(--text); background: var(--panel); }
+    .tab-btn.tab-dirty, .tab-btn.tab-dirty:hover:not(.active) { color: #ffe7a0; }
     .tab-btn.tab-diff::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
@@ -604,12 +604,12 @@
   <div class="tab-tools active" data-for="db">
     <div class="tools-row">
       <div class="tools-group save-group needs-db">
-        <span class="save-wrap"><span class="gm-gate"><button id="dbSave" class="gm-only">Guardar en Supabase</button></span><span id="dbPending" class="pending-summary"></span></span>
         <div class="btn-group">
           <button id="downloadJs" class="primary">Descargar JS</button>
           <button id="downloadJson">JSON</button>
           <button id="downloadCsv">CSV</button>
         </div>
+        <span class="save-wrap"><span class="gm-gate"><button id="dbSave" class="gm-only">Guardar en Supabase</button></span><span id="dbPending" class="pending-summary"></span></span>
         <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       </div>
       <div class="tools-group load-group">
@@ -643,8 +643,8 @@
   <div class="tab-tools" data-for="traducciones">
     <div class="tools-row">
       <div class="tools-group save-group needs-trans">
-        <span class="save-wrap"><span class="gm-gate"><button id="transSave" class="gm-only">Guardar en Supabase</button></span><span id="transPending" class="pending-summary"></span></span>
         <button id="transDownload">Descargar JSON</button>
+        <span class="save-wrap"><span class="gm-gate"><button id="transSave" class="gm-only">Guardar en Supabase</button></span><span id="transPending" class="pending-summary"></span></span>
         <span id="transDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       </div>
       <div class="tools-group load-group">
@@ -662,8 +662,8 @@
   <div class="tab-tools" data-for="especiales">
     <div class="tools-row">
       <div class="tools-group save-group needs-specials">
-        <span class="save-wrap"><span class="gm-gate"><button id="specialsSave" class="gm-only">Guardar en Supabase</button></span><span id="specialsPending" class="pending-summary"></span></span>
         <button id="specialsDownload">Descargar specials.js</button>
+        <span class="save-wrap"><span class="gm-gate"><button id="specialsSave" class="gm-only">Guardar en Supabase</button></span><span id="specialsPending" class="pending-summary"></span></span>
         <span id="specialsDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       </div>
       <div class="tools-group load-group">
@@ -837,6 +837,7 @@
   function setDirty(value = true) {
     dirty = value;
     $("dirtyPill").style.display = dirty ? "" : "none";
+    setTabDirty('db', dirty);
     if (typeof updateDbPending === "function") {
       clearTimeout(_diffTimer);
       _diffTimer = setTimeout(updateDbPending, 400);
@@ -1204,7 +1205,6 @@
   }
 
   function renderPage() {
-    if (_rowObserver) { _rowObserver.disconnect(); _rowObserver = null; }
     const all   = _filteredIndices !== null ? _filteredIndices : db.map((_, i) => i);
     const total = all.length;
     const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -1214,11 +1214,7 @@
       const a = _searchIndex[index] || rowSearchAttrs(db[index]);
       return `<article class="row" data-index="${index}" data-search="${escapeHtml(a['data-search'])}" data-sg="${escapeHtml(a['data-sg'])}" data-st="${escapeHtml(a['data-st'])}" data-stag="${escapeHtml(a['data-stag'])}" data-sy="${escapeHtml(a['data-sy'])}" data-su="${escapeHtml(a['data-su'])}" data-sar="${escapeHtml(a['data-sar'])}"></article>`;
     }).join('');
-    _rowObserver = new IntersectionObserver(
-      (entries) => { entries.forEach(e => { if (e.isIntersecting) fillRow(e.target); }); },
-      { rootMargin: '500px 0px' }
-    );
-    list.querySelectorAll('.row').forEach(row => _rowObserver.observe(row));
+    list.querySelectorAll('.row').forEach(fillRow);
     updatePaginationBar(total, pages);
   }
 
@@ -1228,15 +1224,12 @@
     for (const [k, v] of Object.entries(attrs)) row.setAttribute(k, v);
   }
 
-  let _rowObserver = null;
-
   function fillRow(row) {
     if (row.dataset.filled) return;
     row.dataset.filled = "1";
     const index = Number(row.dataset.index);
     row.innerHTML = buildRowContent(db[index]);
     validateRow(row, db[index], index);
-    if (_rowObserver) _rowObserver.unobserve(row);
   }
 
   function fillAllRows() {
@@ -2261,6 +2254,9 @@
   // ── Pestañas ─────────────────────────────────────────────────────────────
   // ── GitHub diff indicators ────────────────────────────────────────────────
 
+  function setTabDirty(tab, value) {
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.classList.toggle('tab-dirty', value);
+  }
   function setTabDiff(tab, hasDiff) {
     const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
     if (btn) btn.classList.toggle('tab-diff', hasDiff);
@@ -2466,6 +2462,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     _transDirty = value;
     document.body.classList.toggle("has-trans", _translationsLoaded);
     $("transDirtyPill").style.display = value ? '' : 'none';
+    setTabDirty('traducciones', value);
     updateTransPending();
   }
 
@@ -2634,6 +2631,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     _specialsDirty = value;
     document.body.classList.toggle("has-specials", _specialsLoaded);
     $("specialsDirtyPill").style.display = value ? '' : 'none';
+    setTabDirty('especiales', value);
     updateSpecialsPending();
   }
   // Los eventos de un archivo no traen id: se emparejan con los ya guardados (misma fecha y nombre,
