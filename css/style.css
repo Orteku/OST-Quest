@@ -321,14 +321,14 @@ body.theme--light.is-special .today-btn:hover { background: rgba(0,0,0,0.1); }
 .columns-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 9px;
 }
 
 .col {
   width: 100%;
   background: #1b1c21;
   border-radius: 10px;
-  padding: 8px;
+  padding: 6px;
   position: relative;
   box-shadow: var(--panel-shadow);
 }
@@ -427,7 +427,7 @@ body.theme--light .col__eq i { background: #4a6c10; }
 
 /* ─── Covers grid ───────────────────────────────────────────────────────────── */
 .covers-grid {
-  padding: 10px 0 0;
+  padding: 7px 0 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
@@ -1080,9 +1080,9 @@ body.theme--light .site-footer .footer-social__btn { color: #fff; }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 520px) {
-  .col { border-radius: 8px; padding: 6px; }
-  .columns-wrapper { gap: 10px; }
-  .covers-grid { gap: 7px; padding-top: 8px; }
+  .col { border-radius: 8px; padding: 5px; }
+  .columns-wrapper { gap: 8px; }
+  .covers-grid { gap: 7px; padding-top: 6px; }
   .cover-item { padding: 3px; }
   .modal__stats { grid-template-columns: repeat(2, 1fr); }
 
