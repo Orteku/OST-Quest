@@ -292,8 +292,8 @@ function _dropStatsHTML(s) {
   const played   = s.played || 0;
   const accuracy = s.accuracy ?? (played > 0 ? Math.round(((s.totalHits || 0) / (played * 3)) * 100) : 0);
   const cell = (val, key) => `<div class="auth-drop__stat"><strong>${val}</strong><span>${t(key)}</span></div>`;
-  return cell(played, 'drop_stat_played') + cell(accuracy + '%', 'stat_accuracy')
-       + cell(s.streak || 0, 'drop_stat_streak') + cell(s.perfectQuests || 0, 'drop_stat_perfect');
+  return cell(played, 'drop_stat_played') + cell(s.perfectQuests || 0, 'drop_stat_perfect')
+       + cell(accuracy + '%', 'stat_accuracy') + cell(s.streak || 0, 'drop_stat_streak');
 }
 
 function _openDrop() {
@@ -309,9 +309,9 @@ function _openDrop() {
   const initial = (_profile.username || '?')[0].toUpperCase();
 
   drop.innerHTML = `
-    <div class="auth-drop__top">
+    <div class="auth-drop__top auth-drop__top--me">
       <div class="auth-drop__avatar">${_profile.selected_avatar ? `<img class="auth-drop__avatar-img" src="img/achievements/${_esc(_profile.selected_avatar)}" alt="">` : initial}</div>
-      <div class="auth-drop__body">
+      <div class="auth-drop__body auth-drop__body--me">
         <div class="auth-drop__body-top">
           <div class="auth-drop__name-row"><div class="auth-drop__name">${_esc(_profile.username)}</div>${_gmBookHTML()}</div>
           <div class="auth-drop__controls">
@@ -325,10 +325,10 @@ function _openDrop() {
           </div>
         </div>
         <div class="auth-drop__rank" id="auth-drop-rank">&nbsp;</div>
+        <div class="auth-drop__stats" id="auth-drop-stats">${_dropStatsHTML(stats)}</div>
       </div>
     </div>
     <div class="auth-drop__trofeos">
-      <div class="auth-drop__stats" id="auth-drop-stats">${_dropStatsHTML(stats)}</div>
       <div class="auth-drop__trofeos-head">
         <span class="auth-drop__trofeos-title">${t('drop_recent_trophies')}</span>
         <a class="auth-drop__trofeos-link" href="profile">${t('drop_see_all')}</a>

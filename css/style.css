@@ -1883,26 +1883,37 @@ body.theme--light .auth-drop__drop-stat strong { color: #1e1d28; }
   font-family: 'Barlow Condensed', sans-serif; line-height: 1.1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.auth-drop__rank-pos { font-size: 19px; font-weight: 800; color: #ddd9cf; }
-.auth-drop__rank-pts { font-size: 16px; font-weight: 700; color: #b8e030; margin-left: 2px; }
+.auth-drop__rank-pos { font-size: 24px; font-weight: 800; color: #ddd9cf; }
+.auth-drop__rank-pts { font-size: 19px; font-weight: 700; color: #b8e030; margin-left: 3px; }
 .auth-drop__rank-none { font-family: 'Barlow', sans-serif; font-size: 11px; color: #7a7a88; }
 
-/* Estadísticas en pequeño, en el mismo hueco que los trofeos */
-.auth-drop__stats {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
-  padding-bottom: 9px; margin-bottom: 9px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  text-align: center;
+/* Menú propio: nombre y puesto a la izquierda; a la derecha, controles arriba y debajo
+   las estadísticas en dos columnas (la tarjeta de jugador del ranking usa el diseño simple) */
+.auth-drop__top--me { align-items: center; padding: 12px 14px 6px; gap: 13px; }
+.auth-drop__top--me .auth-drop__avatar { width: 60px; height: 60px; font-size: 26px; }
+.auth-drop__body--me {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 18px; row-gap: 4px; align-items: center;
 }
-.auth-drop__stat { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.auth-drop__body--me .auth-drop__body-top { display: contents; }
+.auth-drop__body--me .auth-drop__controls { justify-self: end; }
+.auth-drop__top--me .auth-drop__name { font-size: 22px; }
+@media (max-width: 420px) {
+  .auth-drop__top--me { padding: 10px 11px 6px; gap: 10px; }
+  .auth-drop__top--me .auth-drop__avatar { width: 46px; height: 46px; font-size: 21px; }
+  .auth-drop__body--me { column-gap: 11px; }
+  .auth-drop__stats { column-gap: 10px; }
+}
+.auth-drop__stats {
+  display: grid; grid-template-columns: auto auto;
+  column-gap: 14px; row-gap: 1px;
+}
+.auth-drop__stat { display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
 .auth-drop__stat strong {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 19px; font-weight: 700; line-height: 1.1; color: #ddd9cf;
+  font-size: 15px; font-weight: 700; color: #ddd9cf;
 }
-.auth-drop__stat span {
-  font-size: 10px; color: #8a8a94; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; max-width: 100%;
-}
+.auth-drop__stat span { font-size: 11px; color: #8a8a94; }
 
 .auth-drop__trofeos {
   margin: 6px 10px 10px;
@@ -1949,7 +1960,6 @@ body.theme--light .auth-drop__rank-pos,
 body.theme--light .auth-drop__stat strong { color: #1e1d28; }
 body.theme--light .auth-drop__rank-pts { color: #4a6c10; }
 body.theme--light .auth-drop__stat span { color: #6a6878; }
-body.theme--light .auth-drop__stats { border-bottom-color: rgba(0,0,0,0.08); }
 body.theme--light .auth-drop__trofeos-title { color: #9898a8; }
 
 /* ─── Auth modal ────────────────────────────────────────────────────────────── */

@@ -361,8 +361,12 @@
     }
     .tag-chip:hover { color: var(--text); }
     .tag-chip:hover::before { background: #4a4c57; }
-    .tag-chip.active { color: var(--accent); background: rgba(40,215,232,0.08); text-shadow: 0 0 8px rgba(40,215,232,0.45); }
-    .tag-chip.active::before { background: var(--accent); box-shadow: 0 0 6px var(--accent), 0 0 2px #fff inset; }
+    .tag-chip.active {
+      color: var(--tag-c, var(--accent));
+      background: color-mix(in srgb, var(--tag-c, var(--accent)) 9%, rgba(0,0,0,0.22));
+      text-shadow: 0 0 8px color-mix(in srgb, var(--tag-c, var(--accent)) 45%, transparent);
+    }
+    .tag-chip.active::before { background: var(--tag-c, var(--accent)); box-shadow: 0 0 6px var(--tag-c, var(--accent)), 0 0 2px #fff inset; }
     .footer-space { height: 88px; }
     .global-player {
       position: fixed;
@@ -873,6 +877,31 @@
     if (value) setTabDiff('db', true);
   }
 
+  // Color de cada tag (el de la hoja de Sheets). Los que no estén aquí se encienden con el acento cian.
+  const TAG_COLORS = {
+    action: "#6cb8f0",
+    adventure: "#8fd16a",
+    arcade: "#d9d9d9",
+    fighting: "#ff8f6b",
+    horror: "#c9a0e8",
+    indie: "#3d8be8",
+    japanese: "#ff3b3b",
+    mmo: "#9a9a9a",
+    platformer: "#a9cbd6",
+    puzzle: "#3fa3c0",
+    rhythm: "#b98af5",
+    rpg: "#5b95f9",
+    sandbox: "#7ee8ab",
+    shooter: "#ffd666",
+    sport: "#e8403a",
+    strategy: "#ffb26b",
+    war: "#d46a6a",
+  };
+  function tagStyle(tag) {
+    const c = TAG_COLORS[String(tag).toLowerCase()];
+    return c ? ` style="--tag-c:${c}"` : "";
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -1005,7 +1034,7 @@
     if (!all.length) return '';
     return all.map(tag => {
       const active = activeTags.includes(tag);
-      return `<span class="tag-chip${active ? ' active' : ''}" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`;
+      return `<span${tagStyle(tag)} class="tag-chip${active ? ' active' : ''}" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`;
     }).join('');
   }
 
@@ -1020,7 +1049,7 @@
     if (!all.length) return '';
     return all.map(tag => {
       const active = activeTags.includes(tag);
-      return `<span class="tag-chip${active ? ' active' : ''}" data-tag="${escapeHtml(tag)}" data-track-tag>${escapeHtml(tag)}</span>`;
+      return `<span${tagStyle(tag)} class="tag-chip${active ? ' active' : ''}" data-tag="${escapeHtml(tag)}" data-track-tag>${escapeHtml(tag)}</span>`;
     }).join('');
   }
 
@@ -1596,7 +1625,7 @@
     const active = [...$("newTrackTagSuggestions").querySelectorAll('.tag-chip.active')].map(c => c.dataset.tag);
     $("newTrackTagSuggestions").innerHTML = getAllTrackTags().map(tag => {
       const isActive = active.includes(tag);
-      return `<span class="tag-chip${isActive ? ' active' : ''}" data-tag="${escapeHtml(tag)}" data-track-tag>${escapeHtml(tag)}</span>`;
+      return `<span${tagStyle(tag)} class="tag-chip${isActive ? ' active' : ''}" data-tag="${escapeHtml(tag)}" data-track-tag>${escapeHtml(tag)}</span>`;
     }).join('');
   }
 
@@ -2699,7 +2728,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     const gameIdsStr = (ev.gameIds || []).join(', ');
     const tags = ev.tag && !tagList.includes(ev.tag) ? [...tagList, ev.tag] : tagList;
     const tagChips = tags.map(t =>
-      `<span class="tag-chip${ev.tag === t ? ' active' : ''}" data-sp-tag="${escapeHtml(t)}" data-index="${i}">${escapeHtml(t)}</span>`
+      `<span${tagStyle(t)} class="tag-chip${ev.tag === t ? ' active' : ''}" data-sp-tag="${escapeHtml(t)}" data-index="${i}">${escapeHtml(t)}</span>`
     ).join('');
     return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
       <div class="special-card-header">
