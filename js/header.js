@@ -18,7 +18,7 @@ if (/\.html$/.test(location.pathname)) {
 // ─── Iconos ───────────────────────────────────────────────────────────────────
 
 const _ICON_ARCHIVE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`;
-const _ICON_STATS   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;
+const _ICON_RANKING = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 20V8h6v12M3 20v-7h6M15 20v-4h6v4M2 20h20"/></svg>`;
 const _ICON_SUN     = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
 const _ICON_MOON    = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 
@@ -41,7 +41,7 @@ function _siteHeaderHTML() {
       </div>` : ''}
       <button class="today-btn" id="btn-today" data-i18n="btn_today">Hoy</button>
       <button class="icon-btn" id="btn-archive" data-i18n-aria="btn_archive_label" aria-label="Quest Log">${_ICON_ARCHIVE}</button>
-      <button class="icon-btn" id="btn-stats" data-i18n-aria="btn_stats_label" aria-label="Estadísticas">${_ICON_STATS}</button>
+      <a class="icon-btn" id="btn-ranking" href="ranking" data-i18n-aria="ranking_title" aria-label="Ranking" title="Ranking">${_ICON_RANKING}</a>
       <button class="icon-btn" id="btn-auth" aria-label="Cuenta"></button>
     </div>
   </header>`;
@@ -456,7 +456,6 @@ siteI18nReady.then(() => {
   });
 
   // Botones del header
-  document.getElementById('btn-stats')?.addEventListener('click', openStatsModal);
   document.getElementById('btn-archive')?.addEventListener('click', openArchive);
   document.getElementById('btn-today')?.addEventListener('click', () => {
     if (typeof goToToday === 'function') goToToday();

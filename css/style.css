@@ -587,7 +587,7 @@ body.theme--light .col__eq i { background: #4a6c10; }
 .btn--new        { background: #2a2b33; color: #b8e030; margin-top: 8px; }
 .btn--reconfig   { background: #1e2008; color: #b8e030; margin-top: 8px; font-size: 0.85rem; padding: 8px 20px; --k-e: #080a02; }
 .btn--reconfig:hover { background: #252b0a; }
-.btn--share      { background: #263559; color: #c0d0ee; --k-e: #141b2e; margin-top: 8px; font-size: 0.85rem; padding: 8px 20px; width: auto; display: inline-flex; }
+.btn--share      { background: #263559; color: #c0d0ee; --k-e: #141b2e; margin-top: 0; font-size: 1rem; padding: 12px 34px; width: auto; display: inline-flex; }
 
 /* Result info row */
 .modal__result-info {
@@ -901,7 +901,7 @@ body.theme--light .col__eq i { background: #4a6c10; }
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
   color: #8a8a94;
-  margin: 18px 0 12px;
+  margin: 14px 0 12px;
 }
 .modal__countdown strong {
   font-size: 26px; font-weight: 700;
@@ -1871,9 +1871,38 @@ body.theme--light .gm-book--locked, body.theme--light .gm-book--locked:hover {
   color: #ddd9cf;
   line-height: 1.1;
 }
+/* Tarjeta de jugador del ranking: datos en una línea */
 .auth-drop__drop-stats { display: flex; gap: 12px; flex-wrap: wrap; }
 .auth-drop__drop-stat { font-size: 12px; color: #9898a8; }
 .auth-drop__drop-stat strong { color: #ddd9cf; font-weight: 700; }
+body.theme--light .auth-drop__drop-stat { color: #7a7a88; }
+body.theme--light .auth-drop__drop-stat strong { color: #1e1d28; }
+
+/* Puesto semanal bajo el nombre */
+.auth-drop__rank {
+  font-family: 'Barlow Condensed', sans-serif; line-height: 1.1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.auth-drop__rank-pos { font-size: 19px; font-weight: 800; color: #ddd9cf; }
+.auth-drop__rank-pts { font-size: 16px; font-weight: 700; color: #b8e030; margin-left: 2px; }
+.auth-drop__rank-none { font-family: 'Barlow', sans-serif; font-size: 11px; color: #7a7a88; }
+
+/* Estadísticas en pequeño, en el mismo hueco que los trofeos */
+.auth-drop__stats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  padding-bottom: 9px; margin-bottom: 9px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  text-align: center;
+}
+.auth-drop__stat { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.auth-drop__stat strong {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 19px; font-weight: 700; line-height: 1.1; color: #ddd9cf;
+}
+.auth-drop__stat span {
+  font-size: 10px; color: #8a8a94; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
 
 .auth-drop__trofeos {
   margin: 6px 10px 10px;
@@ -1916,8 +1945,11 @@ body.theme--light .auth-drop__config-link { color: #9898a8; }
 body.theme--light .auth-drop__config-link:hover { color: #1e1d28; }
 body.theme--light .auth-drop__signout-btn { color: #c04040; }
 body.theme--light .auth-drop__signout-btn:hover { color: #a02020; }
-body.theme--light .auth-drop__drop-stat { color: #7a7a88; }
-body.theme--light .auth-drop__drop-stat strong { color: #1e1d28; }
+body.theme--light .auth-drop__rank-pos,
+body.theme--light .auth-drop__stat strong { color: #1e1d28; }
+body.theme--light .auth-drop__rank-pts { color: #4a6c10; }
+body.theme--light .auth-drop__stat span { color: #6a6878; }
+body.theme--light .auth-drop__stats { border-bottom-color: rgba(0,0,0,0.08); }
 body.theme--light .auth-drop__trofeos-title { color: #9898a8; }
 
 /* ─── Auth modal ────────────────────────────────────────────────────────────── */

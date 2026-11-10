@@ -286,6 +286,16 @@ async function _refreshServerStats() {
   return stats;
 }
 
+// Las cuatro estadísticas del modal, en pequeño. Las del servidor traen la puntería calculada;
+// las locales (sin caché del servidor todavía) la sacan de los aciertos
+function _dropStatsHTML(s) {
+  const played   = s.played || 0;
+  const accuracy = s.accuracy ?? (played > 0 ? Math.round(((s.totalHits || 0) / (played * 3)) * 100) : 0);
+  const cell = (val, key) => `<div class="auth-drop__stat"><strong>${val}</strong><span>${t(key)}</span></div>`;
+  return cell(played, 'drop_stat_played') + cell(accuracy + '%', 'stat_accuracy')
+       + cell(s.streak || 0, 'drop_stat_streak') + cell(s.perfectQuests || 0, 'drop_stat_perfect');
+}
+
 function _openDrop() {
   const existing = document.getElementById('auth-drop');
   if (existing) { existing.remove(); return; }
@@ -314,13 +324,11 @@ function _openDrop() {
             </button>
           </div>
         </div>
-        <div class="auth-drop__drop-stats">
-          <span class="auth-drop__drop-stat">⚡ ${t('stat_streak_short')} <strong id="auth-drop-streak">${stats.streak || 0}</strong></span>
-          <span class="auth-drop__drop-stat">🎮 ${t('stat_played')} <strong id="auth-drop-played">${stats.played || 0}</strong></span>
-        </div>
+        <div class="auth-drop__rank" id="auth-drop-rank">&nbsp;</div>
       </div>
     </div>
     <div class="auth-drop__trofeos">
+      <div class="auth-drop__stats" id="auth-drop-stats">${_dropStatsHTML(stats)}</div>
       <div class="auth-drop__trofeos-head">
         <span class="auth-drop__trofeos-title">${t('drop_recent_trophies')}</span>
         <a class="auth-drop__trofeos-link" href="profile">${t('drop_see_all')}</a>
@@ -330,13 +338,19 @@ function _openDrop() {
   `;
   document.body.appendChild(drop);
 
-  // Racha y partidas del servidor (iguales en todos los dispositivos)
+  // Estadísticas del servidor (iguales en todos los dispositivos)
   _refreshServerStats().then(s => {
-    if (!s) return;
-    const streakEl = document.getElementById('auth-drop-streak');
-    const playedEl = document.getElementById('auth-drop-played');
-    if (streakEl) streakEl.textContent = s.streak || 0;
-    if (playedEl) playedEl.textContent = s.played || 0;
+    const el = document.getElementById('auth-drop-stats');
+    if (s && el) el.innerHTML = _dropStatsHTML(s);
+  });
+
+  // Puesto en el ranking semanal, junto al nombre
+  getUserWeeklyPosition().then(pos => {
+    const el = document.getElementById('auth-drop-rank');
+    if (!el) return;
+    el.innerHTML = pos
+      ? `<span class="auth-drop__rank-pos">#${pos.rank}</span> <span class="auth-drop__rank-pts">${pos.pts} ${t('ranking_pts')}</span>`
+      : `<span class="auth-drop__rank-none">${t('ranking_no_score')}</span>`;
   });
 
   // Cargar logros recientes en segundo plano
