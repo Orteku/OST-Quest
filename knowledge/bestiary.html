@@ -9,15 +9,26 @@
   <style>
     :root {
       color-scheme: dark;
-      --bg: #111316;
-      --panel: #1a1d22;
-      --panel2: #232731;
+      --bg: #16171a;
+      --panel: #1b1c21;
+      --panel2: #22232a;
       --text: #eef0f4;
       --muted: #a9b0bd;
-      --line: #333846;
+      --line: #2a2b33;
       --accent: #28d7e8;
       --danger: #ff6666;
       --warn: #ffd166;
+      /* Relieve (mismo bloque que css/style.css): botones con brillo arriba y canto abajo que se hunden
+         al pulsar, paneles con canto y huecos hundidos. Un botón de color pone el de su canto en --k-e */
+      --k-hl: rgba(255,255,255,0.07);
+      --k-e: #0b0b0e;
+      --edge-dark: #08080a;
+      --panel-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 0 #0b0b0e, 0 10px 18px -10px rgba(0,0,0,0.7);
+      --modal-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 5px 0 #0a0a0c, 0 24px 44px -14px rgba(0,0,0,0.8);
+      --well-bg: #0f1012;
+      --well-shadow: inset 0 2px 3px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05);
+      --ring: #2a2b33;
+      --ring-edge: #060607;
     }
     * { box-sizing: border-box; }
     body {
@@ -31,47 +42,43 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(17, 19, 22, 0.96);
-      border-bottom: 1px solid var(--line);
+      background: rgba(22, 23, 26, 0.96);
+      box-shadow: 0 3px 0 var(--edge-dark);
       padding: 14px 16px;
       backdrop-filter: blur(8px);
     }
+    /* El borde transparente mantiene el tamaño y deja ver el color de foco y de validación */
     button, input, select, textarea {
-      border: 1px solid var(--line);
-      background: var(--panel2);
+      border: 1px solid transparent;
+      background: var(--well-bg);
+      box-shadow: var(--well-shadow);
       color: var(--text);
       border-radius: 8px;
       padding: 8px 10px;
       font: inherit;
     }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
     button {
       cursor: pointer;
       font-weight: 650;
+      background: var(--panel2);
+      box-shadow: inset 0 1px 0 var(--k-hl), 0 2px 0 var(--k-e);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.12s, color 0.15s, background 0.15s;
     }
-    button.primary {
-      background: var(--accent);
-      color: #031013;
-      border-color: transparent;
+    button:hover:not(:disabled) { filter: brightness(1.2); }
+    button:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: inset 0 1px 0 var(--k-hl), 0 0 0 var(--k-e);
     }
-    button.danger {
-      background: #3b1f24;
-      color: #ffd9df;
-      border-color: #76333f;
-    }
-    button.success {
-      background: #27a048;
-      color: #fff;
-      border-color: transparent;
-    }
+    button.primary { background: var(--accent); color: #031013; --k-e: #0e5f67; --k-hl: rgba(255,255,255,0.35); }
+    button.danger  { background: #4a2128; color: #ffd9df; --k-e: #1f0c10; }
+    button.success { background: #27a048; color: #fff; --k-e: #11501f; --k-hl: rgba(255,255,255,0.2); }
+    button.primary:hover:not(:disabled), button.success:hover:not(:disabled), button.danger:hover:not(:disabled) { filter: brightness(1.1); }
+    /* Botones planos: van dentro de un campo, son pestañas o son iconos sueltos */
+    .tab-btn, .date-pick-btn, #gpClose, #searchClear { box-shadow: none; }
+    :is(.tab-btn, .date-pick-btn, #gpClose, #searchClear):active { transform: none; }
     img.cover-preview { cursor: zoom-in; }
-    .btn-group {
-      display: flex;
-      gap: 4px;
-      background: rgba(40, 215, 232, 0.08);
-      border: 1px solid rgba(40, 215, 232, 0.2);
-      border-radius: 10px;
-      padding: 4px;
-    }
+    .btn-group { display: flex; gap: 6px; }
     #custom-confirm {
       position: fixed;
       inset: 0;
@@ -83,7 +90,7 @@
     }
     #custom-confirm-box {
       background: var(--panel);
-      border: 1px solid var(--line);
+      box-shadow: var(--modal-shadow);
       border-radius: 14px;
       padding: 24px 28px;
       max-width: 420px;
@@ -165,7 +172,8 @@
       align-self: center;
       padding: 0 2px;
     }
-    .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line); font-size:13px; }
+    .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--panel); box-shadow:var(--panel-shadow); border-radius:10px; font-size:13px; }
+    #paginationBar2 { margin-top: 16px; }
     .pagination-bar button { padding:4px 10px; font-size:12px; }
     .pagination-bar button:disabled { opacity:0.35; cursor:default; pointer-events:none; }
     .pg-icon { width:28px; height:28px; padding:0; font-size:16px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
@@ -173,15 +181,15 @@
     #pageRange, #pageRange2 { color:var(--muted); margin-left:auto; white-space:nowrap; }
     .list {
       display: grid;
-      gap: 10px;
+      gap: 14px;
     }
     .row {
       display: grid;
       grid-template-columns: 140px 1fr;
       gap: 12px;
       background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 12px;
+      box-shadow: var(--panel-shadow);
+      border-radius: 10px;
       padding: 10px;
       align-items: start;
     }
@@ -193,8 +201,8 @@
       width: 130px;
       aspect-ratio: 3 / 4;
       object-fit: cover;
-      background: #080a0d;
-      border: 1px solid #2b303b;
+      background: var(--well-bg);
+      box-shadow: var(--well-shadow);
       border-radius: 8px;
     }
     .cover-preview.missing {
@@ -292,7 +300,7 @@
     }
     .mp3-link[href] { color: var(--accent); cursor: pointer; }
     .mp3-link[href]:hover { opacity: 0.75; }
-    button.btn-playing { background: #22c55e; border-color: #22c55e; color: #000; }
+    button.btn-playing { background: #22c55e; color: #000; --k-e: #0e5a2a; --k-hl: rgba(255,255,255,0.3); }
     .track-btns { display: flex; gap: 4px; align-items: end; }
     .meta-fields select, .year-input { width: 100%; min-width: 0; }
     .year-input {
@@ -307,9 +315,9 @@
     input.field-warn  { border-color: var(--warn) !important; }
     .add-panel {
       margin: 16px 0;
-      background: #15191f;
-      border: 1px dashed #485061;
-      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--panel-shadow);
+      border-radius: 10px;
       padding: 12px;
       display: none;
     }
@@ -327,7 +335,7 @@
     }
     .add-row2 { display: flex; flex-direction: column; gap: 6px; }
     .add-track-row1 { display: flex; align-items: flex-end; gap: 8px; }
-    .add-track-row1 > label:not(.lyrics-check) { flex: 1; min-width: 0; }
+    .add-track-row1 > label { flex: 1; min-width: 0; }
     .add-track-row1 input:not([type="checkbox"]) { width: 100%; }
     .add-track-row2 { display: grid; grid-template-columns: minmax(0,1fr) 65px auto; gap: 8px; align-items: end; }
     .add-track-row2 label { min-width: 0; }
@@ -335,8 +343,6 @@
     .add-row1 input { width: 100%; min-width: 0; }
     .track-header { display: flex; align-items: flex-end; gap: 8px; }
     .track-header > label:first-child { flex: 1; min-width: 0; }
-    .lyrics-check { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; padding-bottom: 8px; font-weight: normal; }
-    .lyrics-check input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); margin: 0; width: auto; height: auto; padding: 0; border: none; border-radius: 0; background: none; }
     .tags-row { display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
     .track-block .tags-row { margin-top: 0; }
     .tags-input { width: 100%; }
@@ -352,7 +358,7 @@
       right: 0;
       height: 68px;
       background: var(--panel);
-      border-top: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
       display: none;
       align-items: center;
       gap: 14px;
@@ -432,7 +438,7 @@
     .gm-only:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
     body:not(.has-db) .needs-db, body:not(.has-trans) .needs-trans, body:not(.has-specials) .needs-specials { display: none !important; }
     .pane-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; }
-    .pane-sticky { position: sticky; top: var(--header-h, 0px); z-index: 9; background: var(--bg); margin: -16px 0 12px; padding-top: 6px; }
+    .pane-sticky { position: sticky; top: var(--header-h, 0px); z-index: 9; background: var(--bg); margin: -16px 0 10px; padding: 6px 0 8px; }
     .header-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
     .header-title { display: flex; align-items: center; gap: 12px; }
     .home-logo { display: inline-flex; border-radius: 8px; transition: transform .15s; }
@@ -443,7 +449,25 @@
     .gm-account { display: flex; align-items: center; gap: 8px; margin-left: auto; }
     .gm-account-row { display: inline-flex; align-items: center; gap: 8px; }
     .header-links { display: flex; gap: 6px; }
-    .ext-link { color: #fff; border: none; border-radius: 8px; padding: 7px 12px; font-weight: 650; text-decoration: none; font-size: 14px; }
+    .ext-link {
+      color: #fff; border-radius: 8px; padding: 7px 12px; font-weight: 650; text-decoration: none; font-size: 14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 0 var(--k-e);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.12s;
+    }
+    .ext-link:hover { filter: brightness(1.12); }
+    .ext-link:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 0 var(--k-e); }
+    /* Buscador: un solo hueco con el campo, el ✕ y el selector dentro */
+    .search-well {
+      display: flex; flex: 1; min-width: 200px; align-items: center;
+      background: var(--well-bg); box-shadow: var(--well-shadow);
+      border: 1px solid transparent; border-radius: 8px;
+    }
+    .search-well:focus-within { border-color: var(--accent); }
+    .search-well > * { background: transparent; box-shadow: none; border: 0; }
+    .search-well > input { flex: 1; min-width: 0; }
+    .search-well > input:focus { border: 0; }
+    #searchClear { padding: 8px 7px; color: var(--muted); }
+    #searchField { width: auto; min-width: 0; padding: 8px 6px; font-size: 13px; color: var(--muted); border-left: 1px solid var(--line); border-radius: 0 8px 8px 0; }
     .tab-tools { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
     .tab-tools.active { display: flex; }
     .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -486,22 +510,42 @@
       .add-track-row2 { grid-template-columns: 1fr 65px; }
     }
     /* ── Tabs ──────────────────────────────── */
-    .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-top: 4px; padding-left: 8px; }
-    .tab-btn { background: none; border: 1px solid transparent; border-bottom: none; color: var(--muted); padding: 7px 18px; border-radius: 8px 8px 0 0; font-weight: 650; margin-bottom: -1px; }
-    .tab-btn.active { background: var(--bg); border-color: var(--line); border-bottom: 1px solid var(--bg); color: var(--text); }
-    .tab-btn:hover:not(.active) { color: var(--text); background: var(--panel); }
+    .tab-bar { display: inline-flex; gap: 3px; padding: 3px; border-radius: 10px; background: var(--well-bg); box-shadow: var(--well-shadow); margin-top: 4px; }
+    .tab-btn { background: transparent; color: var(--muted); padding: 6px 18px; border-radius: 7px; font-weight: 650; }
+    .tab-btn:hover:not(.active) { color: var(--text); filter: none; }
+    .tab-btn.active { background: var(--ring); color: var(--accent); box-shadow: inset 0 1px 0 var(--k-hl), 0 2px 0 var(--k-e); }
     .tab-btn.tab-dirty, .tab-btn.tab-dirty:hover:not(.active) { color: #ffe7a0; }
     .tab-btn.tab-diff::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
     /* ── Traducciones ─────────────────────── */
-    .trans-list { display: grid; gap: 4px; }
-    .trans-row { display: grid; grid-template-columns: 52px 1fr 1fr; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; }
+    .trans-list { background: var(--panel); box-shadow: var(--panel-shadow); border-radius: 10px; padding: 4px 12px; }
+    .trans-row { display: grid; grid-template-columns: 52px 1fr 1fr; gap: 10px; align-items: center; padding: 5px 0; }
+    .trans-row + .trans-row { border-top: 1px solid var(--line); }
     .trans-id { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; padding-right: 4px; }
     .trans-original { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .trans-input { font-size: 13px; width: 100%; }
+    .switch-label { position: relative; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
+    .switch-label:hover { color: var(--text); }
+    .switch-input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+    .switch {
+      position: relative; flex-shrink: 0;
+      width: 36px; height: 20px; border-radius: 10px;
+      background: var(--well-bg); box-shadow: var(--well-shadow);
+      transition: background 0.2s;
+    }
+    .switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #3a3b44;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 0 #0b0b0e;
+      transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .switch-input:checked + .switch { background: #0c3236; }
+    .switch-input:checked + .switch::after { transform: translateX(16px); background: var(--accent); box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 0 #0e5f67; }
+    .switch-input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset: 2px; }
     /* ── Especiales ───────────────────────── */
-    .special-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+    .special-card { background: var(--panel); box-shadow: var(--panel-shadow); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
     .special-card-header { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
     .special-color { width: 38px; height: 34px; padding: 2px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
     .special-date { width: 130px; font-family: ui-monospace, monospace; font-size: 13px; }
@@ -548,12 +592,12 @@
       <span id="gmStatus" class="sheets-status"></span>
     </div>
     <div class="header-links">
-      <a href="/?gm" target="_blank" rel="noopener" class="ext-link" style="background:#d4a017;color:#1a1400">Modo GM</a>
-      <a href="https://www.youtube.com" target="_blank" rel="noopener" class="ext-link" style="background:#ff0000">YouTube</a>
-      <a href="https://www.igdb.com" target="_blank" rel="noopener" class="ext-link" style="background:#8c44b0">IGDB</a>
-      <a href="https://downloads.khinsider.com/" target="_blank" rel="noopener" class="ext-link" style="background:#111;border:1px solid #444">Khinside</a>
-      <a href="https://archive.org/details/audio" target="_blank" rel="noopener" class="ext-link" style="background:#555">Archive.org</a>
-      <a href="https://docs.google.com/spreadsheets/d/1PzT5tdB6yQn9c9_R-YObqTqyaN4jRJxqTT4HEm1nh-s/edit?gid=1895228238#gid=1895228238" target="_blank" rel="noopener" class="ext-link" style="background:#1e8e3e">Sheets</a>
+      <a href="/?gm" target="_blank" rel="noopener" class="ext-link" style="background:#d4a017;color:#1a1400;--k-e:#6b5009">Modo GM</a>
+      <a href="https://www.youtube.com" target="_blank" rel="noopener" class="ext-link" style="background:#e00000;--k-e:#6e0000">YouTube</a>
+      <a href="https://www.igdb.com" target="_blank" rel="noopener" class="ext-link" style="background:#8c44b0;--k-e:#43205a">IGDB</a>
+      <a href="https://downloads.khinsider.com/" target="_blank" rel="noopener" class="ext-link" style="background:#2c2c32;--k-e:#060607">Khinside</a>
+      <a href="https://archive.org/details/audio" target="_blank" rel="noopener" class="ext-link" style="background:#555;--k-e:#222">Archive.org</a>
+      <a href="https://docs.google.com/spreadsheets/d/1PzT5tdB6yQn9c9_R-YObqTqyaN4jRJxqTT4HEm1nh-s/edit?gid=1895228238#gid=1895228238" target="_blank" rel="noopener" class="ext-link" style="background:#1e8e3e;--k-e:#0b4a1d">Sheets</a>
     </div>
   </div>
   <div class="tab-bar">
@@ -642,10 +686,10 @@
   <div class="pane-sticky">
   <div class="pane-tools needs-db">
     <button id="toggleAdd" class="success">Añadir entrada</button>
-    <div style="display:flex;gap:0;flex:1;min-width:200px">
-      <input id="search" type="search" placeholder="Buscar..." style="flex:1;border-radius:8px 0 0 8px;border-right:0" />
-      <button id="searchClear" title="Limpiar búsqueda" style="display:none;border-radius:0;border-left:0;border-right:0;padding:8px 7px;color:var(--muted)">✕</button>
-      <select id="searchField" style="border-radius:0 8px 8px 0;padding:8px 6px;min-width:0;width:auto;font-size:13px">
+    <div class="search-well">
+      <input id="search" type="search" placeholder="Buscar..." />
+      <button id="searchClear" title="Limpiar búsqueda" style="display:none">✕</button>
+      <select id="searchField">
         <option value="all">Todo</option>
         <option value="game">Título</option>
         <option value="tracks">Canción</option>
@@ -713,7 +757,7 @@
   <div id="tab-traducciones" class="tab-pane">
     <div class="pane-sticky pane-tools needs-trans">
       <input id="transSearch" placeholder="Buscar juego..." style="flex:1;min-width:140px" />
-      <label class="lyrics-check"><input type="checkbox" id="transOnlyWith" checked /> Solo con traducción</label>
+      <label class="switch-label"><input type="checkbox" id="transOnlyWith" class="switch-input" checked /><span class="switch"></span>Solo con traducción</label>
       <span id="transCount" style="color:var(--muted);font-size:12px;white-space:nowrap"></span>
     </div>
     <div id="transList" class="trans-list">
