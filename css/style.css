@@ -2580,20 +2580,27 @@ body.theme--light .achievements-grid__empty { color: #787888; }
 .pcard__body { flex: 1; min-width: 0; }
 .pcard__username {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 26px; font-weight: 800;
-  color: #ddd9cf; margin-bottom: 14px; line-height: 1;
+  font-size: 32px; font-weight: 800;
+  color: #ddd9cf; margin-bottom: 6px; line-height: 1;
 }
-.pcard__stats { display: flex; gap: 22px; flex-wrap: wrap; }
-.pcard__stat { display: flex; flex-direction: column; gap: 2px; }
-.pcard__stat-value {
+/* Mismo formato que el menú de usuario: nombre y puesto a la izquierda, estadísticas en dos columnas a la derecha */
+.pcard__rank {
+  font-family: 'Barlow Condensed', sans-serif; line-height: 1.1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pcard__rank-pos { font-size: 30px; font-weight: 800; color: #ddd9cf; }
+.pcard__rank-pts { font-size: 24px; font-weight: 700; color: #b8e030; margin-left: 4px; }
+.pcard__rank-none { font-family: 'Barlow', sans-serif; font-size: 13px; color: #7a7a88; }
+.pcard__stats {
+  display: grid; grid-template-columns: auto auto;
+  column-gap: 28px; row-gap: 6px; flex-shrink: 0;
+}
+.pcard__stat { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; }
+.pcard__stat strong {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 22px; font-weight: 800;
-  color: #b8e030; line-height: 1;
+  font-size: 28px; font-weight: 700; line-height: 1; color: #ddd9cf;
 }
-.pcard__stat-label {
-  font-size: 10px; font-weight: 600; letter-spacing: 1px;
-  text-transform: uppercase; color: #555960;
-}
+.pcard__stat span { font-size: 14px; color: #8a8a94; }
 .pcard__avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .pcard__recent-achievements {
   display: flex; gap: 8px; margin-top: 12px;
@@ -2621,8 +2628,10 @@ body.theme--light .pcard-drawer__toggle:hover { color: #1e1d28; }
 body.theme--light .pcard { background: #eae8e2; }
 body.theme--light .pcard__avatar { background: #4a6c10; color: #fff; }
 body.theme--light .pcard__username { color: #1e1d28; }
-body.theme--light .pcard__stat-value { color: #4a6c10; }
-body.theme--light .pcard__stat-label { color: #9898a8; }
+body.theme--light .pcard__rank-pos,
+body.theme--light .pcard__stat strong { color: #1e1d28; }
+body.theme--light .pcard__rank-pts { color: #4a6c10; }
+body.theme--light .pcard__stat span { color: #6a6878; }
 body.theme--light .pcard__guest-msg { color: #5a5a68; }
 
 /* Bottom sheet de logros (táctil) */
@@ -2688,10 +2697,15 @@ body.theme--light .ach-sheet__desc { color: #7a7a88; }
 body.theme--light .ach-sheet__avatar-btn { background: #4a6c10; color: #fff; --k-e: #2c4208; --k-hl: rgba(255,255,255,0.25); }
 
 @media (max-width: 520px) {
-  .pcard { flex-direction: column; align-items: flex-start; gap: 16px; }
+  /* Avatar y nombre arriba; las estadísticas bajan a una fila propia */
+  .pcard { flex-wrap: wrap; gap: 14px 16px; padding: 20px 18px; }
   .pcard__avatar { width: 56px; height: 56px; font-size: 24px; }
-  .pcard__username { font-size: 22px; }
-  .pcard__stats { gap: 16px; }
+  .pcard__username { font-size: 24px; }
+  .pcard__rank-pos { font-size: 24px; }
+  .pcard__rank-pts { font-size: 19px; }
+  .pcard__stats { width: 100%; column-gap: 20px; }
+  .pcard__stat strong { font-size: 22px; }
+  .pcard__stat span { font-size: 13px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

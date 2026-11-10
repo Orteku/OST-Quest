@@ -348,9 +348,7 @@ function _openDrop() {
   getUserWeeklyPosition().then(pos => {
     const el = document.getElementById('auth-drop-rank');
     if (!el) return;
-    el.innerHTML = pos
-      ? `<span class="auth-drop__rank-pos">#${pos.rank}</span> <span class="auth-drop__rank-pts">${pos.pts} ${t('ranking_pts')}</span>`
-      : `<span class="auth-drop__rank-none">${t('ranking_no_score')}</span>`;
+    el.innerHTML = _rankLineHTML(pos, 'auth-drop');
   });
 
   // Cargar logros recientes en segundo plano
@@ -970,6 +968,17 @@ function _renderProfileHTML(forPage = false) {
   `;
 }
 
+// Puesto semanal de la tarjeta de perfil: undefined mientras carga, null sin puntos esta semana
+let _pcardRank;
+
+// Línea "#1 186 Puntos" del menú de usuario y de la tarjeta de perfil (prefijo de clases: auth-drop / pcard)
+function _rankLineHTML(pos, cls) {
+  if (pos === undefined) return '&nbsp;';
+  return pos
+    ? `<span class="${cls}__rank-pos">#${pos.rank}</span> <span class="${cls}__rank-pts">${pos.pts} ${t('ranking_pts')}</span>`
+    : `<span class="${cls}__rank-none">${t('ranking_no_score')}</span>`;
+}
+
 function _renderProfileCardHTML(unlocked = []) {
   const p       = _profile || {};
   const initial = (p.username || '?')[0].toUpperCase();
@@ -1001,13 +1010,14 @@ function _renderProfileCardHTML(unlocked = []) {
         : initial}</div>
       <div class="pcard__body">
         <div class="pcard__username">${_esc(p.username || '')}${_gmBookHTML()}</div>
-        <div class="pcard__stats">
-          <div class="pcard__stat"><span class="pcard__stat-value">${played}</span><span class="pcard__stat-label">${t('stat_played')}</span></div>
-          <div class="pcard__stat"><span class="pcard__stat-value">${accuracy}%</span><span class="pcard__stat-label">${t('stat_accuracy')}</span></div>
-          <div class="pcard__stat"><span class="pcard__stat-value">${streak}</span><span class="pcard__stat-label">${t('stat_streak_current')}</span></div>
-          <div class="pcard__stat"><span class="pcard__stat-value">${perfect}</span><span class="pcard__stat-label">${t('stat_max_streak')}</span></div>
-        </div>
+        <div class="pcard__rank">${_rankLineHTML(_pcardRank, 'pcard')}</div>
         ${recentHtml}
+      </div>
+      <div class="pcard__stats">
+        <div class="pcard__stat"><strong>${played}</strong><span>${t('drop_stat_played')}</span></div>
+        <div class="pcard__stat"><strong>${perfect}</strong><span>${t('drop_stat_perfect')}</span></div>
+        <div class="pcard__stat"><strong>${accuracy}%</strong><span>${t('stat_accuracy')}</span></div>
+        <div class="pcard__stat"><strong>${streak}</strong><span>${t('drop_stat_streak')}</span></div>
       </div>
     </div>
   `;
@@ -1043,6 +1053,7 @@ async function initProfilePage() {
     renderCard();
     _achGridRender?.();
   });
+  getUserWeeklyPosition().then(pos => { _pcardRank = pos; renderCard(); });
 
   if (settingsEl) {
     settingsEl.innerHTML = _renderProfileHTML(true);

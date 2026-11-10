@@ -577,8 +577,13 @@
     /* ── Especiales ───────────────────────── */
     .special-card { background: var(--panel); box-shadow: var(--panel-shadow); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
     .special-card-header { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-    .special-color { width: 38px; height: 34px; padding: 2px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
-    .special-date { width: 130px; font-family: ui-monospace, monospace; font-size: 13px; }
+    /* La muestra ocupa la columna de las etiquetas de abajo, así las fechas empiezan alineadas con los campos */
+    .special-color {
+      width: 64px; align-self: stretch; padding: 0; flex-shrink: 0;
+      background: var(--sw, #888); --k-e: color-mix(in srgb, var(--sw, #888) 40%, #000); --k-hl: rgba(255,255,255,0.3);
+    }
+    .special-color:hover:not(:disabled) { filter: brightness(1.1); }
+    .special-date { width: calc(10ch + 46px); font-family: ui-monospace, monospace; font-size: 13px; }
     .special-date-sep { color: var(--muted); }
     .date-combo { position: relative; display: inline-flex; align-items: center; }
     .date-combo .special-date { padding-right: 30px; }
@@ -598,6 +603,34 @@
     .sp-id-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); color: var(--muted); cursor: pointer; user-select: none; }
     .sp-id-chip:hover { border-color: var(--accent); color: var(--accent); }
     .sp-id-chip strong { color: var(--text); }
+    /* ── Selector de color propio ─────────── */
+    .color-pop {
+      position: absolute; z-index: 60; width: 236px; padding: 12px; border-radius: 10px;
+      background: var(--panel2); box-shadow: var(--modal-shadow);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .color-pop[hidden] { display: none; }
+    .cp-sv {
+      position: relative; height: 140px; border-radius: 6px; cursor: crosshair; touch-action: none;
+      background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent), hsl(var(--cp-h, 0) 100% 50%);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .cp-hue {
+      position: relative; height: 12px; border-radius: 999px; cursor: pointer; touch-action: none;
+      background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+    }
+    .cp-knob {
+      position: absolute; width: 14px; height: 14px; border-radius: 50%; pointer-events: none;
+      transform: translate(-50%, -50%); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.6);
+    }
+    .cp-hue .cp-knob { top: 50%; }
+    .cp-row { display: flex; gap: 6px; align-items: flex-end; }
+    .cp-preview { width: 34px; height: 30px; border-radius: 8px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); }
+    .cp-field { display: flex; flex-direction: column; gap: 2px; font-size: 10px; color: var(--muted); text-align: center; min-width: 0; flex: 1; }
+    .cp-field input { padding: 6px 4px; font-family: ui-monospace, monospace; font-size: 12px; text-align: center; width: 100%; }
+    .cp-field input::-webkit-inner-spin-button, .cp-field input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .cp-field input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   </style>
 </head>
 <body>
@@ -2732,15 +2765,15 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     ).join('');
     return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
       <div class="special-card-header">
-        <input type="color" class="special-color" data-field="color" data-index="${i}" value="${escapeHtml(ev.color || '#888888')}" title="Color del evento" />
+        <button type="button" class="special-color" data-action="pickColor" data-index="${i}" style="--sw:${escapeHtml(ev.color || '#888888')}" title="Color del evento: ${escapeHtml(ev.color || '#888888')}"></button>
         <span class="date-combo">
-          <input class="special-date" data-field="date" data-index="${i}" placeholder="YYYY-MM-DD o MM-DD" value="${escapeHtml(ev.date || '')}" title="Fecha de inicio: exacta o anual (MM-DD)" />
+          <input class="special-date" data-field="date" data-index="${i}" placeholder="Inicio" value="${escapeHtml(ev.date || '')}" title="Fecha de inicio: exacta (YYYY-MM-DD) o anual (MM-DD)" />
           <button type="button" class="date-pick-btn" data-action="pickDate" title="Elegir en calendario">📅</button>
           <input type="date" class="date-picker-hidden" tabindex="-1" aria-hidden="true" />
         </span>
         <span class="special-date-sep">→</span>
         <span class="date-combo">
-          <input class="special-date" data-field="dateTo" data-index="${i}" placeholder="Fin (opcional)" value="${escapeHtml(ev.dateTo || '')}" title="Fecha de fin opcional, mismo formato que la de inicio. Vacío = solo un día" />
+          <input class="special-date" data-field="dateTo" data-index="${i}" placeholder="Fin" value="${escapeHtml(ev.dateTo || '')}" title="Fecha de fin opcional, mismo formato que la de inicio. Vacío = solo un día" />
           <button type="button" class="date-pick-btn" data-action="pickDate" title="Elegir en calendario">📅</button>
           <input type="date" class="date-picker-hidden" tabindex="-1" aria-hidden="true" />
         </span>
@@ -2777,6 +2810,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       container.innerHTML = '<p style="color:var(--muted);padding:16px 0">No hay eventos. Pulsa "+ Añadir evento" o carga desde Supabase.</p>';
       return;
     }
+    closeColorPop();
     const tagList = getGameTagList();
     container.innerHTML = _specials.map((ev, i) => specialCardHtml(ev, i, tagList)).join('');
   }
@@ -2794,10 +2828,6 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       if (card) card.querySelector('.special-gameid-preview').innerHTML = renderGameIdPreviews(ids);
     } else {
       _specials[i][field] = el.value;
-      if (field === "color") {
-        const card = el.closest('.special-card');
-        if (card) card.style.borderLeftColor = el.value;
-      }
     }
     setSpecialsDirty(true);
   });
@@ -2812,6 +2842,8 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
   });
 
   $("specialsList").addEventListener("click", e => {
+    const sw = e.target.closest("[data-action='pickColor']");
+    if (sw) { openColorPop(sw); return; }
     const pick = e.target.closest("[data-action='pickDate']");
     if (pick) {
       const combo  = pick.closest(".date-combo");
@@ -2973,6 +3005,127 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     const id = chip.querySelector('strong')?.textContent;
     if (id) navigator.clipboard?.writeText(id);
   });
+
+  // ── Selector de color propio (muestra + HEX + RGB editables) ──────────────
+  const colorPop = document.createElement('div');
+  colorPop.className = 'color-pop';
+  colorPop.hidden = true;
+  colorPop.innerHTML = `
+    <div class="cp-sv"><div class="cp-knob"></div></div>
+    <div class="cp-hue"><div class="cp-knob"></div></div>
+    <div class="cp-row">
+      <span class="cp-preview"></span>
+      <label class="cp-field">HEX<input data-cp="hex" maxlength="7" spellcheck="false" /></label>
+    </div>
+    <div class="cp-row">
+      <label class="cp-field">R<input data-cp="r" type="number" min="0" max="255" /></label>
+      <label class="cp-field">G<input data-cp="g" type="number" min="0" max="255" /></label>
+      <label class="cp-field">B<input data-cp="b" type="number" min="0" max="255" /></label>
+    </div>`;
+  document.body.appendChild(colorPop);
+  const cpSv = colorPop.querySelector('.cp-sv'), cpHue = colorPop.querySelector('.cp-hue');
+  const cpIn = k => colorPop.querySelector(`[data-cp="${k}"]`);
+  let _cp = { h: 0, s: 0, v: 0.53 }, _cpIndex = null;
+
+  const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+  function hexToRgb(hex) {
+    let m = String(hex ?? '').trim().replace(/^#/, '');
+    if (/^[0-9a-f]{3}$/i.test(m)) m = m.replace(/./g, c => c + c);
+    if (!/^[0-9a-f]{6}$/i.test(m)) return null;
+    return [0, 2, 4].map(o => parseInt(m.slice(o, o + 2), 16));
+  }
+  const rgbToHex = rgb => '#' + rgb.map(n => clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+  function rgbToHsv([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), d = max - Math.min(r, g, b);
+    let h = 0;
+    if (d) h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return { h: (h * 60 + 360) % 360, s: max ? d / max : 0, v: max };
+  }
+  function hsvToRgb({ h, s, v }) {
+    const f = n => { const k = (n + h / 60) % 6; return (v - v * s * Math.max(0, Math.min(k, 4 - k, 1))) * 255; };
+    return [f(5), f(3), f(1)];
+  }
+
+  // Pinta el selector; `skip` es el campo que se está escribiendo (no se le pisa el texto)
+  function cpPaint(skip) {
+    const rgb = hsvToRgb(_cp), hex = rgbToHex(rgb);
+    colorPop.style.setProperty('--cp-h', _cp.h);
+    const k1 = cpSv.firstElementChild.style;
+    k1.left = (_cp.s * 100) + '%'; k1.top = ((1 - _cp.v) * 100) + '%';
+    cpHue.firstElementChild.style.left = (_cp.h / 360 * 100) + '%';
+    colorPop.querySelector('.cp-preview').style.background = hex;
+    if (skip !== 'hex') cpIn('hex').value = hex;
+    ['r', 'g', 'b'].forEach((k, n) => { if (skip !== k) cpIn(k).value = Math.round(rgb[n]); });
+    return hex;
+  }
+  function cpCommit(skip) {
+    const hex = cpPaint(skip);
+    const ev = _specials[_cpIndex];
+    if (!ev || ev.color === hex) return;
+    ev.color = hex;
+    const card = $("specialsList").querySelector(`.special-card[data-index="${_cpIndex}"]`);
+    if (card) {
+      card.style.borderLeftColor = hex;
+      const sw = card.querySelector('.special-color');
+      sw.style.setProperty('--sw', hex);
+      sw.title = 'Color del evento: ' + hex;
+    }
+    setSpecialsDirty(true);
+  }
+
+  function openColorPop(sw) {
+    const i = Number(sw.dataset.index);
+    if (_cpIndex === i && !colorPop.hidden) { closeColorPop(); return; }
+    _cpIndex = i;
+    _cp = rgbToHsv(hexToRgb(_specials[i]?.color) || [136, 136, 136]);
+    cpPaint();
+    colorPop.hidden = false;
+    const r = sw.getBoundingClientRect();
+    const maxLeft = scrollX + document.documentElement.clientWidth - colorPop.offsetWidth - 8;
+    colorPop.style.left = clamp(r.left + scrollX, scrollX + 8, maxLeft) + 'px';
+    colorPop.style.top = (r.bottom + scrollY + 6) + 'px';
+  }
+  function closeColorPop() { colorPop.hidden = true; _cpIndex = null; }
+
+  function cpDrag(el, onMove) {
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      el.setPointerCapture?.(e.pointerId);
+      const move = ev => {
+        const r = el.getBoundingClientRect();
+        onMove(clamp((ev.clientX - r.left) / r.width, 0, 1), clamp((ev.clientY - r.top) / r.height, 0, 1));
+        cpCommit();
+      };
+      move(e);
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', () => el.removeEventListener('pointermove', move), { once: true });
+    });
+  }
+  cpDrag(cpSv, (x, y) => { _cp.s = x; _cp.v = 1 - y; });
+  cpDrag(cpHue, x => { _cp.h = x * 360; });
+
+  colorPop.addEventListener('input', e => {
+    const k = e.target.dataset.cp;
+    if (!k) return;
+    let rgb;
+    if (k === 'hex') rgb = hexToRgb(e.target.value);
+    else {
+      const vals = ['r', 'g', 'b'].map(c => cpIn(c).value.trim());
+      if (vals.some(v => v === '' || isNaN(v))) return;
+      rgb = vals.map(v => clamp(Number(v), 0, 255));
+    }
+    if (!rgb) return;                                  // HEX a medio escribir: se espera
+    const hsv = rgbToHsv(rgb);
+    if (hsv.s === 0 || hsv.v === 0) hsv.h = _cp.h;     // grises y negro no tienen tono: se conserva el anterior
+    _cp = hsv;
+    cpCommit(k);
+  });
+  colorPop.addEventListener('focusout', e => { if (e.target.dataset.cp) cpPaint(); });   // al salir, normaliza el texto
+  document.addEventListener('pointerdown', e => {
+    if (!colorPop.hidden && !colorPop.contains(e.target) && !e.target.closest("[data-action='pickColor']")) closeColorPop();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !colorPop.hidden) closeColorPop(); });
 
 })();
 </script>
