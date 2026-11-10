@@ -682,19 +682,19 @@ function openEndModal(score) {
       }</p>
       ${isArchiveMode ? `<p class="modal__archive-note">${t('archive_note')}</p>` : ''}
       ${!isArchiveMode ? `
-        <div class="modal__stats">
-          <div class="stat-box"><span class="stat-box__val" id="stat-val-played">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
-          <div class="stat-box"><span class="stat-box__val" id="stat-val-accuracy">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
-          <div class="stat-box"><span class="stat-box__val" id="stat-val-streak">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
-          <div class="stat-box"><span class="stat-box__val" id="stat-val-perfect">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
+        <div class="end-board">
+          <div class="end-board__rank">${!authGetSession()
+            ? `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="end-register-btn">${t('register_cta_link')}</button></p>`
+            : `<div id="end-rank-info" class="stats-rank-info"><p class="rank-empty">${t('ranking_loading')}</p></div>
+               <a href="ranking" class="stats-rank-link" title="${t('ranking_view_full')}" aria-label="${t('ranking_view_full')}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M9 20V8h6v12M3 20v-7h6M15 20v-4h6v4M2 20h20"/></svg></a>`
+          }</div>
+          <div class="modal__stats">
+            <div class="stat-box"><span class="stat-box__val" id="stat-val-played">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
+            <div class="stat-box"><span class="stat-box__val" id="stat-val-accuracy">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
+            <div class="stat-box"><span class="stat-box__val" id="stat-val-streak">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
+            <div class="stat-box"><span class="stat-box__val" id="stat-val-perfect">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
+          </div>
         </div>
-        ${!authGetSession()
-          ? `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="end-register-btn">${t('register_cta_link')}</button></p>`
-          : `<div class="stats-rank-section">
-              <div id="end-rank-info" class="stats-rank-info"><p class="rank-empty">${t('ranking_loading')}</p></div>
-              <a href="ranking" class="stats-rank-link">${t('ranking_view_full')} →</a>
-            </div>`
-        }
       ` : ''}
       ${!isArchiveMode && currentDateStr !== '__gm__' ? `<button class="btn btn--share" id="share-btn">${t('btn_share')}</button>` : ''}
       ${!isArchiveMode ? `<div class="modal__countdown">${t('next_quest_in')} &nbsp; <strong id="end-countdown">--:--:--</strong></div>` : ''}

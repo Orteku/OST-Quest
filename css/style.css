@@ -126,8 +126,8 @@ body.has-special-label .site-tagline { font-size: 9px; }
 
 .site-header__right { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 
-.site-header .icon-btn { background: #1f2027; }
-.site-header .icon-btn:hover { background: #27282f; color: #ddd9cf; }
+.site-header .icon-btn { background: #13141a; }
+.site-header .icon-btn:hover { background: #1b1c23; color: #ddd9cf; }
 
 .header-countdown {
   font-family: 'Barlow Condensed', sans-serif;
@@ -811,7 +811,7 @@ body.theme--light .col__eq i { background: #4a6c10; }
 
 /* End modal */
 .modal__end {
-  padding: 28px 24px 24px;
+  padding: 14px 24px 24px;
   text-align: center;
 }
 .modal__end-score {
@@ -825,7 +825,7 @@ body.theme--light .col__eq i { background: #4a6c10; }
   margin: 0 auto 10px;
 }
 .modal__end-num {
-  font-size: 64px;
+  font-size: 84px;
   font-weight: 800;
   line-height: 1;
 }
@@ -834,7 +834,7 @@ body.theme--light .col__eq i { background: #4a6c10; }
 .modal__end-num--2 { color: #7abe3a; }
 .modal__end-num--3 { color: #b8e030; }
 .modal__end-denom {
-  font-size: 28px;
+  font-size: 34px;
   color: #555a48;
   font-weight: 700;
 }
@@ -901,11 +901,7 @@ body.theme--light .col__eq i { background: #4a6c10; }
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
   color: #8a8a94;
-  margin-top: 16px;
-  padding: 8px 10px;
-  border-radius: 9px;
-  background: var(--well-bg);
-  box-shadow: var(--well-shadow);
+  margin: 18px 0 12px;
 }
 .modal__countdown strong {
   font-size: 26px; font-weight: 700;
@@ -2000,7 +1996,8 @@ body.theme--light .auth-social__last { background: #4a6c10; color: #fff; }
   background: #1b1c21;
   border-radius: 12px; padding: 14px 18px;
   min-width: 220px; max-width: 300px;
-  box-shadow: 0 0 0 1px rgba(184,224,48,0.12), 0 0 16px rgba(184,224,48,0.22), 0 4px 0 #0a0a0c, 0 18px 30px -10px rgba(0,0,0,0.8);
+  /* Como el aviso de novedad, pero con el brillo y el canto más suaves */
+  box-shadow: 0 0 0 1px rgba(184,224,48,0.08), 0 0 9px rgba(184,224,48,0.12), 0 2px 0 #0a0a0c, 0 14px 24px -10px rgba(0,0,0,0.7);
   animation: ach-in 0.4s cubic-bezier(.22,1,.36,1) forwards;
 }
 .achievement-toast--out { animation: ach-out 0.35s ease-in forwards; }
@@ -2060,7 +2057,7 @@ body.theme--light .news-banner__close:hover { color: #1e1d28; }
   color: #ddd9cf; line-height: 1.15;
 }
 .achievement-toast__desc { font-size: 12px; color: #9898a8; line-height: 1.35; margin-top: 3px; }
-body.theme--light .achievement-toast { background: #f0ede8; box-shadow: 0 0 0 1px rgba(74,108,16,0.12), 0 0 16px rgba(74,108,16,0.25), 0 4px 0 #c9c6bd, 0 18px 30px -10px rgba(0,0,0,0.2); }
+body.theme--light .achievement-toast { background: #f0ede8; box-shadow: 0 0 0 1px rgba(74,108,16,0.08), 0 0 9px rgba(74,108,16,0.15), 0 2px 0 #c9c6bd, 0 14px 24px -10px rgba(0,0,0,0.18); }
 body.theme--light .achievement-toast__label { color: #4a6c10; }
 body.theme--light .achievement-toast__img  { box-shadow: 0 0 0 2px var(--ring), 0 0 10px rgba(74,108,16,0.3); }
 body.theme--light .achievement-toast__name { color: #1e1d28; }
@@ -2325,23 +2322,39 @@ body.theme--light .rank-row--me td { background: var(--well-bg); box-shadow: ins
 body.theme--light .rank-row--me .rank-name { color: #3a5810; }
 body.theme--light .rank-empty { color: #9898a8; }
 
-/* Stats modal — sección ranking */
-.stats-rank-section { margin-top: 18px; width: 100%; text-align: center; }
-.stats-rank-info { margin-bottom: 8px; min-height: 36px; }
-.stats-rank-pos { font-size: 22px; font-weight: 700; color: #ddd9cf; margin: 0; }
-.stats-rank-pts { font-size: 15px; color: #b8e030; font-weight: 600; margin-left: 4px; }
-.stats-rank-link {
-  display: inline-block; text-decoration: none;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px; font-weight: 700; letter-spacing: 0.5px;
-  color: #b8e030; background: #1c2610; border-radius: 8px;
-  padding: 7px 18px;
+/* Franja del modal final y de estadísticas: puesto en el ranking (o aviso de registro) arriba,
+   con su botón, y las estadísticas debajo, todo en un mismo hueco */
+.end-board {
+  background: var(--well-bg); box-shadow: var(--well-shadow);
+  border-radius: 10px; padding: 4px 8px 6px; margin-bottom: 16px;
 }
-.stats-rank-link:hover { background: #243112; }
+.end-board__rank {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 40px; padding: 8px 6px 10px; margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  text-align: left;
+}
+body.theme--light .end-board__rank { border-bottom-color: rgba(0,0,0,0.08); }
+.end-board .modal__stats { margin-bottom: 0; }
+.end-board .stat-box { background: none; box-shadow: none; }
+.end-board .rank-empty { padding: 0; text-align: left; font-size: 13px; }
+.end-board .modal__register-cta { margin: 0; font-size: 14px; }
+.stats-rank-pos {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 32px; font-weight: 800; line-height: 1;
+  color: #ddd9cf; margin: 0;
+}
+.stats-rank-pts { font-size: 24px; color: #b8e030; font-weight: 700; margin-left: 8px; }
+.stats-rank-link {
+  flex-shrink: 0; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  color: #b8e030; background: #2a2b33; border-radius: 8px;
+}
+.stats-rank-link:hover { background: #33343d; }
 body.theme--light .stats-rank-pos { color: #1e1d28; }
 body.theme--light .stats-rank-pts { color: #4a6c10; }
-body.theme--light .stats-rank-link { color: #4a6c10; background: #dce8c4; --k-e: #9ab850; }
-body.theme--light .stats-rank-link:hover { background: #e4eed0; }
+body.theme--light .stats-rank-link { color: #4a6c10; background: #e8e6e0; }
+body.theme--light .stats-rank-link:hover { background: #f2f0ea; }
 
 /* Medallas top 3 */
 .rank-gold .rank-pos   { color: #f0c040; font-weight: 700; text-shadow: 0 0 8px rgba(240,192,64,0.55); }
@@ -2478,7 +2491,10 @@ body.theme--light .achievements-grid__empty { color: #787888; }
 .pcard-drawer__panel {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.35s ease;
+  /* El margen lateral no cambia al abrir o cerrar: si se quitaba de golpe al cerrar, el contenido
+     se ensanchaba durante la animación. El vertical se anima junto con la altura */
+  padding: 0 24px;
+  transition: max-height 0.35s ease, padding 0.35s ease;
 }
 .pcard-drawer__panel.is-open { max-height: 1400px; padding: 16px 24px 4px; }
 .pcard-drawer__toggle {

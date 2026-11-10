@@ -180,17 +180,19 @@ function openStatsModal() {
   document.getElementById('modal-inner').innerHTML = `
     <div class="modal__end">
       <h2 class="modal__end-label" style="font-size:1.3rem;margin-bottom:1.2rem">${t('stats_title')}</h2>
-      <div class="modal__stats">
-        <div class="stat-box"><span class="stat-box__val" id="stat-val-played">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
-        <div class="stat-box"><span class="stat-box__val" id="stat-val-accuracy">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
-        <div class="stat-box"><span class="stat-box__val" id="stat-val-streak">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
-        <div class="stat-box"><span class="stat-box__val" id="stat-val-perfect">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
-      </div>
-      <div class="stats-rank-section">
-        <div id="stats-rank-info" class="stats-rank-info">
-          <p class="rank-empty">${t('ranking_loading')}</p>
+      <div class="end-board">
+        <div class="end-board__rank">
+          <div id="stats-rank-info" class="stats-rank-info">
+            <p class="rank-empty">${t('ranking_loading')}</p>
+          </div>
+          <a href="ranking" class="stats-rank-link" id="stats-rank-link" title="${t('ranking_view_full')}" aria-label="${t('ranking_view_full')}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M9 20V8h6v12M3 20v-7h6M15 20v-4h6v4M2 20h20"/></svg></a>
         </div>
-        <a href="ranking" class="stats-rank-link">${t('ranking_view_full')} →</a>
+        <div class="modal__stats">
+          <div class="stat-box"><span class="stat-box__val" id="stat-val-played">${stats.played}</span><span class="stat-box__lbl">${t('stat_played')}</span></div>
+          <div class="stat-box"><span class="stat-box__val" id="stat-val-accuracy">${pct}%</span><span class="stat-box__lbl">${t('stat_accuracy')}</span></div>
+          <div class="stat-box"><span class="stat-box__val" id="stat-val-streak">${stats.streak}</span><span class="stat-box__lbl">${t('stat_streak_current')}</span></div>
+          <div class="stat-box"><span class="stat-box__val" id="stat-val-perfect">${stats.perfectQuests || 0}</span><span class="stat-box__lbl">${t('stat_max_streak')}</span></div>
+        </div>
       </div>
       <button class="btn btn--new" id="close-stats-btn">${t('btn_close')}</button>
     </div>`;
@@ -206,6 +208,7 @@ async function _loadStatsRankInfo() {
   if (!el) return;
 
   if (!authGetSession() || !authGetProfile()) {
+    document.getElementById('stats-rank-link')?.remove();  // sin cuenta no hay puesto: el aviso ocupa la fila
     el.innerHTML = `<p class="modal__register-cta">${t('register_cta_text')} <button class="modal__register-link" id="stats-register-btn">${t('register_cta_link')}</button></p>`;
     document.getElementById('stats-register-btn')?.addEventListener('click', () => {
       closeModal();
