@@ -735,8 +735,8 @@ function openEndModal(score) {
   openModal();
 
   if (score === 0 && !isArchiveMode && typeof authUnlockAchievement === 'function') {
-    authUnlockAchievement('easter_wasted');
-    authUnlockAchievement('easter_both');
+    // easter_both exige en el servidor tener los otros dos: se pide después, no a la vez
+    authUnlockAchievement('easter_wasted').then(() => authUnlockAchievement('easter_both'));
   }
 
   if (score === 0) {
@@ -829,6 +829,10 @@ function resolveGuess(gi, pickedCv, pickedPos) {
   if (gi + 1 < 3) { colStates[gi + 1].locked = false; _prewarmAnswerAudio(gi + 1); }
 
   saveDayProgress(currentDateStr, colStates);
+  // Logros de tag/pista/compañía en cuanto se acierta, no al terminar: así se sabe qué canción lo ha dado
+  if (correct && !isArchiveMode && currentDateStr !== '__gm__' && typeof checkTagAchievements === 'function') {
+    checkTagAchievements({ date: currentDateStr, results: colStates.map(s => s.correct ? '1' : '0').join('') });
+  }
   if (colStates.every(s => s.solved)) _recordFinishedQuest();
   updateScoreDisplay();
   showScorePopup(correct);
@@ -886,8 +890,8 @@ function _recordFinishedQuest() {
 
 function triggerLineEffect(pos) {
   if (!isArchiveMode && typeof authUnlockAchievement === 'function') {
-    authUnlockAchievement('easter_line');
-    authUnlockAchievement('easter_both');
+    // easter_both exige en el servidor tener los otros dos: se pide después, no a la vez
+    authUnlockAchievement('easter_line').then(() => authUnlockAchievement('easter_both'));
   }
 
   const sfx = new Audio('fx/cash.mp3');

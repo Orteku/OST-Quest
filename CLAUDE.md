@@ -98,6 +98,7 @@ Tags de pista: `lyrics` (letra vocal), `rock`, `electronic`, `retro`, `asian`.
 - Día de juego: de 03:00 UTC a 02:59 UTC (`getGameDay()` en el cliente, `_isOnTime` / `gameDay()` en el worker)
 - La partida se registra al responder la tercera columna (`_recordFinishedQuest` en `game.js`)
 - Logros de tag/pista/compañía (`tag_*`, `track_*`, `dev_*`): los cuenta el navegador (`checkTagAchievements`)
+  en cada acierto de la quest del día, no al terminarla,
   y el worker solo acepta los ids de `auth/src/lib/achievements.js`. Al añadir o cambiar niveles,
   actualizar los dos archivos y las imágenes de `img/achievements/`
 - Un logro sin imagen es provisional: no se muestra ni se concede. La web lo sabe por `img/achievements/manifest.json`

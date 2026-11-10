@@ -709,8 +709,8 @@ async function authUpdateStatsDisplay() {
 
 async function submitScoreToSupabase(dateStr, score, stats, results) {
   if (!_token) return;
-  // Los logros de tag se comprueban ya, sin esperar a que se guarde la puntuación: con los datos
-  // precargados y las columnas de hoy, solo falta pedir el desbloqueo mientras se ve el modal final
+  // Los logros de tag ya se comprueban en cada acierto (game.js); esta vuelta repesca alguno
+  // si aquella falló, sin esperar a que se guarde la puntuación
   checkTagAchievements({ date: dateStr, results });
 
   _pendingScoreSubmit = _apiFetch('/scores', 'POST', { gameDate: dateStr, score, stats, results });
@@ -780,9 +780,16 @@ function _prefetchAchievementData() {
   }).catch(() => {});
 }
 
-// today: { date, results } de la partida recién terminada. Se usan los datos precargados
-// y se añaden las columnas de hoy, que el servidor quizá aún no tiene
-async function checkTagAchievements(today = null) {
+// today: { date, results } de la partida de hoy, terminada o no (las columnas sin responder van a '0').
+// Se usan los datos precargados y se añaden las columnas de hoy, que el servidor quizá aún no tiene.
+// Las comprobaciones van en cola: con dos aciertos seguidos, la segunda ya sabe lo que concedió la primera
+let _achCheckQueue = Promise.resolve();
+
+function checkTagAchievements(today = null) {
+  return _achCheckQueue = _achCheckQueue.then(() => _checkTagAchievements(today)).catch(() => {});
+}
+
+async function _checkTagAchievements(today) {
   if (!_token || typeof ACHIEVEMENTS_DB === 'undefined'
       || typeof loadGamesJson !== 'function' || typeof GAME_DB === 'undefined') return;
   try { localStorage.setItem(_ACH_CHECK_PENDING_KEY, '1'); } catch {}
