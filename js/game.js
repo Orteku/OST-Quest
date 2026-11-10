@@ -120,7 +120,8 @@ function renderColumn(gi, wrapper) {
     <button class="play-btn" aria-label="Reproducir / pausar" ${st.locked ? 'disabled' : ''}>
       ${playIcon}
     </button>
-    <span class="col__track-hint">${hintText}</span>`;
+    <span class="col__track-hint">${hintText}</span>
+    ${playingCol === gi && !isLoading ? '<span class="col__eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' : ''}`;
 
   if (!st.locked) {
     hdr.querySelector('.play-btn').addEventListener('click', () => togglePlay(gi));
@@ -671,6 +672,8 @@ function openEndModal(score) {
              <span class="modal__end-denom">/ 3</span>
            </div>`
       }
+      <div class="modal__end-lights">${colStates.map(s =>
+        `<span class="modal__end-light modal__end-light--${s.correct ? 'hit' : 'miss'}"></span>`).join('')}</div>
       <p class="modal__end-label">${
         score === 3 ? t('end_3') :
         score === 2 ? t('end_2') :

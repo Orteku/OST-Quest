@@ -1008,7 +1008,7 @@ async function initProfilePage() {
     if (cardEl) cardEl.innerHTML = `
       <div class="pcard pcard--guest">
         <p class="pcard__guest-msg">${t('profile_not_logged_in')}</p>
-        <button class="btn" onclick="openAuthModal('signin')">${t('auth_sign_in_btn')}</button>
+        <button class="btn btn--new" onclick="openAuthModal('signin')">${t('auth_sign_in_btn')}</button>
       </div>`;
     if (drawerEl) drawerEl.hidden = true;
     return;
