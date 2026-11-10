@@ -510,10 +510,19 @@
       .add-track-row2 { grid-template-columns: 1fr 65px; }
     }
     /* ── Tabs ──────────────────────────────── */
-    .tab-bar { display: inline-flex; gap: 3px; padding: 3px; border-radius: 10px; background: var(--well-bg); box-shadow: var(--well-shadow); margin-top: 4px; }
-    .tab-btn { background: transparent; color: var(--muted); padding: 6px 18px; border-radius: 7px; font-weight: 650; }
+    /* Pestañas de carpeta: la línea es una ranura tallada (canto oscuro + brillo) y la pestaña activa
+       sobresale con el contorno oscuro y el brillo de arriba, tapando la ranura para unirse a lo de debajo */
+    .tab-bar {
+      display: flex; gap: 4px; margin-top: 4px; padding: 1px 0 0 8px;
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05), inset 0 -2px 0 var(--k-e);
+    }
+    .tab-btn { background: none; border: 0; color: var(--muted); padding: 8px 18px 9px; border-radius: 8px 8px 0 0; font-weight: 650; }
     .tab-btn:hover:not(.active) { color: var(--text); filter: none; }
-    .tab-btn.active { background: var(--ring); color: var(--accent); box-shadow: inset 0 1px 0 var(--k-hl), 0 2px 0 var(--k-e); }
+    .tab-btn.active {
+      background: var(--bg); color: var(--text);
+      box-shadow: inset 0 1px 0 var(--k-hl), 0 -1px 0 var(--k-e), -1px 0 0 var(--k-e), 1px 0 0 var(--k-e);
+    }
+    .tab-btn.active:hover { filter: none; }
     .tab-btn.tab-dirty, .tab-btn.tab-dirty:hover:not(.active) { color: #ffe7a0; }
     .tab-btn.tab-diff::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
     .tab-pane { display: none; }
