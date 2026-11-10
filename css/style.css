@@ -2569,10 +2569,10 @@ body.theme--light .achievements-grid__empty { color: #787888; }
   gap: 22px;
 }
 .pcard__avatar {
-  width: 72px; height: 72px; border-radius: 50%;
+  width: 92px; height: 92px; border-radius: 50%;
   background: #b8e030; color: #0e0e14;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 32px; font-weight: 800;
+  font-size: 40px; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   box-shadow: 0 0 0 3px var(--ring), 0 3px 0 3px var(--ring-edge);
@@ -2580,10 +2580,12 @@ body.theme--light .achievements-grid__empty { color: #787888; }
 .pcard__body { flex: 1; min-width: 0; }
 .pcard__username {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 32px; font-weight: 800;
-  color: #ddd9cf; margin-bottom: 6px; line-height: 1;
+  font-size: 50px; font-weight: 800;
+  color: #ddd9cf; line-height: 1;
 }
-/* Mismo formato que el menú de usuario: nombre y puesto a la izquierda, estadísticas en dos columnas a la derecha */
+/* Como el menú de usuario, pero con más sitio: nombre grande a la izquierda (con los últimos trofeos)
+   y a la derecha el puesto encima de las estadísticas en dos columnas */
+.pcard__side { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
 .pcard__rank {
   font-family: 'Barlow Condensed', sans-serif; line-height: 1.1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -2593,12 +2595,12 @@ body.theme--light .achievements-grid__empty { color: #787888; }
 .pcard__rank-none { font-family: 'Barlow', sans-serif; font-size: 13px; color: #7a7a88; }
 .pcard__stats {
   display: grid; grid-template-columns: auto auto;
-  column-gap: 28px; row-gap: 6px; flex-shrink: 0;
+  column-gap: 26px; row-gap: 6px;
 }
 .pcard__stat { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; }
 .pcard__stat strong {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 28px; font-weight: 700; line-height: 1; color: #ddd9cf;
+  font-size: 26px; font-weight: 700; line-height: 1; color: #ddd9cf;
 }
 .pcard__stat span { font-size: 14px; color: #8a8a94; }
 .pcard__avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
@@ -2699,11 +2701,12 @@ body.theme--light .ach-sheet__avatar-btn { background: #4a6c10; color: #fff; --k
 @media (max-width: 520px) {
   /* Avatar y nombre arriba; las estadísticas bajan a una fila propia */
   .pcard { flex-wrap: wrap; gap: 14px 16px; padding: 20px 18px; }
-  .pcard__avatar { width: 56px; height: 56px; font-size: 24px; }
-  .pcard__username { font-size: 24px; }
+  .pcard__avatar { width: 64px; height: 64px; font-size: 28px; }
+  .pcard__username { font-size: 34px; }
+  .pcard__side { width: 100%; gap: 8px; }
   .pcard__rank-pos { font-size: 24px; }
   .pcard__rank-pts { font-size: 19px; }
-  .pcard__stats { width: 100%; column-gap: 20px; }
+  .pcard__stats { column-gap: 16px; }
   .pcard__stat strong { font-size: 22px; }
   .pcard__stat span { font-size: 13px; }
 }

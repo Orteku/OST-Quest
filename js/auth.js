@@ -1010,14 +1010,16 @@ function _renderProfileCardHTML(unlocked = []) {
         : initial}</div>
       <div class="pcard__body">
         <div class="pcard__username">${_esc(p.username || '')}${_gmBookHTML()}</div>
-        <div class="pcard__rank">${_rankLineHTML(_pcardRank, 'pcard')}</div>
         ${recentHtml}
       </div>
-      <div class="pcard__stats">
-        <div class="pcard__stat"><strong>${played}</strong><span>${t('drop_stat_played')}</span></div>
-        <div class="pcard__stat"><strong>${perfect}</strong><span>${t('drop_stat_perfect')}</span></div>
-        <div class="pcard__stat"><strong>${accuracy}%</strong><span>${t('stat_accuracy')}</span></div>
-        <div class="pcard__stat"><strong>${streak}</strong><span>${t('drop_stat_streak')}</span></div>
+      <div class="pcard__side">
+        <div class="pcard__rank">${_rankLineHTML(_pcardRank, 'pcard')}</div>
+        <div class="pcard__stats">
+          <div class="pcard__stat"><strong>${played}</strong><span>${t('stat_played')}</span></div>
+          <div class="pcard__stat"><strong>${perfect}</strong><span>${t('stat_max_streak')}</span></div>
+          <div class="pcard__stat"><strong>${accuracy}%</strong><span>${t('stat_accuracy')}</span></div>
+          <div class="pcard__stat"><strong>${streak}</strong><span>${t('stat_streak_current')}</span></div>
+        </div>
       </div>
     </div>
   `;
