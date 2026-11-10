@@ -42,9 +42,10 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(22, 23, 26, 0.96);
-      box-shadow: 0 3px 0 var(--edge-dark);
-      padding: 14px 16px;
+      /* Franja de arriba más clara; bajo las pestañas, las herramientas llevan el fondo de la página */
+      background: #1e1f25;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px 0;
       backdrop-filter: blur(8px);
     }
     /* El borde transparente mantiene el tamaño y deja ver el color de foco y de validación */
@@ -468,7 +469,7 @@
     .search-well > input:focus { border: 0; }
     #searchClear { padding: 8px 7px; color: var(--muted); }
     #searchField { width: auto; min-width: 0; padding: 8px 6px; font-size: 13px; color: var(--muted); border-left: 1px solid var(--line); border-radius: 0 8px 8px 0; }
-    .tab-tools { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .tab-tools { display: none; flex-direction: column; gap: 8px; margin: 0 -16px; padding: 12px 16px 14px; background: var(--bg); }
     .tab-tools.active { display: flex; }
     .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .tools-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -520,7 +521,7 @@
     .tab-btn:hover:not(.active) { color: var(--text); filter: none; }
     .tab-btn.active {
       background: var(--bg); color: var(--text);
-      box-shadow: inset 0 1px 0 var(--k-hl), 0 -1px 0 var(--k-e), -1px 0 0 var(--k-e), 1px 0 0 var(--k-e);
+      box-shadow: inset 0 2px 0 var(--accent), 0 -1px 0 var(--k-e), -1px 0 0 var(--k-e), 1px 0 0 var(--k-e);
     }
     .tab-btn.active:hover { filter: none; }
     .tab-btn.tab-dirty, .tab-btn.tab-dirty:hover:not(.active) { color: #ffe7a0; }
