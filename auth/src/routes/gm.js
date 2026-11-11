@@ -123,3 +123,40 @@ export async function handleGmSaveSpecials(request, env, db) {
   await db.saveEditorSpecials({ deleteIds, update, insert: insert.map(({ id, ...row }) => row) });
   return json(await db.getEditorSpecials(), 200, request);
 }
+
+// POST /gm/link-status  { urls: [url] }  →  [{ url, status } | { url, error: 'timeout' | 'network' | 'invalid' }]
+// "Comprobar enlaces" del bestiario: el navegador sabe si una pista suena, pero no ve el código HTTP de
+// archive.org ni de KHInsider (CORS). Solo pregunta aquí por las que han fallado, para explicar por qué.
+const LINK_BATCH   = 8;      // cada URL puede gastar HEAD + GET y redirecciones: lejos del límite de subpeticiones
+const LINK_TIMEOUT = 10000;
+const LINK_HEADERS = { 'User-Agent': 'Mozilla/5.0 (compatible; OestiQuestChecker/1.0)' };
+
+async function linkStatus(url) {
+  let u;
+  try { u = new URL(url); } catch { return { url, error: 'invalid' }; }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return { url, error: 'invalid' };
+  const attempt = async (method, extra = {}) => {
+    const res = await fetch(u.href, { method, redirect: 'follow', headers: { ...LINK_HEADERS, ...extra }, signal: AbortSignal.timeout(LINK_TIMEOUT) });
+    res.body?.cancel();
+    return res.status;
+  };
+  try {
+    let status = await attempt('HEAD').catch(() => null);
+    // Hay servidores que rechazan HEAD pero sirven GET: se reintenta pidiendo un solo byte
+    if (status === null || [403, 405, 501].includes(status)) status = await attempt('GET', { Range: 'bytes=0-0' });
+    return { url, status };
+  } catch (e) {
+    return { url, error: e?.name === 'TimeoutError' ? 'timeout' : 'network' };
+  }
+}
+
+export async function handleGmLinkStatus(request, env, db) {
+  const [, err] = await requireGm(request, env, db);
+  if (err) return err;
+  const body = await readBody(request);
+  const urls = body?.urls;
+  if (!Array.isArray(urls) || !urls.length || urls.length > LINK_BATCH || !urls.every(u => typeof u === 'string' && u.length <= 2000)) {
+    return json({ error: 'invalid_urls' }, 400, request);
+  }
+  return json(await Promise.all(urls.map(linkStatus)), 200, request);
+}

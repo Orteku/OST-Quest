@@ -6,7 +6,7 @@ import { handleDiscordStart, handleDiscordCallback } from './routes/discord.js';
 import { handleTwitchStart, handleTwitchCallback } from './routes/twitch.js';
 import { handleSteamStart, handleSteamCallback } from './routes/steam.js';
 import { handleGetMe, handleSetUsername, handleUnlink, handleDeleteAccount, handleGetAchievements, handleUnlockAchievement, handleSetAvatar, handleBackfillAchievements, handleGetPublicPlayer, handleLinkTicket } from './routes/user.js';
-import { handleGmLogin, handleGmGetGames, handleGmSaveGames, handleGmGetTranslations, handleGmSaveTranslations, handleGmGetSpecials, handleGmSaveSpecials } from './routes/gm.js';
+import { handleGmLogin, handleGmGetGames, handleGmSaveGames, handleGmGetTranslations, handleGmSaveTranslations, handleGmGetSpecials, handleGmSaveSpecials, handleGmLinkStatus } from './routes/gm.js';
 import { handleSubmitScore, handleMigrateScores, handleGetStats, handleGetResults, handleFillResults, handleGetHistory } from './routes/scores.js';
 
 export default {
@@ -70,6 +70,7 @@ export default {
       if (path === '/gm/translations'   && method === 'POST') return handleGmSaveTranslations(request, env, db);
       if (path === '/gm/specials'       && method === 'GET')  return handleGmGetSpecials(request, env, db);
       if (path === '/gm/specials'       && method === 'POST') return handleGmSaveSpecials(request, env, db);
+      if (path === '/gm/link-status'    && method === 'POST') return handleGmLinkStatus(request, env, db);
 
       // ── Datos públicos (tarjeta de jugador del ranking) ─────────────────
       const playerMatch = method === 'GET' && path.match(/^\/public\/player\/([a-zA-Z0-9_]{1,40})$/);

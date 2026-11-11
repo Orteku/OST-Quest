@@ -196,6 +196,7 @@
     .link-note { display: flex; flex-direction: column; gap: 2px; font-size: 12px; margin: 2px 0 4px; }
     .link-note:empty { display: none; }
     .link-bad { color: var(--danger); }
+    .link-code { display: inline-block; padding: 0 5px; margin-right: 2px; border-radius: 4px; background: rgba(255,102,102,0.14); font-family: ui-monospace, monospace; font-size: 11px; }
     .link-warn { color: #ffe7a0; }
     .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--panel); box-shadow:var(--panel-shadow); border-radius:10px; font-size:13px; }
     #paginationBar2 { margin-top: 16px; }
@@ -1701,16 +1702,64 @@
       run.aborts.add(abort);
       a.preload = 'metadata';
       a.onloadedmetadata = () => finish({ broken: false });
-      a.onerror = () => {
-        const code = a.error?.code;
-        finish({ broken: true, reason:
-          code === 2 ? 'error de red' :
-          code === 3 ? 'archivo dañado (no se puede decodificar)' :
-          code === 4 ? 'no se puede reproducir (enlace caído o formato no soportado)' : 'error al cargar' });
-      };
-      timer = setTimeout(() => finish({ broken: true, reason: `no responde (más de ${LC_TIMEOUT / 1000} s)` }), LC_TIMEOUT);
+      a.onerror = () => finish({ broken: true, kind: 'media', media: a.error?.code });
+      timer = setTimeout(() => finish({ broken: true, kind: 'timeout' }), LC_TIMEOUT);
       a.src = url;
     });
+  }
+
+  // El audio no dice el código HTTP: para las pistas rotas se le pregunta al worker (POST /gm/link-status),
+  // que no tiene el problema de CORS. Solo con sesión GM; sin ella se explica con lo que sabe el navegador.
+  const HTTP_TEXT = {
+    400: 'Petición incorrecta: la URL está mal formada',
+    401: 'Requiere autenticación: el archivo no es público',
+    403: 'Prohibido: el servidor niega el acceso (archivo privado o bloqueo de enlaces externos)',
+    404: 'No encontrado: el archivo ya no existe o la URL está mal',
+    410: 'Eliminado: el archivo se borró definitivamente',
+    429: 'Demasiadas peticiones: el servidor está limitando; volver a probar más tarde',
+    451: 'Bloqueado por motivos legales (retirado por copyright)',
+    500: 'Error interno del servidor',
+    502: 'Bad gateway: falla un servidor intermedio',
+    503: 'Servicio no disponible: servidor caído o saturado (en archive.org, también si el item no existe o está retirado)',
+    504: 'Gateway timeout: un servidor intermedio no responde',
+  };
+  const MEDIA_TEXT = {
+    2: 'Error de red al descargar el audio',
+    3: 'Archivo dañado: el navegador no puede decodificarlo',
+    4: 'El navegador no puede reproducirlo: enlace caído o formato no soportado',
+  };
+  // → { code: etiqueta corta (404, Timeout…), text: qué significa }
+  function failureInfo(r) {
+    const h = r.http, secs = LC_TIMEOUT / 1000;
+    if (h?.status >= 400) return { code: String(h.status),
+      text: HTTP_TEXT[h.status] || (h.status >= 500 ? 'Error del servidor' : 'Error de la petición') };
+    if (h?.status) return r.kind === 'timeout'
+      ? { code: 'Timeout', text: `No cargó en ${secs} s, aunque el servidor responde (${h.status}): puede ser lentitud puntual, volver a probar` }
+      : { code: 'Formato', text: `El servidor responde (${h.status}) pero el navegador no puede reproducirlo: formato no soportado o archivo dañado` };
+    if (h?.error === 'timeout') return { code: 'Timeout', text: `El servidor no responde (ni en ${secs} s al navegador ni al worker)` };
+    if (h?.error === 'network') return { code: 'Sin conexión', text: 'No se puede conectar: el dominio no existe o el servidor está caído' };
+    if (h?.error === 'invalid') return { code: 'URL', text: 'La URL no es válida' };
+    const hint = ' (entra con la cuenta GM para ver el código HTTP)';
+    return r.kind === 'timeout'
+      ? { code: 'Timeout', text: `No responde en ${secs} s` + hint }
+      : { code: 'Error', text: (MEDIA_TEXT[r.media] || 'Error al cargar el audio') + hint };
+  }
+
+  async function fetchHttpCodes(urls, run, onProgress) {
+    if (!localStorage.getItem(GM_TOKEN_KEY)) return;
+    const batches = [];
+    for (let i = 0; i < urls.length; i += 8) batches.push(urls.slice(i, i + 8));
+    let done = 0;
+    const worker = async () => {
+      while (!run.cancelled && batches.length) {
+        const batch = batches.shift();
+        const res = await gmApi('/gm/link-status', { urls: batch });
+        for (const { url, ...http } of res) { const r = _linkResults.get(url); if (r) r.http = http; }
+        onProgress(done += batch.length);
+      }
+    };
+    try { await worker(); }                            // un lote cada vez, para no cargar a los servidores
+    catch { /* sin sesión o worker sin la ruta: se queda con la explicación del navegador */ }
   }
 
   // Avisos de formato (los mismos que check-links.js): no cuentan como error, pero conviene pasarlos a mp3
@@ -1754,7 +1803,7 @@
     const r = url && _linkResults.get(url);
     if (!r || (!r.broken && !r.warn)) return `<div class="link-note" data-linknote="${ti}"></div>`;
     return `<div class="link-note" data-linknote="${ti}">` +
-      (r.broken ? `<span class="link-bad">✕ No funciona: ${escapeHtml(r.reason)}</span>` : '') +
+      (r.broken ? (f => `<span class="link-bad">✕ <b class="link-code">${escapeHtml(f.code)}</b> ${escapeHtml(f.text)}</span>`)(failureInfo(r)) : '') +
       (r.warn ? `<span class="link-warn">⚠ ${escapeHtml(r.warn)}</span>` : '') + `</div>`;
   }
 
@@ -1831,13 +1880,26 @@
     };
     await Promise.all(Array.from({ length: Math.min(LC_PARALLEL, urls.length) }, worker));
 
+    const brokenUrls = urls.filter(u => _linkResults.get(u)?.broken);
+    if (brokenUrls.length && !run.cancelled) {
+      $("lcFill").style.width = '0%';
+      await fetchHttpCodes(brokenUrls, run, n => {
+        $("lcFill").style.width = (n / brokenUrls.length * 100) + '%';
+        $("lcText").textContent = `Consultando el código de error… ${n} / ${brokenUrls.length}`;
+      });
+    }
+    // Desglose de rotos por código: "3 × 404, 1 × Timeout"
+    const byCode = {};
+    for (const u of brokenUrls) { const c = failureInfo(_linkResults.get(u)).code; byCode[c] = (byCode[c] || 0) + 1; }
+    const breakdown = Object.entries(byCode).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${n} × ${c}`).join(', ');
+
     _lcRun = null;
     $("linkCheck").disabled = false;
     $("linkCheck").textContent = 'Comprobar enlaces';
     $("linkCheckBar").classList.remove('running');
     if ($("linkCheckBar").hidden) return;               // cerrado durante la comprobación
     $("lcText").textContent = (run.cancelled ? `Cancelado: ${done} de ${urls.length} enlaces comprobados` : `${urls.length} enlaces comprobados`) +
-      ` · ${broken} rotos · ${warns} avisos`;
+      ` · ${broken} rotos${breakdown ? ` (${breakdown})` : ''} · ${warns} avisos`;
     setLinkFilter(broken + warns ? (broken ? 'issues' : 'warn') : null);
   }
 
