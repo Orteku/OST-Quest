@@ -707,7 +707,8 @@ body.theme--light .col__eq i { background: #4a6c10; }
 }
 .tutorial-steps li:nth-child(3) .tutorial-step__icon {
   color: #ffc400;
-  background: rgba(255, 196, 0, 0.12);
+  background: rgba(255, 196, 0, 0.1);
+  box-shadow: 0 0 10px rgba(255, 196, 0, 0.35), inset 0 0 6px rgba(255, 196, 0, 0.08);
 }
 
 .tutorial-steps strong,
@@ -751,11 +752,6 @@ body.theme--light .col__eq i { background: #4a6c10; }
 .tutorial-btn-item .tutorial-step__icon {
   color: #a0a090;
   background: rgba(255,255,255,0.05);
-}
-.tutorial-btn-item:nth-child(3) .tutorial-step__icon {
-  color: #ffc400;
-  background: rgba(255, 196, 0, 0.1);
-  box-shadow: 0 0 10px rgba(255, 196, 0, 0.35), inset 0 0 6px rgba(255, 196, 0, 0.08);
 }
 
 /* Custom audio player */
@@ -1067,6 +1063,8 @@ body.theme--light .how-to-play__body p { color: #999; }
   margin: 3px 0;
   line-height: 1.4;
 }
+/* Cada tramo entre puntos va entero: las líneas se parten por los separadores */
+.site-footer .fseg { white-space: nowrap; }
 .site-footer a { color: #7a7a88; text-decoration: underline; text-underline-offset: 2px; }
 .site-footer a:hover { color: #b8e030; }
 body.theme--light .site-footer a { color: #9898a8; }
@@ -1212,8 +1210,20 @@ body.theme--light .site-footer .footer-social__btn { color: #fff; }
   .columns-wrapper { gap: 8px; }
   .covers-grid { gap: 5px; }
 }
-@media (hover: none) and (pointer: coarse) {
-  .vol-control { display: none; }
+/* Volumen oculto donde el navegador no deja cambiarlo desde la página (iOS): lo detecta header.js */
+body.no-volume .vol-control { display: none; }
+
+/* Móvil: el idioma pasa a la derecha junto al tema, solo con la bandera */
+@media (max-width: 640px) {
+  .settings-panel .lang-dropdown { position: fixed; bottom: 20px; right: 68px; }
+  .settings-panel .lang-dropdown__btn { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+  .settings-panel #lang-dropdown-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .settings-panel .lang-dropdown__chevron { display: none; }
+  .settings-panel .lang-dropdown__btn .lang-flag-svg { width: 20px; height: 14px; }
+  .settings-panel .lang-dropdown__menu { left: auto; right: 0; min-width: 0; }
 }
 
 
@@ -1595,7 +1605,7 @@ body.theme--light .tutorial-btn-item p { color: #525060; }
 body.theme--light .tutorial-step__icon { background: rgba(0,0,0,0.07); color: #6a6878; }
 body.theme--light .tutorial-steps li:nth-child(1) .tutorial-step__icon { color: #4a6c10; background: rgba(74,108,16,0.12); }
 body.theme--light .tutorial-btn-item .tutorial-step__icon { color: #787888; background: rgba(0,0,0,0.07); }
-body.theme--light .tutorial-btn-item:nth-child(3) .tutorial-step__icon { color: #c89000; background: rgba(200,144,0,0.1); box-shadow: 0 0 8px rgba(200,144,0,0.3), inset 0 0 4px rgba(200,144,0,0.08); }
+body.theme--light .tutorial-steps li:nth-child(3) .tutorial-step__icon { color: #c89000; background: rgba(200,144,0,0.1); box-shadow: 0 0 8px rgba(200,144,0,0.3), inset 0 0 4px rgba(200,144,0,0.08); }
 body.theme--light .tutorial-divider { border-top-color: rgba(0,0,0,0.1); }
 body.theme--light .tutorial-panel .tutorial-btns { border-left-color: rgba(0,0,0,0.08); }
 

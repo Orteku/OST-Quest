@@ -88,8 +88,8 @@ function _siteFooterHTML() {
         Support me on Ko-fi
       </a>
     </div>
-    <p data-i18n-html="footer_credit_legal">Música provista por <a href="https://archive.org" target="_blank" rel="noopener">Archive.org</a> y <a href="https://downloads.khinsider.com" target="_blank" rel="noopener">KHInsider</a> · Desarrollado por Orteku en colaboración con Vyrka · <a href="privacy">Privacidad</a> · <a href="terms">Términos</a></p>
-    <p data-i18n-html="footer_soundtracks_line">¿Tienes alguna sugerencia? Consulta la <a href="soundtracks">lista de canciones</a> · <a href="about">Sobre el proyecto</a> · <a href="ranking">Ranking</a> · Contacto: <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a></p>`;
+    <p data-i18n-html="footer_line1"><span class="fseg">Desarrollado por Orteku en colaboración con Vyrka</span> · <span class="fseg"><a href="about">Sobre el proyecto</a></span> · <span class="fseg">Contacto: <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a></span></p>
+    <p data-i18n-html="footer_line2"><span class="fseg"><a href="soundtracks">Lista de canciones</a></span> · <span class="fseg">Música provista por <a href="https://archive.org" target="_blank" rel="noopener">Archive.org</a> y <a href="https://downloads.khinsider.com" target="_blank" rel="noopener">KHInsider</a></span> · <span class="fseg"><a href="privacy">Privacidad</a></span> · <span class="fseg"><a href="terms">Términos</a></span></p>`;
 }
 
 // Se ejecuta al cargar el script (va al final del <body>, el DOM ya existe) y antes de aplicar
@@ -101,6 +101,12 @@ function _siteFooterHTML() {
 
   const controls = document.getElementById('site-controls');
   if (controls) controls.outerHTML = _siteControlsHTML();
+  // iOS ignora audio.volume desde la página (solo valen los botones físicos): ahí sobra el control
+  try {
+    const probe = new Audio();
+    probe.volume = 0.5;
+    if (probe.volume !== 0.5) document.body.classList.add('no-volume');
+  } catch (_) {}
 
   // La etiqueta <footer> se queda en cada página (con sus márgenes propios); aquí solo se rellena
   const footer = document.getElementById('site-footer');

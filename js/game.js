@@ -444,8 +444,8 @@ function openTutorialModal() {
           <div><strong>${t('tutorial_guess_h')}</strong><p>${t('tutorial_guess_b')}</p></div>
         </li>
         <li>
-          <span class="tutorial-step__icon">★</span>
-          <div><strong>${t('tutorial_daily_h')}</strong><p>${t('tutorial_daily_b')}</p></div>
+          <span class="tutorial-step__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><path d="M8 21h8M12 17v4M17 4h3v3c0 2.8-2.2 5-5 5M7 4H4v3c0 2.8 2.2 5 5 5"/><path d="M7 4h10v6a5 5 0 01-10 0V4z"/></svg></span>
+          <div><strong>${t('tutorial_ach_h')}</strong><p>${t('tutorial_ach_b')}</p></div>
         </li>
       </ul>
       <hr class="tutorial-divider">
@@ -462,13 +462,11 @@ function openTutorialModal() {
           <div><strong>${t('tutorial_archive_h')}</strong><p>${t('tutorial_archive_b')}</p></div>
         </div>
         <div class="tutorial-btn-item">
-          <span class="tutorial-step__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
-              <line x1="18" y1="20" x2="18" y2="10"/>
-              <line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-          </span>
+          <span class="tutorial-step__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" width="18" height="18"><path d="M9 20V8h6v12M3 20v-7h6M15 20v-4h6v4M2 20h20"/></svg></span>
+          <div><strong>${t('tutorial_ranking_h')}</strong><p>${t('tutorial_ranking_b')}</p></div>
+        </div>
+        <div class="tutorial-btn-item">
+          <span class="tutorial-step__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
           <div><strong>${t('tutorial_stats_h')}</strong><p>${t('tutorial_stats_b')}</p></div>
         </div>
       </div>
@@ -1304,6 +1302,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (volBtn) {
     volBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      // En pantallas táctiles no hay hover: el toque abre/cierra la barra (se silencia bajándola a 0)
+      if (window.matchMedia('(hover: none)').matches) {
+        volBtn.closest('.vol-control')?.classList.toggle('open');
+        return;
+      }
       const current = parseInt(volSlider.value);
       if (current === 0) {
         volSlider.value = prevVol;
@@ -1315,6 +1318,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         setGameVolume(0);
         updateVolIcon(0);
       }
+    });
+    // Tocar fuera cierra la barra abierta en táctil
+    document.addEventListener('click', (e) => {
+      const ctl = volBtn.closest('.vol-control');
+      if (ctl && !ctl.contains(e.target)) ctl.classList.remove('open');
     });
   }
 
