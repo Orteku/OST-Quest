@@ -27,6 +27,9 @@
       --modal-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 5px 0 #0a0a0c, 0 24px 44px -14px rgba(0,0,0,0.8);
       --well-bg: #0f1012;
       --well-shadow: inset 0 2px 3px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05);
+      /* Hueco con el foco: se aclara y se ilumina por dentro con el acento (sin línea de borde) */
+      --well-bg-focus: #14161a;
+      --well-shadow-focus: inset 0 2px 3px rgba(0,0,0,0.6), inset 0 0 10px rgba(40,215,232,0.12), inset 0 -2px 0 rgba(40,215,232,0.55), 0 1px 0 rgba(255,255,255,0.05);
       --ring: #2a2b33;
       --ring-edge: #060607;
     }
@@ -58,7 +61,7 @@
       padding: 8px 10px;
       font: inherit;
     }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    input:focus, select:focus, textarea:focus { outline: none; background-color: var(--well-bg-focus); box-shadow: var(--well-shadow-focus); }
     button {
       cursor: pointer;
       font-weight: 650;
@@ -71,10 +74,12 @@
       transform: translateY(2px);
       box-shadow: inset 0 1px 0 var(--k-hl), 0 0 0 var(--k-e);
     }
-    button.primary { background: var(--accent); color: #031013; --k-e: #0e5f67; --k-hl: rgba(255,255,255,0.35); }
+    button.primary { background: #1aa3b2; color: #021215; --k-e: #0a4f57; --k-hl: rgba(255,255,255,0.28); }
+    /* Descargas principales: verde medio oscuro (el cian queda para Supabase: cargar y guardar) */
+    button.download { background: #1f6e3d; color: #e3f6e9; --k-e: #0c331b; --k-hl: rgba(255,255,255,0.16); }
     button.danger  { background: #4a2128; color: #ffd9df; --k-e: #1f0c10; }
     button.success { background: #27a048; color: #fff; --k-e: #11501f; --k-hl: rgba(255,255,255,0.2); }
-    button.primary:hover:not(:disabled), button.success:hover:not(:disabled), button.danger:hover:not(:disabled) { filter: brightness(1.1); }
+    button.primary:hover:not(:disabled), button.download:hover:not(:disabled), button.success:hover:not(:disabled), button.danger:hover:not(:disabled) { filter: brightness(1.1); }
     /* Botones planos: van dentro de un campo, son pestañas o son iconos sueltos */
     .date-pick-btn, #gpClose, #searchClear { box-shadow: none; }
     :is(.tab-btn, .date-pick-btn, #gpClose, #searchClear):active { transform: none; }
@@ -158,14 +163,16 @@
       max-width: 1700px;
       margin: 0 auto;
     }
+    /* "Sin guardar": piloto encendido en ámbar, como los tags (hueco + led, sin borde) */
     .pill {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 6px 10px;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 5px 12px 5px 10px; border-radius: 999px; font-size: 13px; white-space: nowrap;
+      background: rgba(0,0,0,0.22); box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03);
       color: var(--muted);
     }
-    .pill.warn { border-color: #ffd166; color: #ffe7a0; }
+    .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; flex: none; background: #34353e; box-shadow: inset 0 1px 1px rgba(0,0,0,0.6); }
+    .pill.warn { color: #ffd166; background: rgba(255,209,102,0.08); text-shadow: 0 0 8px rgba(255,209,102,0.4); }
+    .pill.warn::before { background: #ffd166; box-shadow: 0 0 6px #ffd166, 0 0 2px #fff inset; }
     .search-stats {
       font-size: 13px;
       color: var(--muted);
@@ -173,6 +180,22 @@
       align-self: center;
       padding: 0 2px;
     }
+    /* Comprobar enlaces */
+    .lc-btn { margin-left: auto; }
+    .link-check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 12px; margin-bottom: 8px;
+      background: var(--panel); box-shadow: var(--panel-shadow); border-radius: 10px; font-size: 13px; }
+    .link-check[hidden] { display: none; }
+    .lc-progress { flex: 1 1 160px; max-width: 260px; height: 10px; border-radius: 999px; background: var(--well-bg); box-shadow: var(--well-shadow); overflow: hidden; }
+    .lc-fill { height: 100%; width: 0; border-radius: inherit; background: var(--accent); box-shadow: 0 0 8px rgba(40,215,232,0.5); transition: width .2s; }
+    .link-check:not(.running) .lc-progress, .link-check:not(.running) #lcCancel { display: none; }
+    .lc-text { color: var(--muted); }
+    .lc-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+    .lc-filters:empty { display: none; }
+    .lc-filters button.active { transform: translateY(2px); box-shadow: inset 0 1px 0 var(--k-hl), 0 0 0 var(--k-e); background: #2c3a3e; color: var(--accent); }
+    .link-note { display: flex; flex-direction: column; gap: 2px; font-size: 12px; margin: 2px 0 4px; }
+    .link-note:empty { display: none; }
+    .link-bad { color: var(--danger); }
+    .link-warn { color: #ffe7a0; }
     .pagination-bar { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--panel); box-shadow:var(--panel-shadow); border-radius:10px; font-size:13px; }
     #paginationBar2 { margin-top: 16px; }
     .pagination-bar button { padding:4px 10px; font-size:12px; }
@@ -479,10 +502,10 @@
       background: var(--well-bg); box-shadow: var(--well-shadow);
       border: 1px solid transparent; border-radius: 8px;
     }
-    .search-well:focus-within { border-color: var(--accent); }
+    .search-well:focus-within { background: var(--well-bg-focus); box-shadow: var(--well-shadow-focus); }
     .search-well > * { background: transparent; box-shadow: none; border: 0; }
     .search-well > input { flex: 1; min-width: 0; }
-    .search-well > input:focus { border: 0; }
+    .search-well > input:focus, .search-well > select:focus { border: 0; background: transparent; box-shadow: none; }
     #searchClear { padding: 8px 7px; color: var(--muted); }
     #searchField { width: auto; min-width: 0; padding: 8px 6px; font-size: 13px; color: var(--muted); border-left: 1px solid var(--line); border-radius: 0 8px 8px 0; }
     .tab-tools { display: none; flex-direction: column; gap: 8px; margin: 0 -16px; padding: 12px 16px 14px; background: var(--bg); }
@@ -673,11 +696,11 @@
     <div class="tools-row">
       <div class="tools-group save-group needs-db">
         <div class="btn-group">
-          <button id="downloadJs" class="primary">Descargar JS</button>
+          <button id="downloadJs" class="download">Descargar JS</button>
           <button id="downloadJson">JSON</button>
           <button id="downloadCsv">CSV</button>
         </div>
-        <span class="save-wrap"><span class="gm-gate"><button id="dbSave" class="gm-only">Guardar en Supabase</button></span><span id="dbPending" class="pending-summary"></span></span>
+        <span class="save-wrap"><span class="gm-gate"><button id="dbSave" class="primary gm-only">Guardar en Supabase</button></span><span id="dbPending" class="pending-summary"></span></span>
         <span id="dirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       </div>
       <div class="tools-group load-group">
@@ -711,8 +734,8 @@
   <div class="tab-tools" data-for="traducciones">
     <div class="tools-row">
       <div class="tools-group save-group needs-trans">
-        <button id="transDownload">Descargar JSON</button>
-        <span class="save-wrap"><span class="gm-gate"><button id="transSave" class="gm-only">Guardar en Supabase</button></span><span id="transPending" class="pending-summary"></span></span>
+        <button id="transDownload" class="download">Descargar JSON</button>
+        <span class="save-wrap"><span class="gm-gate"><button id="transSave" class="primary gm-only">Guardar en Supabase</button></span><span id="transPending" class="pending-summary"></span></span>
         <span id="transDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       </div>
       <div class="tools-group load-group">
@@ -730,8 +753,8 @@
   <div class="tab-tools" data-for="especiales">
     <div class="tools-row">
       <div class="tools-group save-group needs-specials">
-        <button id="specialsDownload">Descargar specials.js</button>
-        <span class="save-wrap"><span class="gm-gate"><button id="specialsSave" class="gm-only">Guardar en Supabase</button></span><span id="specialsPending" class="pending-summary"></span></span>
+        <button id="specialsDownload" class="download">Descargar specials.js</button>
+        <span class="save-wrap"><span class="gm-gate"><button id="specialsSave" class="primary gm-only">Guardar en Supabase</button></span><span id="specialsPending" class="pending-summary"></span></span>
         <span id="specialsDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
       </div>
       <div class="tools-group load-group">
@@ -763,6 +786,14 @@
       </select>
     </div>
     <span id="searchStats" class="search-stats"></span>
+    <button id="linkCheck" class="lc-btn" title="Prueba todas las pistas de la base cargada y marca las que no funcionan o tienen un formato poco recomendable">Comprobar enlaces</button>
+  </div>
+  <div id="linkCheckBar" class="link-check needs-db" hidden>
+    <div class="lc-progress"><div id="lcFill" class="lc-fill"></div></div>
+    <span id="lcText" class="lc-text"></span>
+    <div id="lcFilters" class="lc-filters"></div>
+    <button id="lcCancel" class="small">Cancelar</button>
+    <button id="lcClose" class="small" title="Cerrar y quitar las marcas">✕</button>
   </div>
   <div id="paginationBar" class="pagination-bar" style="display:none">
     <button id="firstPage"  class="pg-icon" title="Primera página" disabled>«</button>
@@ -979,7 +1010,7 @@
           <label><input class="tags-input" data-field="trackTags" data-track="${ti}" value="${escapeHtml((track.tags || []).join(', '))}" placeholder="tags..." /></label>
           <div class="tag-suggestions">${trackTagSuggestionsHtml(track.tags || [])}</div>
         </div>`;
-      return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${removeBtn}${titleLabel}${srcRow}${trackTagsRow}</div>`;
+      return `<div class="track-block${isFirst ? '' : ' track-block--extra'}">${removeBtn}${titleLabel}${srcRow}${linkNoteHtml(track.mp3Url, ti)}${trackTagsRow}</div>`;
     }).join("");
     return rows + `<button class="small" data-action="addTrack" style="margin-top:6px">+</button>`;
   }
@@ -1207,7 +1238,7 @@
     const total   = db.length;
     const q       = $("search").value.trim();
     const visible = _filteredIndices !== null ? _filteredIndices.length : total;
-    $("searchStats").textContent = total === 0 ? "" : q ? `${visible} de ${total}` : `${total} entradas`;
+    $("searchStats").textContent = total === 0 ? "" : q || _linkFilter ? `${visible} de ${total}` : `${total} entradas`;
     document.body.classList.toggle("has-db", total > 0);
   }
 
@@ -1267,6 +1298,8 @@
   let _page = 0;
   let _filteredIndices = null; // null = sin filtro (todos)
   let _searchIndex = [];       // searchTexts pre-calculado por índice de db
+  const _linkResults = new Map(); // Comprobar enlaces: url → { broken, reason?, warn? }
+  let _linkFilter = null;         // null | 'issues' | 'broken' | 'warn'
 
   function updatePaginationBar(totalVisible, totalPages) {
     const display  = db.length === 0 ? 'none' : '';
@@ -1342,6 +1375,8 @@
         input.value  = track.mp3Url;
         const loadBtn = row.querySelector(`button[data-action="loadTrack"][data-track="${trackIdx}"]`);
         if (loadBtn) { loadBtn.textContent = "▶ Cargar"; loadBtn.disabled = false; }
+        const noteEl = row.querySelector(`[data-linknote="${trackIdx}"]`);
+        if (noteEl) noteEl.outerHTML = linkNoteHtml(track.mp3Url, trackIdx);
         const mp3LinkEl = row.querySelector(`[data-mp3link="${trackIdx}"]`);
         if (mp3LinkEl) {
           const newA = document.createElement('a');
@@ -1621,6 +1656,7 @@
         return acc;
       }, []);
     }
+    if (_linkFilter) _filteredIndices = (_filteredIndices ?? db.map((_, i) => i)).filter(i => matchesLinkFilter(db[i]));
   }
 
   function applySearch() {
@@ -1640,6 +1676,184 @@
     applySearch();
   });
   $("searchField").addEventListener("change", applySearch);
+
+  // ── Comprobar enlaces ─────────────────────────────────────────────────────
+  // El navegador no puede hacer HEAD a archive.org ni a KHInsider (CORS): se carga cada audio con
+  // preload = metadata y se espera a loadedmetadata (funciona) o error (roto). Resultados por URL.
+  const LC_TIMEOUT = 12000;
+  const LC_PARALLEL = 6;
+  let _lcRun = null;                // { cancelled, aborts: Set<fn> } mientras se comprueba
+
+  function probeAudio(url, run) {
+    return new Promise(resolve => {
+      const a = new Audio();
+      let timer;
+      const finish = result => {
+        clearTimeout(timer);
+        a.onloadedmetadata = a.onerror = null;
+        a.removeAttribute('src');
+        a.load();                                       // corta la descarga
+        run.aborts.delete(abort);
+        resolve(result);
+      };
+      const abort = () => finish(null);
+      run.aborts.add(abort);
+      a.preload = 'metadata';
+      a.onloadedmetadata = () => finish({ broken: false });
+      a.onerror = () => {
+        const code = a.error?.code;
+        finish({ broken: true, reason:
+          code === 2 ? 'error de red' :
+          code === 3 ? 'archivo dañado (no se puede decodificar)' :
+          code === 4 ? 'no se puede reproducir (enlace caído o formato no soportado)' : 'error al cargar' });
+      };
+      timer = setTimeout(() => finish({ broken: true, reason: `no responde (más de ${LC_TIMEOUT / 1000} s)` }), LC_TIMEOUT);
+      a.src = url;
+    });
+  }
+
+  // Avisos de formato (los mismos que check-links.js): no cuentan como error, pero conviene pasarlos a mp3
+  const FORMAT_NOTES = {
+    ogg:  'no suena en Safari antiguo (iPhones sin actualizar)',
+    oga:  'no suena en Safari antiguo (iPhones sin actualizar)',
+    opus: 'no suena en Safari antiguo (iPhones sin actualizar)',
+    webm: 'no suena en Safari antiguo (iPhones sin actualizar)',
+    flac: 'sin pérdida y pesado; Safari puede rechazarlo si el servidor no lo declara como audio',
+    wav:  'sin comprimir y muy pesado; tarda en empezar en móvil',
+  };
+  // Archive.org sirve cualquier .mp4 como video/mp4, lleve imagen o no; sus metadatos sí lo dicen (width/height).
+  // Su API admite peticiones desde el navegador (access-control-allow-origin: *).
+  const _archiveMeta = {};
+  async function archiveHasVideo(url) {
+    const m = url.match(/^https?:\/\/(?:www\.)?archive\.org\/download\/([^/]+)\/(.+)$/);
+    if (!m) return null;                                // no es Archive.org: no se puede saber
+    const [, item, filePath] = m;
+    _archiveMeta[item] ??= fetch(`https://archive.org/metadata/${item}/files`, { signal: AbortSignal.timeout?.(LC_TIMEOUT) })
+      .then(r => r.ok ? r.json() : null).catch(() => null);
+    const files = (await _archiveMeta[item])?.result || [];
+    let name;
+    try { name = decodeURIComponent(filePath.split('?')[0]); } catch { name = filePath.split('?')[0]; }
+    const file = files.find(f => f.name === name);
+    return file ? !!(file.width || file.height) : null;
+  }
+  async function formatWarning(url) {
+    const ext = (url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i)?.[1] || '').toLowerCase();
+    if (ext === 'mp3' || ext === 'm4a') return null;
+    if (ext === 'mp4') {
+      const video = await archiveHasVideo(url);
+      if (video === false) return null;                 // .mp4 solo de audio: suena en todas partes
+      return video
+        ? 'es un vídeo (lleva imagen): se descarga también la imagen, mucho más pesado'
+        : '.mp4: comprobar que no lleva imagen';
+    }
+    return `.${ext || '?'}: ${FORMAT_NOTES[ext] || 'formato poco habitual, comprobar que suena en móvil'}`;
+  }
+
+  function linkNoteHtml(url, ti) {
+    const r = url && _linkResults.get(url);
+    if (!r || (!r.broken && !r.warn)) return `<div class="link-note" data-linknote="${ti}"></div>`;
+    return `<div class="link-note" data-linknote="${ti}">` +
+      (r.broken ? `<span class="link-bad">✕ No funciona: ${escapeHtml(r.reason)}</span>` : '') +
+      (r.warn ? `<span class="link-warn">⚠ ${escapeHtml(r.warn)}</span>` : '') + `</div>`;
+  }
+
+  function linkIssues(item) {
+    let broken = false, warn = false;
+    for (const t of item.tracks || []) {
+      const r = t.mp3Url && _linkResults.get(t.mp3Url);
+      if (r?.broken) broken = true;
+      if (r?.warn) warn = true;
+    }
+    return { broken, warn };
+  }
+  function matchesLinkFilter(item) {
+    const { broken, warn } = linkIssues(item);
+    return _linkFilter === 'broken' ? broken : _linkFilter === 'warn' ? warn : broken || warn;
+  }
+
+  function lcCounts() {
+    let broken = 0, warn = 0;
+    for (const item of db) for (const t of item.tracks || []) {
+      const r = t.mp3Url && _linkResults.get(t.mp3Url);
+      if (r?.broken) broken++;
+      if (r?.warn) warn++;
+    }
+    return { broken, warn };
+  }
+
+  function lcRenderFilters() {
+    const { broken, warn } = lcCounts();
+    const opts = [['issues', `Todas (${broken + warn})`], ['broken', `Rotas (${broken})`], ['warn', `Avisos (${warn})`], [null, 'Sin filtro']];
+    $("lcFilters").innerHTML = opts.map(([v, label]) =>
+      `<button class="small${_linkFilter === v ? ' active' : ''}" data-lc-filter="${v ?? ''}">${label}</button>`).join('');
+  }
+
+  function setLinkFilter(v) {
+    _linkFilter = v;
+    lcRenderFilters();
+    applySearch();
+  }
+
+  $("lcFilters").addEventListener("click", e => {
+    const b = e.target.closest("[data-lc-filter]");
+    if (b) setLinkFilter(b.dataset.lcFilter || null);
+  });
+
+  async function runLinkCheck() {
+    const urls = [...new Set(db.flatMap(item => (item.tracks || []).map(t => t.mp3Url).filter(Boolean)))];
+    if (!urls.length) { $("lcText").textContent = 'No hay pistas con enlace'; $("linkCheckBar").hidden = false; return; }
+    const run = _lcRun = { cancelled: false, aborts: new Set() };
+    _linkResults.clear();
+    _linkFilter = null;
+    $("linkCheck").disabled = true;
+    $("linkCheck").textContent = 'Comprobando…';
+    $("linkCheckBar").hidden = false;
+    $("linkCheckBar").classList.add('running');
+    $("lcFilters").innerHTML = '';
+    applySearch();                                      // quita notas de una comprobación anterior
+
+    let done = 0, broken = 0, warns = 0, next = 0;
+    const paint = () => {
+      $("lcFill").style.width = (done / urls.length * 100) + '%';
+      $("lcText").textContent = `${done} / ${urls.length} enlaces · ${broken} rotos · ${warns} avisos`;
+    };
+    paint();
+    const worker = async () => {
+      while (!run.cancelled && next < urls.length) {
+        const url = urls[next++];
+        const [res, warn] = await Promise.all([probeAudio(url, run), formatWarning(url)]);
+        if (!res) return;                               // cancelado a medias: no cuenta
+        _linkResults.set(url, warn ? { ...res, warn } : res);
+        done++; if (res.broken) broken++; if (warn) warns++;
+        paint();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(LC_PARALLEL, urls.length) }, worker));
+
+    _lcRun = null;
+    $("linkCheck").disabled = false;
+    $("linkCheck").textContent = 'Comprobar enlaces';
+    $("linkCheckBar").classList.remove('running');
+    if ($("linkCheckBar").hidden) return;               // cerrado durante la comprobación
+    $("lcText").textContent = (run.cancelled ? `Cancelado: ${done} de ${urls.length} enlaces comprobados` : `${urls.length} enlaces comprobados`) +
+      ` · ${broken} rotos · ${warns} avisos`;
+    setLinkFilter(broken + warns ? (broken ? 'issues' : 'warn') : null);
+  }
+
+  function cancelLinkCheck() {
+    if (!_lcRun) return;
+    _lcRun.cancelled = true;
+    [..._lcRun.aborts].forEach(f => f());
+  }
+
+  $("linkCheck").addEventListener("click", runLinkCheck);
+  $("lcCancel").addEventListener("click", cancelLinkCheck);
+  $("lcClose").addEventListener("click", () => {
+    cancelLinkCheck();
+    _linkResults.clear();
+    $("linkCheckBar").hidden = true;
+    setLinkFilter(null);
+  });
 
   $("dbUpload").addEventListener("click", () => $("fileInput").click());
   $("fileInput").addEventListener("change", async (e) => {

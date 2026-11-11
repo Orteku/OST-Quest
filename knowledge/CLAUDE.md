@@ -36,6 +36,12 @@ y borra lo quitado (pidiendo confirmación si hay borrados); bajo el botón se v
 Se compara con lo cargado, no con lo que hay al guardar, para no borrar lo que otra persona haya añadido
 mientras tanto. En Juegos, cada guardado descarga antes una copia de `database.js`.
 
+"Comprobar enlaces" (pestaña Juegos) prueba todas las pistas de la base cargada. El navegador no puede hacer
+HEAD a archive.org ni a KHInsider (CORS), así que carga cada audio con `preload = 'metadata'` (6 a la vez,
+máximo 12 s cada uno). Marca bajo cada pista si está rota o si su formato conviene cambiarlo, y filtra la lista.
+Los avisos de formato son los mismos que los de `check-links.js` (raíz; herramienta de terminal sobre
+`js/database.js`): si se cambia uno, cambiar los dos. La API de metadatos de archive.org sí admite CORS.
+
 ### Google Apps Script (`apps_script.gs`)
 Script desplegado como aplicación web en Google Sheets. Recibe los datos del editor
 en trozos (chunked) vía GET requests, los ensambla y los escribe en la hoja

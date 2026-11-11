@@ -304,6 +304,14 @@ function openArchive() {
     });
   });
   openModal();
+
+  // Si se está jugando una quest antigua, la lista se abre con ella centrada
+  const list = document.querySelector('.archive__list');
+  const active = list?.querySelector('.archive__item--active');
+  if (active) {
+    // offsetTop es relativo a la lista (position: relative) y no le afecta la animación de entrada del modal
+    list.scrollTop = active.offsetTop - (list.clientHeight - active.offsetHeight) / 2;
+  }
 }
 
 // ─── Tema de especiales ───────────────────────────────────────────────────────
