@@ -88,8 +88,7 @@ function _siteFooterHTML() {
         Support me on Ko-fi
       </a>
     </div>
-    <p data-i18n-html="footer_line1"><span class="fseg">Desarrollado por Orteku en colaboración con Vyrka</span> · <span class="fseg"><a href="about">Sobre el proyecto</a></span> · <span class="fseg">Contacto: <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a></span></p>
-    <p data-i18n-html="footer_line2"><span class="fseg"><a href="soundtracks">Lista de canciones</a></span> · <span class="fseg">Música provista por <a href="https://archive.org" target="_blank" rel="noopener">Archive.org</a> y <a href="https://downloads.khinsider.com" target="_blank" rel="noopener">KHInsider</a></span> · <span class="fseg"><a href="privacy">Privacidad</a></span> · <span class="fseg"><a href="terms">Términos</a></span></p>`;
+    <p data-i18n-html="footer_text"><span class="fseg">Desarrollado por Orteku en colaboración con Vyrka</span><span class="fj"></span><span class="fseg"><a href="about">Sobre el proyecto</a></span><span class="fj fj--m"></span><span class="fseg">Contacto: <a href="mailto:oestiquest@gmail.com">oestiquest@gmail.com</a></span><span class="fj fj--d"></span><span class="fseg"><a href="soundtracks">Lista de canciones</a></span><span class="fj fj--m"></span><span class="fseg">Música provista por <a href="https://archive.org" target="_blank" rel="noopener">Archive.org</a> y <a href="https://downloads.khinsider.com" target="_blank" rel="noopener">KHInsider</a></span><span class="fj"></span><span class="fseg"><a href="privacy">Privacidad</a></span><span class="fj"></span><span class="fseg"><a href="terms">Términos</a></span></p>`;
 }
 
 // Se ejecuta al cargar el script (va al final del <body>, el DOM ya existe) y antes de aplicar

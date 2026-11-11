@@ -1065,6 +1065,16 @@ body.theme--light .how-to-play__body p { color: #999; }
 }
 /* Cada tramo entre puntos va entero: las líneas se parten por los separadores */
 .site-footer .fseg { white-space: nowrap; }
+/* Separadores: .fj--d salta de línea en escritorio y .fj--m en móvil; en el otro caso son un punto */
+.site-footer .fj::before { content: ' · '; }
+.site-footer .fj--d { display: block; height: 3px; }
+.site-footer .fj--d::before { content: none; }
+@media (max-width: 640px) {
+  .site-footer .fj--d { display: inline; height: auto; }
+  .site-footer .fj--d::before { content: ' · '; }
+  .site-footer .fj--m { display: block; }
+  .site-footer .fj--m::before { content: none; }
+}
 .site-footer a { color: #7a7a88; text-decoration: underline; text-underline-offset: 2px; }
 .site-footer a:hover { color: #b8e030; }
 body.theme--light .site-footer a { color: #9898a8; }

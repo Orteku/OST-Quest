@@ -43,8 +43,7 @@
     "You're a legend!"
   ],
   "tagline": "Guess the OST",
-  "footer_line1": "<span class=\"fseg\">Developed by Orteku in collaboration with Vyrka</span> · <span class=\"fseg\"><a href=\"about\">About</a></span> · <span class=\"fseg\">Contact: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a></span>",
-  "footer_line2": "<span class=\"fseg\"><a href=\"soundtracks\">Song list</a></span> · <span class=\"fseg\">Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a></span> · <span class=\"fseg\"><a href=\"privacy\">Privacy</a></span> · <span class=\"fseg\"><a href=\"terms\">Terms</a></span>",
+  "footer_text": "<span class=\"fseg\">Developed by Orteku in collaboration with Vyrka</span><span class=\"fj\"></span><span class=\"fseg\"><a href=\"about\">About</a></span><span class=\"fj fj--m\"></span><span class=\"fseg\">Contact: <a href=\"mailto:oestiquest@gmail.com\">oestiquest@gmail.com</a></span><span class=\"fj fj--d\"></span><span class=\"fseg\"><a href=\"soundtracks\">Song list</a></span><span class=\"fj fj--m\"></span><span class=\"fseg\">Music sourced from <a href=\"https://archive.org\" target=\"_blank\" rel=\"noopener\">Archive.org</a> and <a href=\"https://downloads.khinsider.com\" target=\"_blank\" rel=\"noopener\">KHInsider</a></span><span class=\"fj\"></span><span class=\"fseg\"><a href=\"privacy\">Privacy</a></span><span class=\"fj\"></span><span class=\"fseg\"><a href=\"terms\">Terms</a></span>",
   "tutorial_title": "How to play",
   "tutorial_listen_h": "Listen",
   "tutorial_listen_b": "Press ▶︎ to play a soundtrack clip and try to recognize it.",
