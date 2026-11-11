@@ -595,7 +595,7 @@ async function loadRankingInto(containerId, tab) {
         : `<span class="rank-avatar">${_esc(r.username.charAt(0).toUpperCase())}</span>`;
       return `<tr class="${[medal, isMe ? 'rank-row--me' : ''].filter(Boolean).join(' ')}">
         <td class="rank-pos">${i + 1}</td>
-        <td class="rank-name"><button type="button" class="rank-name__btn">${avatarHtml}${_esc(r.username)}${isMe ? ' ★' : ''}</button></td>
+        <td class="rank-name"><button type="button" class="rank-name__btn">${avatarHtml}${_esc(r.username)}${isMe ? `<span class="rank-me-led" title="${t('ranking_you')}" aria-label="${t('ranking_you')}"></span>` : ''}</button></td>
         <td class="rank-pts">${r.pts}</td>
         <td class="rank-streak">${r.streak || '—'}</td>
       </tr>`;

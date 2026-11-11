@@ -2392,7 +2392,7 @@ body.theme--light .profile-delete-btn:hover { background: #f8e8e8; border-color:
 .rank-th--pts    { text-align: right !important; }
 .rank-th--streak { text-align: right !important; }
 .rank-pos { width: 1%; white-space: nowrap; color: #555560; text-align: center; }
-.rank-name { color: #ddd9cf; display: flex; align-items: center; gap: 8px; }
+.rank-name { color: #ddd9cf; }
 .rank-name__btn {
   display: flex; align-items: center; gap: 8px; min-width: 0;
   padding: 0; border: none; background: none;
@@ -2407,8 +2407,12 @@ body.theme--light .profile-delete-btn:hover { background: #f8e8e8; border-color:
 }
 .rank-avatar--img { object-fit: cover; border: 1px solid #2c2c34; }
 .rank-pts { width: 1%; white-space: nowrap; text-align: right; color: #b8e030; font-weight: 600; font-variant-numeric: tabular-nums; }
-.rank-row--me td { background: var(--well-bg); box-shadow: inset 0 1px 0 rgba(184,224,48,0.25), inset 0 -1px 0 rgba(184,224,48,0.25); }
-.rank-row--me .rank-name { color: #b8e030; }
+/* Tu fila: solo un piloto encendido junto al nombre */
+.rank-me-led {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-left: 2px;
+  background: #c4f070;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 6px rgba(184,224,48,0.8), 0 0 12px rgba(184,224,48,0.35);
+}
 
 /* Light theme */
 body.theme--light #auth-modal-inner { background: #f0ede6; }
@@ -2431,8 +2435,7 @@ body.theme--light .rank-table td { border-color: #e4e2da; }
 body.theme--light .rank-pos { color: #9898a8; }
 body.theme--light .rank-name { color: #1e1d28; }
 body.theme--light .rank-pts { color: #4a6c10; }
-body.theme--light .rank-row--me td { background: var(--well-bg); box-shadow: inset 0 1px 0 rgba(74,108,16,0.35), inset 0 -1px 0 rgba(74,108,16,0.35); }
-body.theme--light .rank-row--me .rank-name { color: #3a5810; }
+body.theme--light .rank-me-led { background: #6aa018; box-shadow: 0 0 0 1px rgba(0,0,0,0.15), 0 0 6px rgba(106,160,24,0.6); }
 body.theme--light .rank-empty { color: #9898a8; }
 
 /* Franja del modal final y de estadísticas: puesto en el ranking (o aviso de registro) arriba,
@@ -2471,17 +2474,18 @@ body.theme--light .stats-rank-link:hover { background: #f2f0ea; }
 
 /* Medallas top 3 */
 .rank-gold .rank-pos   { color: #f0c040; font-weight: 700; text-shadow: 0 0 8px rgba(240,192,64,0.55); }
-.rank-gold .rank-name  { color: #f0c040; }
+.rank-gold .rank-name  { color: #f0c040; text-shadow: 0 0 7px rgba(240,192,64,0.35); }
 .rank-silver .rank-pos { color: #b8c8d8; font-weight: 700; text-shadow: 0 0 8px rgba(184,200,216,0.45); }
-.rank-silver .rank-name{ color: #b8c8d8; }
+.rank-silver .rank-name{ color: #b8c8d8; text-shadow: 0 0 7px rgba(184,200,216,0.3); }
 .rank-bronze .rank-pos { color: #d0956a; font-weight: 700; text-shadow: 0 0 8px rgba(208,149,106,0.45); }
-.rank-bronze .rank-name{ color: #d0956a; }
+.rank-bronze .rank-name{ color: #d0956a; text-shadow: 0 0 7px rgba(208,149,106,0.3); }
 body.theme--light .rank-gold .rank-pos,
 body.theme--light .rank-gold .rank-name  { color: #8a6800; }
 body.theme--light .rank-silver .rank-pos,
 body.theme--light .rank-silver .rank-name{ color: #50606c; }
 body.theme--light .rank-bronze .rank-pos,
 body.theme--light .rank-bronze .rank-name{ color: #7a4a20; }
+body.theme--light :is(.rank-gold, .rank-silver, .rank-bronze) .rank-name { text-shadow: 0 0 6px color-mix(in srgb, currentColor 30%, transparent); }
 
 /* CTA registro en end modal */
 .modal__register-cta {

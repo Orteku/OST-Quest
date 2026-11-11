@@ -181,7 +181,8 @@
       padding: 0 2px;
     }
     /* Comprobar enlaces */
-    .lc-btn { margin-left: auto; }
+    .lc-btn { margin-left: auto; background: #c98a12; color: #1c1203; --k-e: #5e3f05; --k-hl: rgba(255,255,255,0.25); }
+    .lc-btn:hover:not(:disabled) { filter: brightness(1.1); }
     .link-check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 12px; margin-bottom: 8px;
       background: var(--panel); box-shadow: var(--panel-shadow); border-radius: 10px; font-size: 13px; }
     .link-check[hidden] { display: none; }
