@@ -114,7 +114,7 @@ function renderColumn(gi, wrapper) {
         ? t('col_locked')
         : playingCol === gi
           ? `<span class="col__hint-guessing">${t('col_guessing')}</span>`
-          : t('col_play_hint');
+          : withIcons(t('col_play_hint'));
 
   hdr.innerHTML = `
     <button class="play-btn" aria-label="Reproducir / pausar" ${st.locked ? 'disabled' : ''}>
@@ -123,8 +123,10 @@ function renderColumn(gi, wrapper) {
     <span class="col__track-hint">${hintText}</span>
     ${playingCol === gi && !isLoading ? '<span class="col__eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' : ''}`;
 
+  // Toda la barra reproduce/pausa (en móvil el botón queda lejos del pulgar); el clic en el botón llega por burbujeo
   if (!st.locked) {
-    hdr.querySelector('.play-btn').addEventListener('click', () => togglePlay(gi));
+    hdr.classList.add('col__header--clickable');
+    hdr.addEventListener('click', () => togglePlay(gi));
   }
   col.appendChild(hdr);
 
@@ -435,7 +437,7 @@ function openTutorialModal() {
       <ul class="tutorial-steps">
         <li>
           <span class="tutorial-step__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="7,3 21,12 7,21"/></svg></span>
-          <div><strong>${t('tutorial_listen_h')}</strong><p>${t('tutorial_listen_b')}</p></div>
+          <div><strong>${t('tutorial_listen_h')}</strong><p>${withIcons(t('tutorial_listen_b'))}</p></div>
         </li>
         <li>
           <span class="tutorial-step__icon">?</span>

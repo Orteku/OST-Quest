@@ -358,11 +358,13 @@ body.theme--light.is-special .today-btn:hover { background: rgba(0,0,0,0.1); }
   border-radius: 8px;
   background: var(--well-bg);
   box-shadow: var(--well-shadow);
-  cursor: pointer;
   user-select: none;
   transition: background 0.15s;
 }
-.col__header:hover       { background: #141518; }
+/* Toda la barra es pulsable (salvo columna bloqueada); al pulsarla se hunde el botón de play */
+.col__header--clickable { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.col__header--clickable:hover { background: #141518; }
+.col__header--clickable:active .play-btn { transform: translateY(2px); box-shadow: inset 0 1px 0 var(--k-hl), 0 0 0 var(--k-e); }
 .col__header--playing    { background: #0e1608; animation: col-pulse 3.5s ease-in-out infinite; }
 
 .col__hint-guessing::after {
@@ -409,14 +411,17 @@ body.is-special .play-btn:hover { background: var(--special-color); filter: brig
 .play-btn svg      { width: 10px; height: 10px; }
 
 .col__track-hint {
-  font-size: 12px;
-  color: #7a7a84;
+  font-size: 13px;
+  font-weight: 500;
+  color: #a0a0aa;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .col__track-hint strong { color: #ddd9cf; }
+/* Triángulo de play dentro de los textos (sustituye al carácter ▶) */
+.play-glyph { display: inline-block; width: 0.8em; height: 0.8em; vertical-align: -0.06em; margin: 0 0.1em; }
 
 /* Piloto de la columna resuelta y ecualizador mientras suena, al final de la cabecera */
 .col--correct .col__header::after,
@@ -1558,11 +1563,11 @@ body.theme--light #btn-help.is-active { color: #4a6c10; }
 
 /* Columns */
 body.theme--light .col { background: #eae8e2; }
-body.theme--light .col__header:hover { background: #d4d1c8; }
+body.theme--light .col__header--clickable:hover { background: #d4d1c8; }
 body.theme--light .cover-item:not(.cover-item--correct-pick, .cover-item--wrong-pick, .cover-item--answer) { background: #d6d3cb; }
 body.theme--light .modal__cover-wrap { background: #d6d3cb; }
 body.theme--light .col__header--playing { background: #cce0b0; animation-name: col-pulse-light; }
-body.theme--light .col__track-hint { color: #525060; }
+body.theme--light .col__track-hint { color: #3e3c48; }
 body.theme--light .col__track-hint strong { color: #1e1d28; }
 body.theme--light .lock-overlay { background: rgba(234,232,226,0.7); color: #a8a8b0; }
 

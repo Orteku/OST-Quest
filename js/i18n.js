@@ -14,6 +14,13 @@ function t(key) {
   return typeof _t[key] === 'string' ? _t[key] : key;
 }
 
+// El ▶ de los textos se cambia por un triángulo dibujado: hay móviles cuya fuente no lo tiene
+// (o no entiende el selector de texto U+FE0E) y lo pintan como un cuadrado
+const _PLAY_GLYPH = '<svg class="play-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5,3 21,12 5,21"/></svg>';
+function withIcons(str) {
+  return str.replace(/▶︎?/g, _PLAY_GLYPH);
+}
+
 function tRandom(key) {
   const arr = _t[key];
   if (!Array.isArray(arr) || !arr.length) return key;
@@ -27,7 +34,7 @@ function _applyDOM() {
   });
   document.querySelectorAll('[data-i18n-html]').forEach(el => {
     const v = _t[el.dataset.i18nHtml];
-    if (typeof v === 'string') el.innerHTML = v;
+    if (typeof v === 'string') el.innerHTML = withIcons(v);
   });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => {
     const v = _t[el.dataset.i18nAria];
