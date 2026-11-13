@@ -985,6 +985,7 @@ function openGmPanel() {
     </div>`).join('');
 
   let _gmPool = [...GAME_DB];
+  let _gmSpecial = null;
 
   const _availSpecials = SPECIAL_EVENTS;
   const _specialOptHtml = _availSpecials.map(e => `<option value="${e.date}">${e.label}</option>`).join('');
@@ -1013,7 +1014,14 @@ function openGmPanel() {
   const byId = Object.fromEntries(GAME_DB.map(g => [g.id, g]));
 
   function _getGmPool(sp) {
+    _gmSpecial = sp;
     return getSpecialPool(sp, GAME_DB) || GAME_DB;
+  }
+  // Pista al azar; en un especial, solo entre las que casan con su filtro (p. ej. su compositor)
+  function _gmRandomTrack(game) {
+    const allowed = _gmSpecial ? getSpecialTrackIndexes(_gmSpecial, game) : [];
+    return allowed.length ? allowed[Math.floor(Math.random() * allowed.length)]
+                          : Math.floor(Math.random() * game.tracks.length);
   }
 
   function _rebuildGmSelects(pool) {
@@ -1097,7 +1105,7 @@ function openGmPanel() {
         if (!avail.length) { errorEl.textContent = t('gm_error_no_games'); return; }
         const picked = avail[Math.floor(Math.random() * avail.length)];
         answerId = picked.id;
-        trackIdx = Math.floor(Math.random() * picked.tracks.length);
+        trackIdx = _gmRandomTrack(picked);
       } else {
         if (usedIds.has(answerId)) {
           errorEl.textContent = t('gm_error_in_use').replace('{name}', localizeGame(byId[answerId]).game);
@@ -1108,7 +1116,7 @@ function openGmPanel() {
           const tv = parseInt(document.getElementById(`gm-track-${gi}`).value);
           trackIdx = isNaN(tv) ? 0 : tv;
         } else {
-          trackIdx = Math.floor(Math.random() * byId[answerId].tracks.length);
+          trackIdx = _gmRandomTrack(byId[answerId]);
         }
       }
       usedIds.add(answerId);

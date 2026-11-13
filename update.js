@@ -35,7 +35,7 @@ console.log(`📦 Base de datos cargada: ${GAME_DB.length} juegos`);
 
 // ── Cargar eventos especiales ─────────────────────────────────────────────────
 
-const { getSpecialForDate, hasGameData, getSpecialPool } = require('./js/specials.js');
+const { getSpecialForDate, hasGameData, getSpecialPool, getSpecialTrackIndexes } = require('./js/specials.js');
 
 // ── Cargar algoritmo compartido ───────────────────────────────────────────────
 
@@ -62,6 +62,17 @@ function getPoolForDate(dateStr) {
   }
   console.log(`🎉 Especial: ${special.label} (${dateStr}) — pool de ${pool.length} juegos`);
   return pool;
+}
+
+// Pistas que pueden sonar ese día: en un especial, solo las que casan con su filtro
+function getTrackFilterForDate(dateStr, pool) {
+  const special = getSpecialForDate(dateStr);
+  return pool === GAME_DB || !special ? null : g => getSpecialTrackIndexes(special, g);
+}
+
+function generateDay(dateStr) {
+  const pool = getPoolForDate(dateStr);
+  return generateGameForDate(dateStr, pool, getTrackFilterForDate(dateStr, pool));
 }
 
 // ── Fechas ────────────────────────────────────────────────────────────────────
@@ -107,8 +118,12 @@ const _todayGameSpecial = (() => { const s = getSpecialForDate(today); return s 
 // Si ya lo es, puede haberse jugado: cambiarla descuadraría los resultados de quien ya ha jugado.
 const _todayNeedsSpecial = (() => {
   if (!_todayGameSpecial) return false;
-  const poolIds = new Set(getPoolForDate(today).map(g => g.id));
-  return !(existing[today] || []).length || existing[today].some(g => !poolIds.has(g.answerId));
+  const pool    = getPoolForDate(today);
+  const poolIds = new Set(pool.map(g => g.id));
+  const filter  = getTrackFilterForDate(today, pool);
+  const byId    = new Map(GAME_DB.map(g => [g.id, g]));
+  return !(existing[today] || []).length || existing[today].some(g =>
+    !poolIds.has(g.answerId) || (filter && !filter(byId.get(g.answerId)).includes(g.trackIndex)));
 })();
 
 // 1. Preservar días pasados y hoy, salvo que haya que pasar hoy al especial.
@@ -121,14 +136,14 @@ for (const [dateStr, game] of Object.entries(existing)) {
 
 // 2. Regenerar hoy si hay que pasarlo al especial
 if (_todayNeedsSpecial) {
-  result[today] = generateGameForDate(today, getPoolForDate(today));
+  result[today] = generateDay(today);
   generated++;
 }
 
 // 3. Regenerar desde mañana hasta 365 días adelante
 for (let i = 0; i < 365; i++) {
   const dateStr = addDays(tomorrow, i);
-  result[dateStr] = generateGameForDate(dateStr, getPoolForDate(dateStr));
+  result[dateStr] = generateDay(dateStr);
   generated++;
 }
 

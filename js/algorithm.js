@@ -92,8 +92,10 @@ function seededShuffle(arr, rng) {
   return a;
 }
 
-// Tres grupos { answerId, coverIds, trackIndex } elegidos de `pool` (toda la base o la de un especial)
-function generateGameForDate(dateStr, pool) {
+// Tres grupos { answerId, coverIds, trackIndex } elegidos de `pool` (toda la base o la de un especial).
+// trackIndexes(game) opcional: índices de las pistas que pueden sonar (en especiales que solo
+// incluyen algunas pistas de un juego, p. ej. por compositor); sin él, cualquiera.
+function generateGameForDate(dateStr, pool, trackIndexes = null) {
   const seed = dateToSeed(dateStr);
   const rng  = seededRng(seed);
   const used = new Set();
@@ -110,7 +112,10 @@ function generateGameForDate(dateStr, pool) {
     if (!answer) break;
     used.add(answer.id);
 
-    const trackIndex    = Math.floor(rng() * answer.tracks.length);
+    const allowed       = trackIndexes ? trackIndexes(answer) : null;
+    const trackIndex    = allowed && allowed.length
+      ? allowed[Math.floor(rng() * allowed.length)]
+      : Math.floor(rng() * answer.tracks.length);
     const answerEffTags = effectiveTags(answer, answer.tracks[trackIndex]);
 
     const weights    = gi === strictGroupIndex ? WEIGHTS.strict : WEIGHTS.normal;

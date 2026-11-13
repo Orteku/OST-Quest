@@ -12,7 +12,9 @@ un Cloudflare Worker (`auth/`) con Supabase como base de datos.
 - **`profile.html`, `ranking.html`, `soundtracks.html`, `about.html`, `privacy.html`, `terms.html`** — resto de páginas
 - **`css/style.css`** — todos los estilos
 - **`js/database.js`** — `GAME_DB`: array con los ~800 juegos
-- **`js/specials.js`** — eventos especiales (`SPECIAL_EVENTS`, `getSpecialForDate`, `getSpecialPool`); también lo usa `update.js`
+- **`js/specials.js`** — eventos especiales (`SPECIAL_EVENTS`, `getSpecialForDate`, `getSpecialPool`,
+  `getSpecialTrackIndexes`); también lo usa `update.js`. Si el filtro de un especial (tag de pista,
+  compositor en `search`) solo casa con algunas pistas de un juego, solo suenan esas
 - **`js/achievements.js`** — `ACHIEVEMENTS_DB`, `DEV_ACHIEVEMENT_TERMS`, `TRACK_ACHIEVEMENT_MAX_YEAR`, comprobación de imágenes
 - **`js/algorithm.js`** — selección de grupos y generación de quests (`generateGameForDate`, la usa update.js; el modo GM usa `weightedPickN`)
 - **`js/daily.js`** — carga `games.json`, utilidades de fecha, persistencia localStorage

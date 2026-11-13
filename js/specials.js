@@ -1,7 +1,8 @@
 // OST Quest — Eventos especiales
 // date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
 // dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas
-// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.
+// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto, también compositor). Mínimo ~12 juegos.
+// Si el filtro solo casa con algunas pistas de un juego (tag de pista, compositor), solo suenan esas.
 // Imágenes opcionales en img/specials/ con la fecha sin guiones: banner_1031.png (header) y logo_1031.png (favicon)
 
 const SPECIAL_EVENTS = [
@@ -60,22 +61,39 @@ function hasGameData(e) {
   return !!(e.gameIds?.length || e.search || e.tag);
 }
 
+// Pistas de `game` que entran en el especial `sp` (índices de game.tracks). Si el filtro casa con
+// el juego entero (id, tag del juego, nombre, desarrolladora) valen todas; si solo casa con algunas
+// pistas (tag de pista, compositor) solo valen esas, para que no suene otra canción del juego.
+// Sin especial o sin pool: todas.
+function getSpecialTrackIndexes(sp, game) {
+  const all = game.tracks.map((_, i) => i);
+  if (!sp || !hasGameData(sp) || sp.gameIds?.length) {
+    return !sp?.gameIds?.length || sp.gameIds.includes(game.id) ? all : [];
+  }
+  const lc = s => (s || '').toLowerCase();
+  if (sp.tag) {
+    if (game.tags && game.tags.includes(sp.tag)) return all;
+    return all.filter(i => (game.tracks[i].tags || []).includes(sp.tag));
+  }
+  const terms = sp.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const gameMatch = terms.some(term =>
+    lc(game.game).includes(term) || lc(game.developer).includes(term) ||
+    (game.tags || []).some(tag => lc(tag).includes(term))
+  );
+  if (gameMatch) return all;
+  return all.filter(i => {
+    const tr = game.tracks[i];
+    return terms.some(term => lc(tr.artist).includes(term) || (tr.tags || []).some(tag => lc(tag).includes(term)));
+  });
+}
+
 // Juegos entre los que se elige la quest de un especial: lista de IDs, tag (de juego o de pista)
-// o búsqueda de texto en nombre, desarrolladora y tags. null si el especial no tiene pool.
-// Lo usan update.js (al generar games.json) y el modo GM.
+// o búsqueda de texto en nombre, desarrolladora, tags y compositor de las pistas.
+// null si el especial no tiene pool. Lo usan update.js (al generar games.json) y el modo GM;
+// la pista que suena se elige con getSpecialTrackIndexes.
 function getSpecialPool(sp, db) {
   if (!sp || !hasGameData(sp)) return null;
-  if (sp.gameIds?.length) return db.filter(g => sp.gameIds.includes(g.id));
-  if (sp.tag) return db.filter(g =>
-    (g.tags && g.tags.includes(sp.tag)) ||
-    g.tracks.some(tr => tr.tags && tr.tags.includes(sp.tag))
-  );
-  const terms = sp.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-  return db.filter(g => terms.some(term =>
-    (g.game      && g.game.toLowerCase().includes(term)) ||
-    (g.developer && g.developer.toLowerCase().includes(term)) ||
-    (g.tags      && g.tags.some(tag => tag.toLowerCase().includes(term)))
-  ));
+  return db.filter(g => getSpecialTrackIndexes(sp, g).length > 0);
 }
 
 function getSpecialForDate(dateStr) {
@@ -135,4 +153,4 @@ function countSpecialsBefore(dateStr) {
   return count;
 }
 
-if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore, hasGameData, getSpecialPool };
+if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecialForDate, countSpecialsBefore, hasGameData, getSpecialPool, getSpecialTrackIndexes };
