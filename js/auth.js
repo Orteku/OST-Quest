@@ -1025,8 +1025,28 @@ function _renderProfileCardHTML(unlocked = []) {
   `;
 }
 
+// Pasa la tarjeta de perfil al formato compacto cuando el ancho no cabe: en móvil siempre, y en
+// cualquier ancho si el nombre choca con el puesto y las estadísticas (zoom, nombre largo, ventana estrecha)
+function _fitPcard() {
+  const card = document.querySelector('#profile-card .pcard:not(.pcard--guest)');
+  if (!card) return;
+  card.classList.remove('pcard--compact');
+  const body = card.querySelector('.pcard__body');
+  const tight = window.innerWidth <= 520
+    || card.scrollWidth > card.clientWidth + 1
+    || (body && body.scrollWidth > body.clientWidth + 1);
+  card.classList.toggle('pcard--compact', tight);
+}
+
 async function initProfilePage() {
   const cardEl     = document.getElementById('profile-card');
+  if (cardEl && !cardEl._fitBound) {
+    cardEl._fitBound = true;
+    // La tarjeta se repinta varias veces (estadísticas, puesto, avatar): se reajusta en cada una
+    new MutationObserver(_fitPcard).observe(cardEl, { childList: true });
+    window.addEventListener('resize', _fitPcard);
+    document.fonts?.ready.then(_fitPcard);
+  }
   const settingsEl = document.getElementById('profile-settings');
   const drawerEl   = document.getElementById('pcard-drawer');
 

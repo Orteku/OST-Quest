@@ -2793,24 +2793,25 @@ body.theme--light .ach-sheet__name { color: #1e1d28; }
 body.theme--light .ach-sheet__desc { color: #7a7a88; }
 body.theme--light .ach-sheet__avatar-btn { background: #4a6c10; color: #fff; --k-e: #2c4208; --k-hl: rgba(255,255,255,0.25); }
 
+/* Tarjeta compacta: la pone auth.js (_fitPcard) cuando el formato ancho no cabe (móvil, zoom, nombre largo).
+   Dos columnas: avatar, nombre, puesto y trofeos a la izquierda; estadísticas una por línea a la derecha */
+.pcard--compact {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "avatar name stats" "avatar rank stats" "avatar recent stats";
+  align-items: center; gap: 5px 12px; padding: 16px 14px;
+}
+.pcard--compact .pcard__body, .pcard--compact .pcard__side { display: contents; }
+.pcard--compact .pcard__avatar { grid-area: avatar; width: 48px; height: 48px; font-size: 22px; }
+.pcard--compact .pcard__username { grid-area: name; font-size: 26px; min-width: 0; }
+.pcard--compact .pcard__rank { grid-area: rank; }
+.pcard--compact .pcard__recent-achievements { grid-area: recent; margin-top: 2px; gap: 6px; }
+.pcard--compact .pcard__achievement-icon { width: 26px; height: 26px; }
+.pcard--compact .pcard__stats { grid-area: stats; grid-template-columns: auto; row-gap: 4px; align-self: center; }
+.pcard--compact .pcard__rank-pos { font-size: 20px; }
+.pcard--compact .pcard__rank-pts { font-size: 16px; margin-left: 2px; }
+.pcard--compact .pcard__stat strong { font-size: 19px; }
+.pcard--compact .pcard__stat span { font-size: 12px; }
 @media (max-width: 520px) {
-  /* Dos columnas: avatar, nombre, puesto y trofeos a la izquierda; estadísticas una por línea a la derecha */
-  .pcard:not(.pcard--guest) {
-    display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas: "avatar name stats" "avatar rank stats" "avatar recent stats";
-    align-items: center; gap: 5px 12px; padding: 16px 14px;
-  }
-  .pcard__body, .pcard__side { display: contents; }
-  .pcard__avatar { grid-area: avatar; width: 48px; height: 48px; font-size: 22px; }
-  .pcard__username { grid-area: name; font-size: 26px; min-width: 0; }
-  .pcard__rank { grid-area: rank; }
-  .pcard__recent-achievements { grid-area: recent; margin-top: 2px; gap: 6px; }
-  .pcard__achievement-icon { width: 26px; height: 26px; }
-  .pcard__stats { grid-area: stats; grid-template-columns: auto; row-gap: 4px; align-self: center; }
-  .pcard__rank-pos { font-size: 20px; }
-  .pcard__rank-pts { font-size: 16px; margin-left: 2px; }
-  .pcard__stat strong { font-size: 19px; }
-  .pcard__stat span { font-size: 12px; }
   .profile-wrap { margin-top: 12px; gap: 20px; }
 }
 
