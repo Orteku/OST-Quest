@@ -3,6 +3,7 @@ import { signSession, verifyJwt } from '../lib/jwt.js';
 import { sendPasswordResetEmail } from '../lib/mailer.js';
 import { json } from '../lib/cors.js';
 import { attemptAllowed } from '../lib/ratelimit.js';
+import { requireTurnstile } from '../lib/turnstile.js';
 
 function generateHexToken(len = 32) {
   return [...crypto.getRandomValues(new Uint8Array(len))]
@@ -20,6 +21,8 @@ export async function handleRegister(request, env, db) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
                               return json({ error: 'invalid_email' }, 400, request);
   if (!await attemptAllowed(request, env)) return json({ error: 'too_many_attempts' }, 429, request);
+  const captchaErr = await requireTurnstile(request, env, body, 'register');
+  if (captchaErr) return captchaErr;
 
   const existing = await db.getUserByEmail(email.toLowerCase());
   if (existing) return json({ error: 'email_already_registered' }, 409, request);
@@ -75,6 +78,10 @@ export async function handleForgotPassword(request, env, db) {
   if (!email) return json({ error: 'email_required' }, 400, request);
   // Sin límite se podría llenar de correos el buzón de alguien
   if (!await attemptAllowed(request, env, email)) return json({ error: 'too_many_attempts' }, 429, request);
+  // Cuando se cree la pantalla de recuperar contraseña, su formulario debe llevar el widget de Turnstile
+  // con data-action="recover" y enviar el token como `turnstileToken`; si no, este endpoint lo rechaza.
+  const captchaErr = await requireTurnstile(request, env, body, 'recover');
+  if (captchaErr) return captchaErr;
 
   const user = await db.getUserByEmail(email.toLowerCase());
   // Devolvemos OK igualmente para no revelar si el email existe

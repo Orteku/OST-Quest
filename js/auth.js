@@ -4,9 +4,46 @@ const AUTH_URL  = 'https://auth.oestiquest.com';
 const _JWT_KEY  = 'ostquest_jwt';
 const _USER_KEY = 'ostquest_user';
 
+// Cloudflare Turnstile (anti-bots) en el registro. La clave de sitio es pública; el secreto vive en el Worker.
+const _TS_SITEKEY = '0x4AAAAAAGC90ORRKTyyXy3o';
+let _tsPromise = null;
+let _tsWidgetId = null;
+let _tsToken    = null;
+
+function _loadTurnstile() {
+  return _tsPromise ??= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    s.onload = () => resolve(window.turnstile);
+    s.onerror = () => { _tsPromise = null; reject(new Error('turnstile_load')); };
+    document.head.appendChild(s);
+  });
+}
+
+// Pinta el widget en el hueco #auth-turnstile del modal de registro (solo se muestra si hace falta interacción)
+async function _mountTurnstile() {
+  const box = document.getElementById('auth-turnstile');
+  _tsWidgetId = null; _tsToken = null;
+  if (!box) return;
+  try {
+    const ts = await _loadTurnstile();
+    if (!document.getElementById('auth-turnstile')) return;
+    _tsWidgetId = ts.render(box, {
+      sitekey: _TS_SITEKEY,
+      action: 'register',
+      appearance: 'interaction-only',
+      theme: document.body.classList.contains('theme--light') ? 'light' : 'dark',
+      callback: token => { _tsToken = token; },
+      'expired-callback': () => { _tsToken = null; },
+      'error-callback': () => { _tsToken = null; },
+    });
+  } catch { /* sin el script no se podrá registrar: _submitEmail lo avisa */ }
+}
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
-let _token              = null;   // JWT string
+let _token             = null;   // JWT string
 let _profile            = null;   // { id, username, email, provider }
 let _cachedAchievements = [];     // último fetch de logros del usuario
 let _serverStats        = null;   // estadísticas de /scores/stats para la tarjeta del perfil
@@ -410,6 +447,7 @@ function _renderAuthModal() {
         ? `<input class="auth-input" type="email" id="auth-email" placeholder="${t('auth_email')}" autocomplete="email">`
         : `<input class="auth-input" type="text" id="auth-email" placeholder="${t('auth_email_or_username')}" autocomplete="username" autocapitalize="off" spellcheck="false">`}
       <input class="auth-input" type="password" id="auth-pwd" placeholder="${t('auth_password')}" autocomplete="${reg ? 'new-password' : 'current-password'}">
+      ${reg ? '<div id="auth-turnstile"></div>' : ''}
       <p class="auth-err" id="auth-err" style="display:none"></p>
       <button class="btn auth-submit-btn" id="auth-submit">${t(reg ? 'auth_register_btn' : 'auth_sign_in_btn')}</button>
     </div>
@@ -454,6 +492,7 @@ function _renderAuthModal() {
     _authMode = _authMode === 'signin' ? 'register' : 'signin';
     _renderAuthModal();
   });
+  if (reg) _mountTurnstile();
   document.getElementById('auth-submit').addEventListener('click', _submitEmail);
   document.getElementById('auth-pwd').addEventListener('keydown', e => { if (e.key === 'Enter') _submitEmail(); });
   document.querySelectorAll('.auth-social__btn').forEach(btn => {
@@ -485,14 +524,22 @@ async function _submitEmail() {
   _hideErr();
 
   // Para entrar vale el email o el nombre de usuario (cuentas sin email, como las de Steam, con contraseña puesta)
-  const data = _authMode === 'register'
-    ? await _apiFetch('/auth/register', 'POST', { email, password: pwd })
-    : await _apiFetch('/auth/login', 'POST', { login: email, password: pwd });
+  let data;
+  if (_authMode === 'register') {
+    if (!_tsToken) { _showErr(t('auth_error_captcha_wait')); return; }
+    data = await _apiFetch('/auth/register', 'POST', { email, password: pwd, turnstileToken: _tsToken });
+    // Cada token vale una sola vez: se pide otro para el siguiente intento
+    _tsToken = null;
+    if (_tsWidgetId !== null) try { window.turnstile.reset(_tsWidgetId); } catch {}
+  } else {
+    data = await _apiFetch('/auth/login', 'POST', { login: email, password: pwd });
+  }
 
   if (data?.error) {
     const msg = data.error === 'invalid_credentials'     ? t('auth_error_invalid_credentials')
               : data.error === 'email_already_registered' ? t('auth_error_email_taken')
               : data.error === 'too_many_attempts'        ? t('auth_error_too_many')
+              : data.error === 'captcha_failed'           ? t('auth_error_captcha')
               : t('auth_error_generic');
     _showErr(msg);
     return;

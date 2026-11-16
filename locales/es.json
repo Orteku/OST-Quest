@@ -121,6 +121,8 @@
   "auth_username_invalid": "Solo letras, números y _ (3-20 caracteres)",
   "auth_error_email_taken": "Ese correo ya está registrado",
   "auth_error_too_many": "Demasiados intentos. Espera un minuto y vuelve a probar.",
+  "auth_error_captcha": "No hemos podido verificar que eres una persona. Recarga la página e inténtalo de nuevo.",
+  "auth_error_captcha_wait": "Estamos verificando que eres una persona. Espera un segundo y vuelve a pulsar.",
   "auth_error_generic": "Error al iniciar sesión. Inténtalo de nuevo.",
   "auth_error_invalid_credentials": "Email o contraseña incorrectos",
   "auth_migration_done": "Historial guardado en tu cuenta",
