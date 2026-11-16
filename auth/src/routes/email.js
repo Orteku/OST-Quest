@@ -75,7 +75,7 @@ export async function handleForgotPassword(request, env, db) {
   try { body = await request.json(); } catch { return json({ error: 'invalid_json' }, 400, request); }
 
   const { email } = body;
-  if (!email) return json({ error: 'email_required' }, 400, request);
+  if (!email || typeof email !== 'string') return json({ error: 'email_required' }, 400, request);
   // Sin límite se podría llenar de correos el buzón de alguien
   if (!await attemptAllowed(request, env, email)) return json({ error: 'too_many_attempts' }, 429, request);
   // Cuando se cree la pantalla de recuperar contraseña, su formulario debe llevar el widget de Turnstile
@@ -93,7 +93,12 @@ export async function handleForgotPassword(request, env, db) {
   await db.createResetToken(user.id, token, expiresAt);
 
   const resetLink = `https://oestiquest.com/reset-password.html?token=${token}`;
-  await sendPasswordResetEmail(env, user.email, resetLink);
+  // Si falla el envío respondemos igual (si no, el error delataría que el email existe); queda en los logs
+  try {
+    await sendPasswordResetEmail(env, user.email, resetLink, body.lang === 'en' ? 'en' : 'es');
+  } catch (e) {
+    console.error('forgot-password:', e.message);
+  }
 
   return json({ ok: true }, 200, request);
 }
@@ -137,8 +142,9 @@ export async function handleResetPassword(request, env, db) {
   const { token, password } = body;
   if (!token || !password)  return json({ error: 'token_and_password_required' }, 400, request);
   if (password.length < 6)  return json({ error: 'password_too_short' }, 400, request);
+  if (!await attemptAllowed(request, env)) return json({ error: 'too_many_attempts' }, 429, request);
 
-  const record = await db.getResetToken(token);
+  const record = await db.getResetToken(String(token));
   if (!record || new Date(record.expires_at) < new Date()) {
     if (record) await db.deleteResetToken(token);
     return json({ error: 'invalid_or_expired_token' }, 400, request);
@@ -148,5 +154,7 @@ export async function handleResetPassword(request, env, db) {
   await db.updateUser(record.user_id, { password_hash });
   await db.deleteResetToken(token);
 
-  return json({ ok: true }, 200, request);
+  // Entra directamente con la contraseña nueva
+  const session = await signSession(record.user_id, env.JWT_SECRET);
+  return json({ ok: true, token: session }, 200, request);
 }

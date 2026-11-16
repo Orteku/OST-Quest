@@ -2252,6 +2252,23 @@ body.theme--light .achievement-toast__desc { color: #6a6a78; }
 .auth-legal-note { font-size: 11px; color: #555568; text-align: center; margin: 4px 0 8px; line-height: 1.5; }
 .auth-legal-note a { color: #7878a8; text-decoration: underline; }
 .auth-legal-note a:hover { color: #9898c0; }
+/* Recuperar contraseña: enlace del login, texto de la pantalla y confirmación */
+.auth-forgot { align-self: flex-end; font-size: 12px; color: #6868a0; cursor: pointer; margin-top: -2px; }
+.auth-forgot:hover { color: #9090c0; text-decoration: underline; }
+.auth-forgot-text { font-size: 13px; color: #9898a8; line-height: 1.5; text-align: center; margin: -8px 0 16px; }
+.auth-ok { font-size: 13px; color: #b8d080; line-height: 1.55; text-align: center; padding: 12px 14px; border-radius: 8px; background: var(--well-bg); box-shadow: var(--well-shadow); }
+.auth-ok strong { color: #ddd9cf; font-weight: 600; word-break: break-all; }
+/* reset-password.html: la misma tarjeta que el modal de acceso, en la página */
+.reset-card {
+  max-width: 340px;
+  margin: 40px auto 0;
+  padding: 28px 24px 24px;
+  background: #1b1c21;
+  box-shadow: var(--modal-shadow);
+  border-radius: 14px;
+}
+.reset-card .auth-submit-btn { width: 100%; }
+.reset-card a.auth-submit-btn { display: block; text-align: center; text-decoration: none; margin-top: 14px; }
 body.theme--light .auth-legal-note { color: #9898a8; }
 body.theme--light .auth-legal-note a { color: #5858a0; }
 
@@ -2453,6 +2470,11 @@ body.theme--light .auth-err { color: #b02020; }
 body.theme--light .auth-submit-btn { background: #dce8c4; color: #3a5810; --k-e: #9ab850; }
 body.theme--light .auth-submit-btn:hover { background: #ccdcb4; }
 body.theme--light .auth-switch__btn { color: #7878a8; }
+body.theme--light .auth-forgot { color: #7878a8; }
+body.theme--light .auth-forgot-text { color: #6a6a78; }
+body.theme--light .auth-ok { background: #fff; color: #3a5810; }
+body.theme--light .auth-ok strong { color: #1e1d28; }
+body.theme--light .reset-card { background: #f0ede6; }
 body.theme--light .rank-tab { color: #7878a8; }
 body.theme--light .rank-tab--active { background: #f2f0ea; color: #3a5810; }
 body.theme--light .rank-table th { color: #9898a8; border-color: #d0cec6; }

@@ -9,6 +9,7 @@ const _TS_SITEKEY = '0x4AAAAAAGC90ORRKTyyXy3o';
 let _tsPromise = null;
 let _tsWidgetId = null;
 let _tsToken    = null;
+let _tsFailed   = false;   // el widget dio error (o no cargó): esperar no sirve, hay que recargar
 
 function _loadTurnstile() {
   return _tsPromise ??= new Promise((resolve, reject) => {
@@ -21,24 +22,35 @@ function _loadTurnstile() {
   });
 }
 
-// Pinta el widget en el hueco #auth-turnstile del modal de registro (solo se muestra si hace falta interacción)
-async function _mountTurnstile() {
+// Pinta el widget en el hueco #auth-turnstile del modal (solo se muestra si hace falta interacción).
+// action: 'register' o 'recover', la misma que espera el Worker en ese endpoint
+async function _mountTurnstile(action) {
   const box = document.getElementById('auth-turnstile');
-  _tsWidgetId = null; _tsToken = null;
+  _tsWidgetId = null; _tsToken = null; _tsFailed = false;
   if (!box) return;
   try {
     const ts = await _loadTurnstile();
     if (!document.getElementById('auth-turnstile')) return;
     _tsWidgetId = ts.render(box, {
       sitekey: _TS_SITEKEY,
-      action: 'register',
+      action,
       appearance: 'interaction-only',
       theme: document.body.classList.contains('theme--light') ? 'light' : 'dark',
-      callback: token => { _tsToken = token; },
+      callback: token => { _tsToken = token; _tsFailed = false; },
       'expired-callback': () => { _tsToken = null; },
-      'error-callback': () => { _tsToken = null; },
+      'error-callback': () => { _tsToken = null; _tsFailed = true; },
     });
-  } catch { /* sin el script no se podrá registrar: _submitEmail lo avisa */ }
+  } catch { _tsFailed = true; }
+}
+
+// Lee el token del widget o avisa de que aún se está verificando. Tras usarlo hay que llamar a _resetTurnstile()
+function _takeTurnstileToken() {
+  if (!_tsToken) { _showErr(t(_tsFailed ? 'auth_error_captcha' : 'auth_error_captcha_wait')); return null; }
+  return _tsToken;
+}
+function _resetTurnstile() {
+  _tsToken = null;   // cada token vale una sola vez
+  if (_tsWidgetId !== null) try { window.turnstile.reset(_tsWidgetId); } catch {}
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -436,7 +448,91 @@ function closeAuthModal() {
   document.getElementById('auth-modal-inner')?.classList.remove('auth-modal--profile');
 }
 
+// Pantalla «¿Has olvidado tu contraseña?»: pide el email y manda el enlace de /reset-password.html
+function _renderForgotModal() {
+  const typed = document.getElementById('auth-email')?.value.trim() || '';
+  document.getElementById('auth-modal-inner').innerHTML = `
+    <button class="modal__close-x" id="auth-close">&times;</button>
+    <h2 class="auth-title">${t('auth_forgot_title')}</h2>
+    <p class="auth-forgot-text">${t('auth_forgot_text')}</p>
+    <div class="auth-form" id="auth-forgot-form">
+      <input class="auth-input" type="email" id="auth-email" placeholder="${t('auth_email')}" autocomplete="email">
+      <div id="auth-turnstile"></div>
+      <p class="auth-err" id="auth-err" style="display:none"></p>
+      <button class="btn auth-submit-btn" id="auth-submit">${t('auth_forgot_btn')}</button>
+    </div>
+    <p class="auth-switch"><button class="auth-switch__btn" id="auth-sw">${t('auth_forgot_back')}</button></p>
+  `;
+  const input = document.getElementById('auth-email');
+  if (typed.includes('@')) input.value = typed;   // si escribió su email en el login, se lo dejamos puesto
+  document.getElementById('auth-close').addEventListener('click', closeAuthModal);
+  document.getElementById('auth-sw').addEventListener('click', () => { _authMode = 'signin'; _renderAuthModal(); });
+  document.getElementById('auth-submit').addEventListener('click', _submitForgot);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') _submitForgot(); });
+  _mountTurnstile('recover');
+}
+
+async function _submitForgot() {
+  const email = document.getElementById('auth-email')?.value.trim();
+  if (!email) return;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { _showErr(t('auth_error_invalid_email')); return; }
+  _hideErr();
+  const turnstileToken = _takeTurnstileToken();
+  if (!turnstileToken) return;
+  const btn = document.getElementById('auth-submit');
+  btn.disabled = true;
+  const data = await _apiFetch('/auth/forgot-password', 'POST', { email, turnstileToken, lang: _lang });
+  _resetTurnstile();
+  btn.disabled = false;
+  if (!data?.ok) {
+    _showErr(data?.error === 'too_many_attempts' ? t('auth_error_too_many')
+           : data?.error === 'captcha_failed'    ? t('auth_error_captcha')
+           : t('auth_error_retry'));
+    return;
+  }
+  // El servidor responde igual exista o no la cuenta, así que el mensaje tampoco lo revela
+  document.getElementById('auth-forgot-form').innerHTML =
+    `<p class="auth-ok">${t('auth_forgot_sent').replace('{email}', `<strong>${_esc(email)}</strong>`)}</p>`;
+}
+
+// reset-password.html: el enlace del correo trae el token (la página lo deja en window.RESET_TOKEN)
+function initResetPasswordPage() {
+  const card = document.getElementById('reset-card');
+  const token = window.RESET_TOKEN;
+  const showLinkError = () => {
+    card.querySelector('.auth-forgot-text').textContent = t('reset_error_link');
+    document.getElementById('reset-form').innerHTML =
+      `<button class="btn auth-submit-btn" id="reset-new">${t('reset_request_new')}</button>`;
+    document.getElementById('reset-new').addEventListener('click', () => openAuthModal('forgot'));
+  };
+  if (!/^[0-9a-f]{64}$/.test(token || '')) { showLinkError(); return; }
+
+  const submit = async () => {
+    const pwd  = document.getElementById('reset-pwd').value;
+    const pwd2 = document.getElementById('reset-pwd2').value;
+    _hideErr();
+    if (pwd.length < 6)  { _showErr(t('auth_password_too_short')); return; }
+    if (pwd !== pwd2)    { _showErr(t('auth_passwords_dont_match')); return; }
+    const btn = document.getElementById('reset-submit');
+    btn.disabled = true;
+    const data = await _apiFetch('/auth/reset-password', 'POST', { token, password: pwd });
+    btn.disabled = false;
+    if (data?.error === 'invalid_or_expired_token') { showLinkError(); return; }
+    if (!data?.ok) {
+      _showErr(data?.error === 'too_many_attempts' ? t('auth_error_too_many') : t('auth_error_retry'));
+      return;
+    }
+    card.querySelector('.auth-forgot-text').remove();
+    document.getElementById('reset-form').innerHTML =
+      `<p class="auth-ok">${t('reset_ok')}</p><a class="btn auth-submit-btn" href="./">${t('reset_go_play')}</a>`;
+    if (data.token) await _handleNewToken(data.token);
+  };
+  document.getElementById('reset-submit').addEventListener('click', submit);
+  document.getElementById('reset-pwd2').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+}
+
 function _renderAuthModal() {
+  if (_authMode === 'forgot') { _renderForgotModal(); return; }
   const reg = _authMode === 'register';
   const lastProvider = localStorage.getItem('ostquest_last_provider');
   document.getElementById('auth-modal-inner').innerHTML = `
@@ -447,7 +543,8 @@ function _renderAuthModal() {
         ? `<input class="auth-input" type="email" id="auth-email" placeholder="${t('auth_email')}" autocomplete="email">`
         : `<input class="auth-input" type="text" id="auth-email" placeholder="${t('auth_email_or_username')}" autocomplete="username" autocapitalize="off" spellcheck="false">`}
       <input class="auth-input" type="password" id="auth-pwd" placeholder="${t('auth_password')}" autocomplete="${reg ? 'new-password' : 'current-password'}">
-      ${reg ? '<div id="auth-turnstile"></div>' : ''}
+      ${reg ? '<div id="auth-turnstile"></div>'
+            : `<button type="button" class="auth-forgot" id="auth-forgot">${t('auth_forgot_link')}</button>`}
       <p class="auth-err" id="auth-err" style="display:none"></p>
       <button class="btn auth-submit-btn" id="auth-submit">${t(reg ? 'auth_register_btn' : 'auth_sign_in_btn')}</button>
     </div>
@@ -492,7 +589,11 @@ function _renderAuthModal() {
     _authMode = _authMode === 'signin' ? 'register' : 'signin';
     _renderAuthModal();
   });
-  if (reg) _mountTurnstile();
+  if (reg) _mountTurnstile('register');
+  document.getElementById('auth-forgot')?.addEventListener('click', () => {
+    _authMode = 'forgot';
+    _renderAuthModal();
+  });
   document.getElementById('auth-submit').addEventListener('click', _submitEmail);
   document.getElementById('auth-pwd').addEventListener('keydown', e => { if (e.key === 'Enter') _submitEmail(); });
   document.querySelectorAll('.auth-social__btn').forEach(btn => {
@@ -526,11 +627,10 @@ async function _submitEmail() {
   // Para entrar vale el email o el nombre de usuario (cuentas sin email, como las de Steam, con contraseña puesta)
   let data;
   if (_authMode === 'register') {
-    if (!_tsToken) { _showErr(t('auth_error_captcha_wait')); return; }
-    data = await _apiFetch('/auth/register', 'POST', { email, password: pwd, turnstileToken: _tsToken });
-    // Cada token vale una sola vez: se pide otro para el siguiente intento
-    _tsToken = null;
-    if (_tsWidgetId !== null) try { window.turnstile.reset(_tsWidgetId); } catch {}
+    const turnstileToken = _takeTurnstileToken();
+    if (!turnstileToken) return;
+    data = await _apiFetch('/auth/register', 'POST', { email, password: pwd, turnstileToken });
+    _resetTurnstile();
   } else {
     data = await _apiFetch('/auth/login', 'POST', { login: email, password: pwd });
   }
