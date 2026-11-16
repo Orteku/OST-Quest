@@ -621,7 +621,7 @@
     .special-field-row { display: flex; gap: 8px; align-items: flex-start; }
     .special-field-label { color: var(--muted); font-size: 12px; padding-top: 10px; width: 64px; flex-shrink: 0; }
     .special-gameids { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; }
-    .special-gameid-preview { display: flex; flex-wrap: wrap; gap: 4px; min-height: 4px; }
+    .special-gameid-preview, .special-search-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 4px; }
     .sp-id-search { flex: 1; min-width: 260px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .sp-id-results { display: flex; flex-wrap: wrap; gap: 4px; max-height: 160px; overflow-y: auto; }
     .sp-id-results:empty { display: none; }
@@ -2704,7 +2704,9 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     return '// OST Quest — Eventos especiales\n'
       + "// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)\n"
       + "// dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas\n"
-      + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto). Mínimo ~12 juegos.\n"
+      + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto, también compositor). Mínimo ~12 juegos.\n"
+      + "// En 'search' se pueden mezclar IDs con '#': \"kumi tanioka, #814, #120\" (para juegos con el mismo nombre).\n"
+      + "// Si el filtro solo casa con algunas pistas de un juego (tag de pista, compositor), solo suenan esas.\n"
       + "// Imágenes opcionales en img/specials/ con la fecha sin guiones: banner_1031.png (header) y logo_1031.png (favicon)\n\n"
       + 'const SPECIAL_EVENTS = [\n'
       + lines.join(',\n')
@@ -3022,6 +3024,26 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     ).length;
   }
 
+  // Vista previa del campo search: juego de cada #ID y cuántos juegos entran en el pool.
+  // Misma regla que getSpecialTrackIndexes de js/specials.js (si cambia allí, cambiarla aquí)
+  function renderSearchPreview(search) {
+    const all = String(search || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+    if (!all.length) return '';
+    const isId = t => /^#\d+$/.test(t);
+    const ids = all.filter(isId).map(t => Number(t.slice(1)));
+    const terms = all.filter(t => !isId(t));
+    const lc = s => String(s || '').toLowerCase();
+    const count = db.filter(g =>
+      ids.includes(Number(g.id)) ||
+      terms.some(term =>
+        lc(g.game).includes(term) || lc(g.developer).includes(term) ||
+        (g.tags || []).some(tag => lc(tag).includes(term)) ||
+        (g.tracks || []).some(tr => lc(tr.artist).includes(term) || (tr.tags || []).some(tag => lc(tag).includes(term))))
+    ).length;
+    return (ids.length ? renderGameIdPreviews(ids) : '')
+      + `<span style="font-size:11px;color:var(--muted)">${count} juegos en el pool</span>`;
+  }
+
   function renderGameIdPreviews(ids) {
     if (!ids || !ids.length) return '<span style="color:var(--muted);font-size:11px">Sin juegos asignados</span>';
     const chips = ids.slice(0, 30).map(id => {
@@ -3075,7 +3097,10 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
         </div>
         <div class="special-field-row">
           <span class="special-field-label">search</span>
-          <input class="special-search" data-field="search" data-index="${i}" placeholder="Desarrollador, compositor, serie..." value="${escapeHtml(ev.search || '')}" style="width:100%" />
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+            <input class="special-search" data-field="search" data-index="${i}" placeholder="Desarrollador, compositor, serie, #ID..." title="Términos separados por comas. #814 = el juego con ID 814 (para juegos con el mismo nombre)" value="${escapeHtml(ev.search || '')}" style="width:100%" />
+            <div class="special-search-preview">${renderSearchPreview(ev.search)}</div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -3103,6 +3128,10 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       _specials[i].gameIds = ids;
       const card = el.closest('.special-card');
       if (card) card.querySelector('.special-gameid-preview').innerHTML = renderGameIdPreviews(ids);
+    } else if (field === "search") {
+      _specials[i].search = el.value;
+      const card = el.closest('.special-card');
+      if (card) card.querySelector('.special-search-preview').innerHTML = renderSearchPreview(el.value);
     } else {
       _specials[i][field] = el.value;
     }

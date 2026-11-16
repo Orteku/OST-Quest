@@ -2,6 +2,7 @@
 // date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
 // dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas
 // Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto, también compositor). Mínimo ~12 juegos.
+// En 'search' se pueden mezclar IDs con '#': "kumi tanioka, #814, #120" (para juegos con el mismo nombre).
 // Si el filtro solo casa con algunas pistas de un juego (tag de pista, compositor), solo suenan esas.
 // Imágenes opcionales en img/specials/ con la fecha sin guiones: banner_1031.png (header) y logo_1031.png (favicon)
 
@@ -75,7 +76,11 @@ function getSpecialTrackIndexes(sp, game) {
     if (game.tags && game.tags.includes(sp.tag)) return all;
     return all.filter(i => (game.tracks[i].tags || []).includes(sp.tag));
   }
-  const terms = sp.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  // `#814` en la búsqueda es el juego con ese ID (para distinguir juegos con el mismo nombre)
+  const allTerms = sp.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const ids   = allTerms.filter(t => /^#\d+$/.test(t)).map(t => Number(t.slice(1)));
+  const terms = allTerms.filter(t => !/^#\d+$/.test(t));
+  if (ids.includes(Number(game.id))) return all;
   const gameMatch = terms.some(term =>
     lc(game.game).includes(term) || lc(game.developer).includes(term) ||
     (game.tags || []).some(tag => lc(tag).includes(term))
