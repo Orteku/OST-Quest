@@ -468,7 +468,7 @@ function _renderForgotModal() {
   document.getElementById('auth-close').addEventListener('click', closeAuthModal);
   document.getElementById('auth-sw').addEventListener('click', () => { _authMode = 'signin'; _renderAuthModal(); });
   document.getElementById('auth-submit').addEventListener('click', _submitForgot);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') _submitForgot(); });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) _submitForgot(); });
   _mountTurnstile('recover');
 }
 
@@ -528,7 +528,7 @@ function initResetPasswordPage() {
     if (data.token) await _handleNewToken(data.token);
   };
   document.getElementById('reset-submit').addEventListener('click', submit);
-  document.getElementById('reset-pwd2').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  document.getElementById('reset-pwd2').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) submit(); });
 }
 
 function _renderAuthModal() {
@@ -595,7 +595,7 @@ function _renderAuthModal() {
     _renderAuthModal();
   });
   document.getElementById('auth-submit').addEventListener('click', _submitEmail);
-  document.getElementById('auth-pwd').addEventListener('keydown', e => { if (e.key === 'Enter') _submitEmail(); });
+  document.getElementById('auth-pwd').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) _submitEmail(); });
   document.querySelectorAll('.auth-social__btn').forEach(btn => {
     btn.addEventListener('click', () => {
       localStorage.setItem('ostquest_last_provider', btn.dataset.provider);
@@ -675,7 +675,7 @@ function openUsernameModal() {
   `;
   document.getElementById('auth-modal').style.display = 'flex';
   document.getElementById('uname-save').addEventListener('click', _saveUsername);
-  document.getElementById('uname-input').addEventListener('keydown', e => { if (e.key === 'Enter') _saveUsername(); });
+  document.getElementById('uname-input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) _saveUsername(); });
 }
 
 async function _saveUsername() {

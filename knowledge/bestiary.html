@@ -1530,7 +1530,7 @@
   });
 
   list.addEventListener("keydown", (e) => {
-    if (e.target.matches("input[data-field]") && e.key === "Enter") e.target.blur();
+    if (e.target.matches("input[data-field]") && e.key === "Enter" && !e.isComposing) e.target.blur();
   });
 
   list.addEventListener("click", (e) => {
@@ -2448,7 +2448,7 @@
   }
 
   $("gmLoginBtn").addEventListener("click", gmLogin);
-  $("gmPassword").addEventListener("keydown", e => { if (e.key === "Enter") gmLogin(); });
+  $("gmPassword").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) gmLogin(); });
   $("gmLogoutBtn").addEventListener("click", clearGmSession);
 
   $("dbLoad").addEventListener("click", async () => {
