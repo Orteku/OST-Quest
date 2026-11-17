@@ -557,5 +557,6 @@
   "2027-11-13": [{"answerId":190,"coverIds":[581,571,190,462],"trackIndex":0},{"answerId":348,"coverIds":[348,92,272,185],"trackIndex":0},{"answerId":423,"coverIds":[405,96,423,391],"trackIndex":0}],
   "2027-11-14": [{"answerId":191,"coverIds":[55,479,191,128],"trackIndex":0},{"answerId":288,"coverIds":[288,741,535,546],"trackIndex":0},{"answerId":480,"coverIds":[388,480,681,219],"trackIndex":0}],
   "2027-11-15": [{"answerId":413,"coverIds":[561,413,508,119],"trackIndex":0},{"answerId":467,"coverIds":[467,484,396,419],"trackIndex":0},{"answerId":591,"coverIds":[26,591,790,3],"trackIndex":0}],
-  "2027-11-16": [{"answerId":459,"coverIds":[585,459,397,749],"trackIndex":0},{"answerId":334,"coverIds":[424,334,241,670],"trackIndex":0},{"answerId":345,"coverIds":[345,695,581,714],"trackIndex":0}]
+  "2027-11-16": [{"answerId":459,"coverIds":[585,459,397,749],"trackIndex":0},{"answerId":334,"coverIds":[424,334,241,670],"trackIndex":0},{"answerId":345,"coverIds":[345,695,581,714],"trackIndex":0}],
+  "2027-11-17": [{"answerId":779,"coverIds":[433,415,793,779],"trackIndex":0},{"answerId":233,"coverIds":[662,291,233,66],"trackIndex":0},{"answerId":549,"coverIds":[748,722,549,59],"trackIndex":0}]
 }

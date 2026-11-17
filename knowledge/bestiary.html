@@ -621,7 +621,9 @@
     .special-field-row { display: flex; gap: 8px; align-items: flex-start; }
     .special-field-label { color: var(--muted); font-size: 12px; padding-top: 10px; width: 64px; flex-shrink: 0; }
     .special-gameids { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; }
-    .special-gameid-preview, .special-search-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 4px; }
+    .special-pool-count { font-size: 12px; color: var(--muted); padding-top: 2px; }
+    .special-pool-count strong { color: var(--text); }
+    .special-gameid-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 4px; }
     .sp-id-search { flex: 1; min-width: 260px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .sp-id-results { display: flex; flex-wrap: wrap; gap: 4px; max-height: 160px; overflow-y: auto; }
     .sp-id-results:empty { display: none; }
@@ -2723,9 +2725,9 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     return '// OST Quest — Eventos especiales\n'
       + "// date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)\n"
       + "// dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas\n"
-      + "// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto, también compositor). Mínimo ~12 juegos.\n"
-      + "// En 'search' se pueden mezclar IDs con '#': \"kumi tanioka, #814, #120\" (para juegos con el mismo nombre).\n"
-      + "// Si el filtro solo casa con algunas pistas de un juego (tag de pista, compositor), solo suenan esas.\n"
+      + "// Pool: 'gameIds' (lista de IDs), 'tag' (tags de juego o de pista, separados por comas) y 'search' (texto en nombre, desarrolladora\n"
+      + "// y compositor, separado por comas). Se pueden combinar: entra todo lo que case con cualquiera. Mínimo ~12 juegos.\n"
+      + "// Si un filtro solo casa con algunas pistas de un juego (tag de pista, compositor), solo suenan esas.\n"
       + "// Imágenes opcionales en img/specials/ con la fecha sin guiones: banner_1031.png (header) y logo_1031.png (favicon)\n\n"
       + 'const SPECIAL_EVENTS = [\n'
       + lines.join(',\n')
@@ -3035,32 +3037,26 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     };
   }
 
-  function countPoolByTag(tag) {
-    if (!tag || db.length === 0) return 0;
-    return db.filter(g =>
-      (g.tags && g.tags.includes(tag)) ||
-      (g.tracks && g.tracks.some(tr => tr.tags && tr.tags.includes(tag)))
-    ).length;
-  }
-
-  // Vista previa del campo search: juego de cada #ID y cuántos juegos entran en el pool.
+  // Juegos que entran en el pool del evento (los tres filtros se suman).
   // Misma regla que getSpecialTrackIndexes de js/specials.js (si cambia allí, cambiarla aquí)
-  function renderSearchPreview(search) {
-    const all = String(search || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-    if (!all.length) return '';
-    const isId = t => /^#\d+$/.test(t);
-    const ids = all.filter(isId).map(t => Number(t.slice(1)));
-    const terms = all.filter(t => !isId(t));
+  function countEventPool(ev) {
+    const ids = (ev.gameIds || []).map(Number);
+    const terms = String(ev.search || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+    const tags = String(ev.tag || '').split(',').map(t => t.trim()).filter(Boolean);
+    if (!ids.length && !terms.length && !tags.length) return null;
     const lc = s => String(s || '').toLowerCase();
-    const count = db.filter(g =>
+    return db.filter(g =>
       ids.includes(Number(g.id)) ||
+      tags.some(tag => (g.tags || []).includes(tag) || (g.tracks || []).some(tr => (tr.tags || []).includes(tag))) ||
       terms.some(term =>
         lc(g.game).includes(term) || lc(g.developer).includes(term) ||
-        (g.tags || []).some(tag => lc(tag).includes(term)) ||
-        (g.tracks || []).some(tr => lc(tr.artist).includes(term) || (tr.tags || []).some(tag => lc(tag).includes(term))))
+        (g.tracks || []).some(tr => lc(tr.artist).includes(term)))
     ).length;
-    return (ids.length ? renderGameIdPreviews(ids) : '')
-      + `<span style="font-size:11px;color:var(--muted)">${count} juegos en el pool</span>`;
+  }
+  function poolCountHtml(ev) {
+    const n = countEventPool(ev);
+    if (n === null) return 'Sin filtros: evento solo visual (no cambia las quests)';
+    return `<strong>${n}</strong> juegos en el pool${n < 12 ? ' · <span class="field-warn">pocos (mínimo ~12)</span>' : ''}`;
   }
 
   function renderGameIdPreviews(ids) {
@@ -3077,9 +3073,10 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
 
   function specialCardHtml(ev, i, tagList) {
     const gameIdsStr = (ev.gameIds || []).join(', ');
-    const tags = ev.tag && !tagList.includes(ev.tag) ? [...tagList, ev.tag] : tagList;
+    const evTags = String(ev.tag || '').split(',').map(t => t.trim()).filter(Boolean);
+    const tags = [...tagList, ...evTags.filter(t => !tagList.includes(t))];
     const tagChips = tags.map(t =>
-      `<span${tagStyle(t)} class="tag-chip${ev.tag === t ? ' active' : ''}" data-sp-tag="${escapeHtml(t)}" data-index="${i}">${escapeHtml(t)}</span>`
+      `<span${tagStyle(t)} class="tag-chip${evTags.includes(t) ? ' active' : ''}" data-sp-tag="${escapeHtml(t)}" data-index="${i}">${escapeHtml(t)}</span>`
     ).join('');
     return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
       <div class="special-card-header">
@@ -3111,16 +3108,13 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
           <span class="special-field-label">tag</span>
           <div style="flex:1;min-width:0">
             <div class="tag-suggestions">${tagChips}</div>
-            ${ev.tag ? `<span style="font-size:11px;color:var(--muted)">${countPoolByTag(ev.tag)} juegos en el pool</span>` : ''}
           </div>
         </div>
         <div class="special-field-row">
           <span class="special-field-label">search</span>
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
-            <input class="special-search" data-field="search" data-index="${i}" placeholder="Desarrollador, compositor, serie, #ID..." title="Términos separados por comas. #814 = el juego con ID 814 (para juegos con el mismo nombre)" value="${escapeHtml(ev.search || '')}" style="width:100%" />
-            <div class="special-search-preview">${renderSearchPreview(ev.search)}</div>
-          </div>
+          <input class="special-search" data-field="search" data-index="${i}" placeholder="Desarrollador, compositor, serie..." title="Términos separados por comas: nombre del juego, desarrolladora o compositor" value="${escapeHtml(ev.search || '')}" style="width:100%" />
         </div>
+        <div class="special-pool-count" title="game_ids, tag y search se suman">${poolCountHtml(ev)}</div>
       </div>
     </div>`;
   }
@@ -3147,12 +3141,12 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       _specials[i].gameIds = ids;
       const card = el.closest('.special-card');
       if (card) card.querySelector('.special-gameid-preview').innerHTML = renderGameIdPreviews(ids);
-    } else if (field === "search") {
-      _specials[i].search = el.value;
-      const card = el.closest('.special-card');
-      if (card) card.querySelector('.special-search-preview').innerHTML = renderSearchPreview(el.value);
     } else {
       _specials[i][field] = el.value;
+    }
+    if (field === "gameIds" || field === "search") {
+      const count = el.closest('.special-card')?.querySelector('.special-pool-count');
+      if (count) count.innerHTML = poolCountHtml(_specials[i]);
     }
     setSpecialsDirty(true);
   });
@@ -3197,7 +3191,9 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       const tag = chip.dataset.spTag;
       const i = Number(chip.dataset.index);
       if (!_specials[i]) return;
-      _specials[i].tag = _specials[i].tag === tag ? '' : tag;
+      // Varios tags a la vez: cada chip se activa o desactiva por separado
+      const cur = String(_specials[i].tag || '').split(',').map(t => t.trim()).filter(Boolean);
+      _specials[i].tag = (cur.includes(tag) ? cur.filter(t => t !== tag) : [...cur, tag]).join(', ');
       setSpecialsDirty(true);
       renderSpecials();
     }
@@ -3306,7 +3302,15 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     }
   });
 
-  $("specialsDownload").addEventListener("click", () => {
+  $("specialsDownload").addEventListener("click", async () => {
+    // Las funciones del archivo se copian del specials.js de GitHub: sin él no se genera (la copia
+    // de respaldo del editor puede estar desactualizada y romper update.js)
+    if (!_specialsGithubSrc) _specialsGithubSrc = await getGithubRaw('js/specials.js');
+    if (!_specialsGithubSrc) {
+      $("specialsStatus").textContent = 'No se ha podido leer specials.js de GitHub. Revisa la conexión y vuelve a intentarlo.';
+      $("specialsStatus").className = 'sheets-status error';
+      return;
+    }
     download('specials.js', generateSpecialsJs(), 'text/javascript;charset=utf-8');
     $("specialsStatus").textContent = '✓ specials.js descargado';
     $("specialsStatus").className = 'sheets-status ok';

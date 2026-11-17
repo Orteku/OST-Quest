@@ -94,7 +94,7 @@ tercera columna. El navegador no genera quests: si `games.json` no carga, avisa 
 
 ### Eventos especiales (`js/specials.js`)
 Fechas fijas (`YYYY-MM-DD`) o anuales (`MM-DD`), con rango opcional (`dateTo`). Un especial con pool (`gameIds`,
-`tag` o `search`) genera la quest solo con esos juegos, no cuenta en la numeración de quests y da un logro
+`tag` y/o `search`, que se suman) genera la quest solo con esos juegos, no cuenta en la numeración de quests y da un logro
 `special_{fecha}`. Sin pool es solo visual (color, banner y favicon de `img/specials/`).
 
 ### Audio

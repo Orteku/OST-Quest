@@ -1,9 +1,9 @@
 // OST Quest — Eventos especiales
 // date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
 // dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas
-// Pool: usar 'gameIds' (lista de IDs), 'tag' (filtra GAME_DB por tag) o 'search' (filtra GAME_DB por texto, también compositor). Mínimo ~12 juegos.
-// En 'search' se pueden mezclar IDs con '#': "kumi tanioka, #814, #120" (para juegos con el mismo nombre).
-// Si el filtro solo casa con algunas pistas de un juego (tag de pista, compositor), solo suenan esas.
+// Pool: 'gameIds' (lista de IDs), 'tag' (tags de juego o de pista, separados por comas) y 'search' (texto en nombre, desarrolladora
+// y compositor, separado por comas). Se pueden combinar: entra todo lo que case con cualquiera. Mínimo ~12 juegos.
+// Si un filtro solo casa con algunas pistas de un juego (tag de pista, compositor), solo suenan esas.
 // Imágenes opcionales en img/specials/ con la fecha sin guiones: banner_1031.png (header) y logo_1031.png (favicon)
 
 const SPECIAL_EVENTS = [
@@ -62,38 +62,39 @@ function hasGameData(e) {
   return !!(e.gameIds?.length || e.search || e.tag);
 }
 
-// Pistas de `game` que entran en el especial `sp` (índices de game.tracks). Si el filtro casa con
-// el juego entero (id, tag del juego, nombre, desarrolladora) valen todas; si solo casa con algunas
-// pistas (tag de pista, compositor) solo valen esas, para que no suene otra canción del juego.
+// Tags del campo `tag` de un especial (admite varios separados por comas)
+function specialTagList(sp) {
+  return String(sp?.tag || '').split(',').map(t => t.trim()).filter(Boolean);
+}
+
+// Pistas de `game` que entran en el especial `sp` (índices de game.tracks). Los tres filtros se suman:
+// el juego entra si casa con cualquiera de ellos.
+//  - gameIds: esos juegos, con todas sus pistas
+//  - tag: uno o varios separados por comas; juegos con alguno de ellos (todas las pistas) o solo las pistas que lo tengan
+//  - search: términos separados por comas; si casan con el juego (nombre, desarrolladora) valen
+//    todas sus pistas, y si solo casan con algunas pistas (compositor) solo esas,
+//    para que no suene otra canción del juego.
 // Sin especial o sin pool: todas.
 function getSpecialTrackIndexes(sp, game) {
   const all = game.tracks.map((_, i) => i);
-  if (!sp || !hasGameData(sp) || sp.gameIds?.length) {
-    return !sp?.gameIds?.length || sp.gameIds.includes(game.id) ? all : [];
-  }
+  if (!sp || !hasGameData(sp)) return all;
+  if (sp.gameIds?.length && sp.gameIds.map(Number).includes(Number(game.id))) return all;
   const lc = s => (s || '').toLowerCase();
-  if (sp.tag) {
-    if (game.tags && game.tags.includes(sp.tag)) return all;
-    return all.filter(i => (game.tracks[i].tags || []).includes(sp.tag));
-  }
-  // `#814` en la búsqueda es el juego con ese ID (para distinguir juegos con el mismo nombre)
-  const allTerms = sp.search.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-  const ids   = allTerms.filter(t => /^#\d+$/.test(t)).map(t => Number(t.slice(1)));
-  const terms = allTerms.filter(t => !/^#\d+$/.test(t));
-  if (ids.includes(Number(game.id))) return all;
-  const gameMatch = terms.some(term =>
-    lc(game.game).includes(term) || lc(game.developer).includes(term) ||
-    (game.tags || []).some(tag => lc(tag).includes(term))
-  );
-  if (gameMatch) return all;
+  const terms = (sp.search || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const tags = specialTagList(sp);
+  if (tags.some(t => (game.tags || []).includes(t))) return all;
+  if (terms.some(term =>
+    lc(game.game).includes(term) || lc(game.developer).includes(term)
+  )) return all;
   return all.filter(i => {
     const tr = game.tracks[i];
-    return terms.some(term => lc(tr.artist).includes(term) || (tr.tags || []).some(tag => lc(tag).includes(term)));
+    if (tags.some(t => (tr.tags || []).includes(t))) return true;
+    return terms.some(term => lc(tr.artist).includes(term));
   });
 }
 
 // Juegos entre los que se elige la quest de un especial: lista de IDs, tag (de juego o de pista)
-// o búsqueda de texto en nombre, desarrolladora, tags y compositor de las pistas.
+// y búsqueda de texto en nombre, desarrolladora y compositor de las pistas (se suman).
 // null si el especial no tiene pool. Lo usan update.js (al generar games.json) y el modo GM;
 // la pista que suena se elige con getSpecialTrackIndexes.
 function getSpecialPool(sp, db) {
