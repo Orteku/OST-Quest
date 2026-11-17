@@ -2,7 +2,7 @@
 // date: 'YYYY-MM-DD' (fecha exacta) o 'MM-DD' (se repite cada año)
 // dateTo: 'YYYY-MM-DD' o 'MM-DD' opcional — extiende el evento a un rango de fechas
 // Pool: 'gameIds' (lista de IDs), 'tag' (tags de juego o de pista, separados por comas) y 'search' (texto en nombre, desarrolladora
-// y compositor, separado por comas). Se pueden combinar: entra todo lo que case con cualquiera. Mínimo ~12 juegos.
+// y compositor, separado por comas; 'año:1990-1999', 'año:<2000'... restringen por año). Se pueden combinar: entra todo lo que case con cualquiera. Mínimo ~12 juegos.
 // Si un filtro solo casa con algunas pistas de un juego (tag de pista, compositor), solo suenan esas.
 // Imágenes opcionales en img/specials/ con la fecha sin guiones: banner_1031.png (header) y logo_1031.png (favicon)
 
@@ -67,6 +67,17 @@ function specialTagList(sp) {
   return String(sp?.tag || '').split(',').map(t => t.trim()).filter(Boolean);
 }
 
+// Términos de año del campo search: 'año:1998', 'año:1990-1999', 'año:<2000', 'año:>2015' (también 'year:').
+// Llevan prefijo para no confundirse con juegos que tienen un año en el nombre (Anno 1800, Cyberpunk 2077).
+// Devuelve una función que dice si un año cumple el término, o null si es un término de texto normal.
+function specialYearTest(term) {
+  const m = term.match(/^(?:año|year)\s*:\s*(?:(\d{4})\s*-\s*(\d{4})|([<>])\s*(\d{4})|(\d{4}))$/i);
+  if (!m) return null;
+  if (m[1]) return y => y >= Number(m[1]) && y <= Number(m[2]);
+  if (m[3]) return m[3] === '<' ? y => y < Number(m[4]) : y => y > Number(m[4]);
+  return y => y === Number(m[5]);
+}
+
 // Pistas de `game` que entran en el especial `sp` (índices de game.tracks). Los tres filtros se suman:
 // el juego entra si casa con cualquiera de ellos.
 //  - gameIds: esos juegos, con todas sus pistas
@@ -74,14 +85,22 @@ function specialTagList(sp) {
 //  - search: términos separados por comas; si casan con el juego (nombre, desarrolladora) valen
 //    todas sus pistas, y si solo casan con algunas pistas (compositor) solo esas,
 //    para que no suene otra canción del juego.
+//  - años en search ('año:1990-1999'...): no suman, restringen el resultado de los demás filtros
+//    (si hay varios, vale cumplir cualquiera). Si solo hay años, el pool son los juegos de esos años.
 // Sin especial o sin pool: todas.
 function getSpecialTrackIndexes(sp, game) {
   const all = game.tracks.map((_, i) => i);
   if (!sp || !hasGameData(sp)) return all;
-  if (sp.gameIds?.length && sp.gameIds.map(Number).includes(Number(game.id))) return all;
   const lc = s => (s || '').toLowerCase();
-  const terms = (sp.search || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const allTerms = (sp.search || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const yearTests = allTerms.map(specialYearTest).filter(Boolean);
+  const terms = allTerms.filter(t => !specialYearTest(t));
   const tags = specialTagList(sp);
+  if (yearTests.length) {
+    if (!yearTests.some(test => test(Number(game.year)))) return [];
+    if (!terms.length && !tags.length && !sp.gameIds?.length) return all;
+  }
+  if (sp.gameIds?.length && sp.gameIds.map(Number).includes(Number(game.id))) return all;
   if (tags.some(t => (game.tags || []).includes(t))) return all;
   if (terms.some(term =>
     lc(game.game).includes(term) || lc(game.developer).includes(term)

@@ -620,10 +620,58 @@
     .special-card-body { display: flex; flex-direction: column; gap: 10px; }
     .special-field-row { display: flex; gap: 8px; align-items: flex-start; }
     .special-field-label { color: var(--muted); font-size: 12px; padding-top: 10px; width: 64px; flex-shrink: 0; }
-    .special-gameids { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; }
-    .special-pool-count { font-size: 12px; color: var(--muted); padding-top: 2px; }
+    .special-pool-count { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); padding-top: 2px; }
     .special-pool-count strong { color: var(--text); }
-    .special-gameid-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 4px; }
+    .tag-chip .tag-count { opacity: .75; }
+    /* Campos con fichas (game_ids, search): un solo hueco con las fichas y la caja de escribir */
+    .token-field {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 36px; padding: 3px 5px;
+      border: 1px solid transparent; border-radius: 8px; background: var(--well-bg); box-shadow: var(--well-shadow); cursor: text;
+    }
+    .token-field:focus-within { background: var(--well-bg-focus); box-shadow: var(--well-shadow-focus); }
+    .token-field .tf-input, .token-field .tf-input:focus { flex: 1; min-width: 160px; border: 0; background: transparent; box-shadow: none; padding: 4px; font-size: 13px; }
+    .tf-token {
+      display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 2px 2px 8px; border-radius: 6px;
+      font-size: 12px; background: var(--panel2); box-shadow: inset 0 1px 0 var(--k-hl), 0 1px 0 var(--k-e); cursor: default;
+    }
+    .tf-token b { color: var(--muted); font: 600 11px ui-monospace, monospace; }
+    .tf-token.tf-bad { color: #ffe7a0; background: rgba(255,209,102,0.1); }
+    .tf-text { cursor: text; }
+    .tf-x, .tf-count, .pool-toggle { padding: 0 4px; border: 0; background: transparent; box-shadow: none; font-size: 11px; color: var(--muted); }
+    :is(.tf-x, .tf-count, .pool-toggle):active { transform: none; }
+    .tf-count { color: var(--accent); font-weight: 650; }
+    .tf-count:hover { text-decoration: underline; filter: none; }
+    .tf-x:hover { color: var(--danger); filter: none; }
+    .pool-toggle { font-size: 13px; padding: 0 2px; }
+    .pool-toggle:disabled { opacity: .3; }
+    .pool-arrow { display: inline-block; transition: transform .15s; }
+    .pool-toggle.open .pool-arrow { transform: rotate(90deg); }
+    /* Lista de juegos (pool, coincidencias, sugerencias) */
+    .pool-list { margin-top: 6px; max-height: 420px; overflow-y: auto; padding: 4px; border-radius: 8px; background: var(--well-bg); box-shadow: var(--well-shadow); }
+    .pool-list[hidden] { display: none; }
+    .pool-row { display: grid; grid-template-columns: 46px 30px 1fr; align-items: center; gap: 2px 8px; padding: 4px 6px; font-size: 13px; }
+    .pool-row + .pool-row { border-top: 1px solid var(--line); }
+    .pool-id { font: 11px ui-monospace, monospace; color: var(--muted); }
+    .pool-cover { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; background: var(--panel2); }
+    .pool-name { min-width: 0; }
+    .pool-muted { color: var(--muted); }
+    .pool-tracks { grid-column: 3; display: flex; flex-direction: column; gap: 2px; padding-left: 10px; border-left: 2px solid var(--line); font-size: 12px; }
+    .pool-empty { padding: 6px; font-size: 12px; color: var(--muted); }
+    .tf-pop {
+      position: absolute; z-index: 60; max-height: 360px; overflow-y: auto; padding: 6px; border-radius: 10px;
+      background: var(--panel2); box-shadow: var(--modal-shadow);
+    }
+    .tf-pop[hidden] { display: none; }
+    .tf-pop .pool-row + .pool-row { border-top-color: rgba(255,255,255,0.05); }
+    .tf-opt { cursor: pointer; border-radius: 6px; }
+    .tf-opt.sel, .tf-opt:hover { background: rgba(40,215,232,0.1); }
+    .tf-pop-head { padding: 4px 6px 6px; font-size: 12px; color: var(--muted); }
+    .tf-help { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+    .tf-help-opt { display: grid; grid-template-columns: 120px 1fr; gap: 8px; padding: 5px 8px; }
+    .tf-help-opt span { color: var(--muted); }
+    .tf-help code, .tf-pop-head code { font-family: ui-monospace, monospace; color: var(--accent); }
+    .tf-help-note { padding: 6px 8px 2px; font-size: 11px; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.05); margin-top: 4px; }
+    .tf-help-live { padding: 4px 8px; font-size: 12px; }
     .sp-id-search { flex: 1; min-width: 260px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .sp-id-results { display: flex; flex-wrap: wrap; gap: 4px; max-height: 160px; overflow-y: auto; }
     .sp-id-results:empty { display: none; }
@@ -3037,47 +3085,15 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     };
   }
 
-  // Juegos que entran en el pool del evento (los tres filtros se suman).
-  // Misma regla que getSpecialTrackIndexes de js/specials.js (si cambia allí, cambiarla aquí)
-  function countEventPool(ev) {
-    const ids = (ev.gameIds || []).map(Number);
-    const terms = String(ev.search || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-    const tags = String(ev.tag || '').split(',').map(t => t.trim()).filter(Boolean);
-    if (!ids.length && !terms.length && !tags.length) return null;
-    const lc = s => String(s || '').toLowerCase();
-    return db.filter(g =>
-      ids.includes(Number(g.id)) ||
-      tags.some(tag => (g.tags || []).includes(tag) || (g.tracks || []).some(tr => (tr.tags || []).includes(tag))) ||
-      terms.some(term =>
-        lc(g.game).includes(term) || lc(g.developer).includes(term) ||
-        (g.tracks || []).some(tr => lc(tr.artist).includes(term)))
-    ).length;
-  }
-  function poolCountHtml(ev) {
-    const n = countEventPool(ev);
-    if (n === null) return 'Sin filtros: evento solo visual (no cambia las quests)';
-    return `<strong>${n}</strong> juegos en el pool${n < 12 ? ' · <span class="field-warn">pocos (mínimo ~12)</span>' : ''}`;
-  }
-
-  function renderGameIdPreviews(ids) {
-    if (!ids || !ids.length) return '<span style="color:var(--muted);font-size:11px">Sin juegos asignados</span>';
-    const chips = ids.slice(0, 30).map(id => {
-      const item = db.find(x => Number(x.id) === Number(id));
-      const cls = item ? 'sp-id-chip' : 'sp-id-chip field-warn';
-      const name = item ? escapeHtml(item.game) : `#${id}`;
-      return `<span class="${cls}" title="ID ${id}">${name}</span>`;
-    });
-    if (ids.length > 30) chips.push(`<span class="sp-id-chip" style="color:var(--muted)">+${ids.length - 30} más</span>`);
-    return chips.join('');
-  }
-
   function specialCardHtml(ev, i, tagList) {
-    const gameIdsStr = (ev.gameIds || []).join(', ');
     const evTags = String(ev.tag || '').split(',').map(t => t.trim()).filter(Boolean);
     const tags = [...tagList, ...evTags.filter(t => !tagList.includes(t))];
-    const tagChips = tags.map(t =>
-      `<span${tagStyle(t)} class="tag-chip${evTags.includes(t) ? ' active' : ''}" data-sp-tag="${escapeHtml(t)}" data-index="${i}">${escapeHtml(t)}</span>`
-    ).join('');
+    // Los tags marcados llevan entre paréntesis cuántos juegos incluyen
+    const tagChips = tags.map(t => {
+      const on = evTags.includes(t);
+      const count = on && db.length ? ` <span class="tag-count">(${tagEntries(t).length})</span>` : '';
+      return `<span${tagStyle(t)} class="tag-chip${on ? ' active' : ''}" data-sp-tag="${escapeHtml(t)}" data-index="${i}">${escapeHtml(t)}${count}</span>`;
+    }).join('');
     return `<div class="special-card" data-index="${i}" style="border-left: 4px solid ${escapeHtml(ev.color || '#888')}">
       <div class="special-card-header">
         <button type="button" class="special-color" data-action="pickColor" data-index="${i}" style="--sw:${escapeHtml(ev.color || '#888888')}" title="Color del evento: ${escapeHtml(ev.color || '#888888')}"></button>
@@ -3099,10 +3115,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       <div class="special-card-body">
         <div class="special-field-row">
           <span class="special-field-label">game_ids</span>
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
-            <input class="special-gameids" data-field="gameIds" data-index="${i}" placeholder="IDs separados por comas" value="${escapeHtml(gameIdsStr)}" />
-            <div class="special-gameid-preview">${renderGameIdPreviews(ev.gameIds)}</div>
-          </div>
+          <div style="flex:1;min-width:0">${tokenFieldHtml('ids', ev, i)}</div>
         </div>
         <div class="special-field-row">
           <span class="special-field-label">tag</span>
@@ -3112,9 +3125,9 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
         </div>
         <div class="special-field-row">
           <span class="special-field-label">search</span>
-          <input class="special-search" data-field="search" data-index="${i}" placeholder="Desarrollador, compositor, serie..." title="Términos separados por comas: nombre del juego, desarrolladora o compositor" value="${escapeHtml(ev.search || '')}" style="width:100%" />
+          <div style="flex:1;min-width:0">${tokenFieldHtml('search', ev, i)}</div>
         </div>
-        <div class="special-pool-count" title="game_ids, tag y search se suman">${poolCountHtml(ev)}</div>
+        <div class="special-pool">${poolSectionHtml(ev, i)}</div>
       </div>
     </div>`;
   }
@@ -3126,6 +3139,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       return;
     }
     closeColorPop();
+    closeTfPop();
     const tagList = getGameTagList();
     container.innerHTML = _specials.map((ev, i) => specialCardHtml(ev, i, tagList)).join('');
   }
@@ -3136,18 +3150,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     if (i === null || !_specials[i]) return;
     const field = el.dataset.field;
     if (!field) return;
-    if (field === "gameIds") {
-      const ids = el.value.split(',').map(s => Number(s.trim())).filter(n => n > 0 && !isNaN(n));
-      _specials[i].gameIds = ids;
-      const card = el.closest('.special-card');
-      if (card) card.querySelector('.special-gameid-preview').innerHTML = renderGameIdPreviews(ids);
-    } else {
-      _specials[i][field] = el.value;
-    }
-    if (field === "gameIds" || field === "search") {
-      const count = el.closest('.special-card')?.querySelector('.special-pool-count');
-      if (count) count.innerHTML = poolCountHtml(_specials[i]);
-    }
+    _specials[i][field] = el.value;
     setSpecialsDirty(true);
   });
 
@@ -3181,6 +3184,7 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       customConfirm(`¿Eliminar el evento "${_specials[i]?.label || 'sin nombre'}"?`, { ok: 'Eliminar', okDanger: true }).then(ok => {
         if (!ok) return;
         _specials.splice(i, 1);
+        _poolOpen.clear();
         setSpecialsDirty(true);
         renderSpecials();
       });
@@ -3198,6 +3202,351 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
       renderSpecials();
     }
   });
+
+  // ── Pool de un evento ─────────────────────────────────────────────────────
+  // Misma regla que getSpecialTrackIndexes y specialYearTest de js/specials.js (si cambia allí, cambiarla aquí)
+  const splitList = s => String(s || '').split(',').map(t => t.trim()).filter(Boolean);
+  function yearTest(term) {
+    const m = String(term).match(/^(?:año|year)\s*:\s*(?:(\d{4})\s*-\s*(\d{4})|([<>])\s*(\d{4})|(\d{4}))$/i);
+    if (!m) return null;
+    if (m[1]) return y => y >= Number(m[1]) && y <= Number(m[2]);
+    if (m[3]) return m[3] === '<' ? y => y < Number(m[4]) : y => y > Number(m[4]);
+    return y => y === Number(m[5]);
+  }
+  const isYearTerm = t => /^(?:año|year)\s*:/i.test(String(t).trim());
+  const eventHasFilters = ev => !!((ev.gameIds || []).length || splitList(ev.search).length || splitList(ev.tag).length);
+
+  // Índices de las pistas de `game` que entran en el evento (vacío = el juego no entra)
+  function eventTrackIndexes(ev, game) {
+    const all = (game.tracks || []).map((_, i) => i);
+    const lc = s => String(s || '').toLowerCase();
+    const allTerms = splitList(ev.search).map(t => t.toLowerCase());
+    const yearTests = allTerms.map(yearTest).filter(Boolean);
+    const terms = allTerms.filter(t => !yearTest(t));
+    const tags = splitList(ev.tag);
+    const ids = (ev.gameIds || []).map(Number);
+    if (yearTests.length) {
+      if (!yearTests.some(test => test(Number(game.year)))) return [];
+      if (!terms.length && !tags.length && !ids.length) return all;
+    }
+    if (ids.includes(Number(game.id))) return all;
+    if (tags.some(t => (game.tags || []).includes(t))) return all;
+    if (terms.some(term => lc(game.game).includes(term) || lc(game.developer).includes(term))) return all;
+    return all.filter(i => {
+      const tr = game.tracks[i];
+      return tags.some(t => (tr.tags || []).includes(t)) || terms.some(term => lc(tr.artist).includes(term));
+    });
+  }
+  // [{ game, tracks }]: tracks = null si entran todas las pistas del juego, o la lista de las que entran
+  function poolEntries(test) {
+    const out = [];
+    for (const g of db) {
+      const idx = test(g);
+      if (idx.length) out.push({ game: g, tracks: idx.length === (g.tracks || []).length ? null : idx });
+    }
+    return out;
+  }
+  const eventPool   = ev   => eventHasFilters(ev) ? poolEntries(g => eventTrackIndexes(ev, g)) : null;
+  const termEntries = term => poolEntries(g => eventTrackIndexes({ search: term }, g));
+  const tagEntries  = tag  => poolEntries(g => eventTrackIndexes({ tag }, g));
+
+  // Lista de juegos: #ID, portada, nombre y año; debajo, las canciones concretas si no entran todas
+  function poolRowsHtml(entries) {
+    if (!entries.length) return '<div class="pool-empty">Ningún juego</div>';
+    return entries.map(({ game, tracks }) => `<div class="pool-row">
+        <span class="pool-id">#${escapeHtml(game.id)}</span>
+        ${game.cover ? `<img class="pool-cover" src="${escapeHtml(game.cover)}" alt="" loading="lazy" />` : '<span class="pool-cover"></span>'}
+        <span class="pool-name">${escapeHtml(game.game)}${game.year ? `<span class="pool-muted">, ${escapeHtml(game.year)}</span>` : ''}</span>
+        ${tracks ? `<div class="pool-tracks">${tracks.map(ti => {
+          const t = game.tracks[ti];
+          return `<div>${escapeHtml(t.title || '(sin título)')}${t.artist ? `<span class="pool-muted">, ${escapeHtml(t.artist)}</span>` : ''}</div>`;
+        }).join('')}</div>` : ''}
+      </div>`).join('');
+  }
+
+  const _poolOpen = new Set();   // índices de eventos con la lista del pool desplegada
+  function poolCountHtml(ev, i, pool = eventPool(ev)) {
+    if (pool === null) return 'Sin filtros: evento solo visual (no cambia las quests)';
+    const n = pool.length;
+    return `<button type="button" class="pool-toggle${_poolOpen.has(i) ? ' open' : ''}" data-action="togglePool" data-index="${i}"${n ? '' : ' disabled'} title="Ver los juegos del pool"><span class="pool-arrow">▸</span></button>` +
+      `<strong>${n}</strong> juegos en el pool${n < 12 ? ' · <span class="field-warn">pocos (mínimo ~12)</span>' : ''}`;
+  }
+  function poolSectionHtml(ev, i) {
+    const pool = eventPool(ev), open = _poolOpen.has(i) && pool?.length;
+    return `<div class="special-pool-count" title="game_ids, tag y search se suman">${poolCountHtml(ev, i, pool)}</div>
+      <div class="pool-list"${open ? '' : ' hidden'}>${open ? poolRowsHtml(pool) : ''}</div>`;
+  }
+  function refreshPool(i) {
+    const card = $("specialsList").querySelector(`.special-card[data-index="${i}"]`);
+    if (card) card.querySelector('.special-pool').innerHTML = poolSectionHtml(_specials[i], i);
+  }
+
+  // ── Campos con fichas: game_ids y search ──────────────────────────────────
+  // Lo guardado no cambia (lista de IDs y texto separado por comas); las fichas son solo la forma de verlo.
+  function idTokensHtml(ids) {
+    return ids.map((id, n) => {
+      const g = db.find(x => Number(x.id) === Number(id));
+      const bad = db.length && !g;
+      return `<span class="tf-token${bad ? ' tf-bad' : ''}" title="${bad ? 'Este ID no está en la base cargada' : `ID ${escapeHtml(id)}`}">` +
+        `<b>#${escapeHtml(id)}</b>${g ? ' ' + escapeHtml(g.game) : bad ? ' (no existe)' : ''}` +
+        `<button type="button" class="tf-x" data-tf-remove="${n}" title="Quitar">✕</button></span>`;
+    }).join('');
+  }
+  function searchTokensHtml(terms) {
+    return terms.map((t, n) => {
+      const badYear = isYearTerm(t) && !yearTest(t);
+      const count = db.length ? termEntries(t).length : null;
+      return `<span class="tf-token${badYear || count === 0 ? ' tf-bad' : ''}"${badYear ? ' title="Formato de año no válido"' : ''}>` +
+        `<span class="tf-text" data-tf-edit="${n}" title="Clic para editar">${escapeHtml(t)}</span>` +
+        (count === null ? '' : `<button type="button" class="tf-count" data-tf-count="${n}" title="Ver coincidencias">(${count})</button>`) +
+        `<button type="button" class="tf-x" data-tf-remove="${n}" title="Quitar">✕</button></span>`;
+    }).join('');
+  }
+  const TF_PLACEHOLDER = {
+    ids: 'Buscar juego por nombre o ID…',
+    search: 'Desarrolladora, compositor, serie, año:1998… (coma para añadir)',
+  };
+  function tokenFieldHtml(kind, ev, i) {
+    const tokens = kind === 'ids' ? idTokensHtml(ev.gameIds || []) : searchTokensHtml(splitList(ev.search));
+    return `<div class="token-field" data-tf="${kind}" data-index="${i}">${tokens}` +
+      `<input class="tf-input" placeholder="${tokens ? '' : TF_PLACEHOLDER[kind]}" autocomplete="off" spellcheck="false" /></div>`;
+  }
+  function rerenderTokens(field) {
+    const ev = _specials[Number(field.dataset.index)];
+    const input = field.querySelector('.tf-input');
+    field.querySelectorAll('.tf-token').forEach(t => t.remove());
+    const html = field.dataset.tf === 'ids' ? idTokensHtml(ev.gameIds || []) : searchTokensHtml(splitList(ev.search));
+    input.insertAdjacentHTML('beforebegin', html);
+    input.placeholder = html ? '' : TF_PLACEHOLDER[field.dataset.tf];
+  }
+  function tfChanged(field) {
+    rerenderTokens(field);
+    refreshPool(Number(field.dataset.index));
+    setSpecialsDirty(true);
+    if (!tfPop.hidden && _tfField === field) placeTfPop(field);
+  }
+  function addSearchTerms(field, parts) {
+    const ev = _specials[Number(field.dataset.index)];
+    const terms = splitList(ev.search);
+    const have = new Set(terms.map(t => t.toLowerCase()));
+    const add = parts.map(t => t.trim()).filter(t => t && !have.has(t.toLowerCase()) && have.add(t.toLowerCase()));
+    if (!add.length) return;
+    ev.search = [...terms, ...add].join(', ');
+    tfChanged(field);
+  }
+  function addGameIds(field, ids) {
+    const ev = _specials[Number(field.dataset.index)];
+    const cur = (ev.gameIds || []).map(Number);
+    const add = ids.map(Number).filter(n => n > 0 && !cur.includes(n));
+    if (!add.length) return;
+    ev.gameIds = [...cur, ...add];
+    tfChanged(field);
+  }
+
+  // Desplegable bajo el campo: sugerencias de juegos, ayuda de año o coincidencias de un término
+  const tfPop = document.createElement('div');
+  tfPop.className = 'tf-pop';
+  tfPop.hidden = true;
+  document.body.appendChild(tfPop);
+  let _tfField = null, _tfSel = 0, _tfSugg = [];
+  function placeTfPop(field) {
+    const r = field.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth;
+    const width = Math.min(Math.max(r.width, 320), vw - 16);
+    tfPop.style.width = width + 'px';
+    tfPop.style.left = Math.min(Math.max(r.left + scrollX, scrollX + 8), scrollX + vw - width - 8) + 'px';
+    tfPop.style.top = (r.bottom + scrollY + 4) + 'px';
+  }
+  function showTfPop(field, html, kind) {
+    tfPop.innerHTML = html;
+    tfPop.dataset.kind = kind;
+    tfPop.hidden = false;
+    _tfField = field;
+    placeTfPop(field);
+  }
+  function closeTfPop() { tfPop.hidden = true; _tfField = null; _tfSugg = []; }
+
+  function showIdSuggestions(field, input) {
+    const q = input.value.trim().toLowerCase();
+    if (!q || !db.length) return closeTfPop();
+    const have = new Set((_specials[Number(field.dataset.index)].gameIds || []).map(Number));
+    const words = q.split(/\s+/);
+    const matches = db.filter(g => !have.has(Number(g.id)) &&
+      (String(g.id) === q || words.every(w => String(g.game || '').toLowerCase().includes(w))));
+    matches.sort((a, b) => (String(b.id) === q) - (String(a.id) === q));
+    _tfSugg = matches.slice(0, 50);
+    _tfSel = 0;
+    if (!_tfSugg.length) return showTfPop(field, '<div class="pool-empty">Ningún juego coincide</div>', 'sugg');
+    showTfPop(field, _tfSugg.map((g, n) => `<div class="tf-opt pool-row${n === _tfSel ? ' sel' : ''}" data-tf-pick="${escapeHtml(g.id)}">
+        <span class="pool-id">#${escapeHtml(g.id)}</span>
+        ${g.cover ? `<img class="pool-cover" src="${escapeHtml(g.cover)}" alt="" loading="lazy" />` : '<span class="pool-cover"></span>'}
+        <span class="pool-name">${escapeHtml(g.game)}${g.year ? `<span class="pool-muted">, ${escapeHtml(g.year)}</span>` : ''}</span>
+      </div>`).join('') + (matches.length > _tfSugg.length ? `<div class="pool-empty">y ${matches.length - _tfSugg.length} más: escribe más para afinar</div>` : ''), 'sugg');
+  }
+  function moveTfSel(d) {
+    if (!_tfSugg.length) return;
+    _tfSel = (_tfSel + d + _tfSugg.length) % _tfSugg.length;
+    tfPop.querySelectorAll('.tf-opt').forEach((o, n) => o.classList.toggle('sel', n === _tfSel));
+    tfPop.querySelectorAll('.tf-opt')[_tfSel]?.scrollIntoView({ block: 'nearest' });
+  }
+  function pickId(id) {
+    const field = _tfField;
+    if (!field) return;
+    const input = field.querySelector('.tf-input');
+    input.value = '';
+    closeTfPop();
+    addGameIds(field, [id]);
+    input.focus();
+  }
+
+  // Ayuda de los términos de año, al escribir "año" o "year"
+  const YEAR_FORMATS = [
+    ['año:1998', 'un año concreto'],
+    ['año:1990-1999', 'entre dos años (ambos incluidos)'],
+    ['año:<2000', 'antes de ese año'],
+    ['año:>2015', 'después de ese año'],
+  ];
+  function showYearHelp(field, input) {
+    const text = input.value.trim();
+    const valid = yearTest(text);
+    showTfPop(field, `<div class="tf-help">
+        ${YEAR_FORMATS.map(([f, d]) => `<div class="tf-opt tf-help-opt" data-tf-year="${escapeHtml(f)}"><code>${escapeHtml(f)}</code><span>${d}</span></div>`).join('')}
+        <div class="tf-help-note">También vale <code>year:</code>. Los años no suman juegos: restringen los demás filtros. Si solo hay años, el pool son los juegos de esos años.</div>
+        ${valid ? `<div class="tf-help-live"><code>${escapeHtml(text)}</code> → ${termEntries(text).length} juegos · coma o Enter para añadir</div>` : ''}
+      </div>`, 'year');
+  }
+
+  function onSearchInput(field, input) {
+    if (input.value.includes(',')) {
+      const parts = input.value.split(',');
+      input.value = parts.pop().trimStart();
+      addSearchTerms(field, parts);
+    }
+    if (/^\s*(año|year)(\s*:|\s*$)/i.test(input.value)) showYearHelp(field, input);
+    else if (_tfField === field) closeTfPop();
+  }
+
+  $("specialsList").addEventListener("input", e => {
+    const input = e.target.closest('.tf-input');
+    if (!input) return;
+    const field = input.closest('.token-field');
+    if (field.dataset.tf === 'search') return onSearchInput(field, input);
+    if (input.value.includes(',')) {                       // pegar "12, 40, 7": se añaden los IDs
+      const parts = input.value.split(',');
+      input.value = parts.pop().trimStart();
+      addGameIds(field, parts.map(p => p.trim()).filter(p => /^\d+$/.test(p)));
+    }
+    showIdSuggestions(field, input);
+  });
+
+  $("specialsList").addEventListener("keydown", e => {
+    const input = e.target.closest('.tf-input');
+    if (!input || e.isComposing) return;
+    const field = input.closest('.token-field');
+    const ev = _specials[Number(field.dataset.index)];
+    const isIds = field.dataset.tf === 'ids';
+    if (e.key === 'Escape' && !tfPop.hidden) { closeTfPop(); e.preventDefault(); return; }
+    if (isIds && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { moveTfSel(e.key === 'ArrowDown' ? 1 : -1); e.preventDefault(); return; }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (isIds) {
+        if (_tfSugg[_tfSel] && _tfField === field) pickId(_tfSugg[_tfSel].id);
+        else if (/^\d+$/.test(input.value.trim())) { addGameIds(field, [input.value.trim()]); input.value = ''; closeTfPop(); }
+      } else {
+        addSearchTerms(field, [input.value]);
+        input.value = '';
+        closeTfPop();
+      }
+      return;
+    }
+    if (e.key === 'Backspace' && !input.value) {           // borrar hacia atrás: quita la última ficha
+      if (isIds && ev.gameIds?.length) { ev.gameIds = ev.gameIds.slice(0, -1); tfChanged(field); }
+      else if (!isIds) {
+        const terms = splitList(ev.search);
+        if (!terms.length) return;
+        e.preventDefault();
+        input.value = terms.pop();                          // el último término vuelve a la caja para editarlo
+        ev.search = terms.join(', ');
+        tfChanged(field);
+        onSearchInput(field, input);
+      }
+    }
+  });
+
+  // Al salir de search, lo que quede escrito se añade como término
+  $("specialsList").addEventListener("focusout", e => {
+    const input = e.target.closest('.tf-input');
+    if (!input) return;
+    const field = input.closest('.token-field');
+    if (field.dataset.tf === 'search' && input.value.trim()) { addSearchTerms(field, [input.value]); input.value = ''; }
+    if (field.dataset.tf === 'ids') input.value = '';
+    if (_tfField === field && tfPop.dataset.kind !== 'matches') closeTfPop();
+  });
+
+  // Clics dentro de los campos de fichas y en la flecha del pool (antes que el resto de clics de la tarjeta)
+  $("specialsList").addEventListener("click", e => {
+    const toggle = e.target.closest("[data-action='togglePool']");
+    if (toggle) {
+      const i = Number(toggle.dataset.index);
+      _poolOpen.has(i) ? _poolOpen.delete(i) : _poolOpen.add(i);
+      refreshPool(i);
+      return;
+    }
+    const field = e.target.closest('.token-field');
+    if (!field) return;
+    const ev = _specials[Number(field.dataset.index)];
+    const input = field.querySelector('.tf-input');
+    const rm = e.target.closest('[data-tf-remove]');
+    if (rm) {
+      const n = Number(rm.dataset.tfRemove);
+      if (field.dataset.tf === 'ids') ev.gameIds = ev.gameIds.filter((_, k) => k !== n);
+      else ev.search = splitList(ev.search).filter((_, k) => k !== n).join(', ');
+      closeTfPop();
+      tfChanged(field);
+      return;
+    }
+    const cnt = e.target.closest('[data-tf-count]');
+    if (cnt) {
+      const term = splitList(ev.search)[Number(cnt.dataset.tfCount)];
+      if (!tfPop.hidden && tfPop.dataset.kind === 'matches' && tfPop.dataset.term === term) return closeTfPop();
+      const entries = termEntries(term);
+      showTfPop(field, `<div class="tf-pop-head"><code>${escapeHtml(term)}</code> · ${entries.length} juego${entries.length === 1 ? '' : 's'}</div>${poolRowsHtml(entries)}`, 'matches');
+      tfPop.dataset.term = term;
+      return;
+    }
+    const edit = e.target.closest('[data-tf-edit]');
+    if (edit) {
+      const terms = splitList(ev.search);
+      const n = Number(edit.dataset.tfEdit);
+      const pending = input.value.trim();
+      const [term] = terms.splice(n, 1);
+      if (pending) terms.push(pending);
+      ev.search = terms.join(', ');
+      input.value = term;
+      tfChanged(field);
+      input.focus();
+      onSearchInput(field, input);
+      return;
+    }
+    if (e.target === field) input.focus();
+  });
+
+  tfPop.addEventListener('pointerdown', e => { if (tfPop.dataset.kind !== 'matches') e.preventDefault(); });   // no quitar el foco a la caja
+  tfPop.addEventListener('click', e => {
+    const pick = e.target.closest('[data-tf-pick]');
+    if (pick) return pickId(pick.dataset.tfPick);
+    const yr = e.target.closest('[data-tf-year]');
+    if (yr && _tfField) {
+      const input = _tfField.querySelector('.tf-input');
+      input.value = yr.dataset.tfYear;
+      input.focus();
+      showYearHelp(_tfField, input);
+    }
+  });
+  document.addEventListener('pointerdown', e => {
+    if (!tfPop.hidden && !tfPop.contains(e.target) && !e.target.closest('.token-field')) closeTfPop();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !tfPop.hidden) closeTfPop(); });
 
   $("specialsAdd").addEventListener("click", () => {
     _specials.push({ date: '', dateTo: '', label: '', name: '', color: '#888888', tag: '', gameIds: [], search: '' });
