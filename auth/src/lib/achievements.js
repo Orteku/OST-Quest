@@ -7,7 +7,7 @@ const GAME_TAG_LEVELS = {
   shooter: [10, 30, 50], indie: [10, 30, 50], strategy: [10, 30, 50], platformer: [10, 30, 50],
   horror:  [10, 30, 50], puzzle: [10, 30, 50],
   fighting: [10, 20, 30], war: [10, 20, 30],
-  sport: [5, 10], rhythm: [5, 10],
+  sport: [5, 10], rhythm: [5, 10], pointandclick: [5, 10],
 };
 const TRACK_TAG_LEVELS = {
   lyrics: [10, 30, 50], retro: [10, 30, 50], rock: [10, 30, 50],

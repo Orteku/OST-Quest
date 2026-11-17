@@ -318,6 +318,20 @@ const ACHIEVEMENTS_DB = [
     en: { name: 'YOU ROCK!', desc: 'Guess 10 rhythm games in the daily quest' },
   },
   {
+    id:     'tag_pointandclick_5',
+    hidden: false,
+    image:  'tag_pointandclick_5.webp',
+    es: { name: '¡Mira, detrás de ti, un trofeo de tres cabezas!', desc: 'Acierta 5 aventuras gráficas en la quest del día' },
+    en: { name: 'Look behind you, a three-headed trophy!', desc: 'Guess 5 point-and-click adventures in the daily quest' },
+  },
+  {
+    id:     'tag_pointandclick_10',
+    hidden: false,
+    image:  'tag_pointandclick_10.webp',
+    es: { name: 'Si quieres el trofeo, tienes que poder tirar a varias viejecitas por la escalera', desc: 'Acierta 10 aventuras gráficas en la quest del día' },
+    en: { name: "If you want to get the trophy, you have to push a few old ladies down the stairs", desc: 'Guess 10 point-and-click adventures in the daily quest' },
+  },
+  {
     id:     'tag_strategy_10',
     hidden: false,
     image:  'tag_strategy_10.webp',

@@ -69,7 +69,7 @@ Cada entrada en `js/database.js`:
 ```
 
 Tags de juego en uso: `action`, `adventure`, `arcade`, `fighting`, `horror`, `indie`, `japanese`, `mmo`,
-`platformer`, `puzzle`, `rhythm`, `rpg`, `sandbox`, `shooter`, `sport`, `strategy`, `war`.
+`platformer`, `pointandclick` (aventura gráfica clásica: escenarios, objetos), `puzzle`, `rhythm`, `rpg`, `sandbox`, `shooter`, `sport`, `strategy`, `war`.
 
 Tags de pista: `lyrics` (letra vocal), `rock`, `electronic`, `retro`, `asian`.
 

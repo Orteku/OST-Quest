@@ -165,7 +165,7 @@ Conserva los días pasados y hoy (salvo que hoy sea un especial cuya quest aún 
 ```
 
 Tags de juego: `action`, `adventure`, `arcade`, `fighting`, `horror`, `indie`, `japanese`, `mmo`, `platformer`,
-`puzzle`, `rhythm`, `rpg`, `sandbox`, `shooter`, `sport`, `strategy`, `war`.
+`pointandclick`, `puzzle`, `rhythm`, `rpg`, `sandbox`, `shooter`, `sport`, `strategy`, `war`.
 Tags de pista: `lyrics`, `rock`, `electronic`, `retro`, `asian`.
 
 **Portadas de IGDB:** busca el juego en [igdb.com](https://www.igdb.com), copia el código de la portada (ej. `co4jni`) y
