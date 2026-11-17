@@ -1126,13 +1126,28 @@
     return `${m}:${String(sec).padStart(2, "0")}`;
   }
 
+  // Campo de inicio: se formatea al salir; si no es un tiempo válido se queda en rojo y no se cambia
+  function applyTimeInput(input) {
+    const secs = timeToSeconds(input.value);
+    input.classList.toggle("field-error", secs === null);
+    if (secs !== null) input.value = secondsToTime(secs);
+    return secs;
+  }
+  document.addEventListener("change", e => {
+    if (e.target.id === "newStart") applyTimeInput(e.target);
+  });
+
+  // "m:ss" o solo cifras, donde las dos últimas son los segundos (132 → 1:32, 32 → 0:32, 2 → 0:02).
+  // Devuelve null si no es válido (segundos por encima de 59 o caracteres que no son cifras)
   function timeToSeconds(val) {
     const s = String(val || "").trim();
-    if (s.includes(":")) {
-      const [m, sec] = s.split(":");
-      return Math.max(0, (parseInt(m, 10) || 0) * 60 + (parseInt(sec, 10) || 0));
-    }
-    return Math.max(0, Number(s) || 0);
+    if (!s) return 0;
+    const match = s.includes(":") ? s.match(/^(\d*):(\d{1,2})$/) : s.match(/^(\d*?)(\d{1,2})$/);
+    if (!match) return null;
+    const [, m, sec] = match;
+    const secN = parseInt(sec, 10);
+    if (secN > 59) return null;
+    return (parseInt(m, 10) || 0) * 60 + secN;
   }
 
   const IMAGE_EXT_RE = /\.(jpe?g|png|webp|gif|svg|avif|bmp|tiff?)(\?|#|$)/i;
@@ -1397,8 +1412,9 @@
         _addToIdx(_audioIdx, track.mp3Url, index);
         revalidateByIndices(new Set([...oldAudioRows, ...(_audioIdx.get(track.mp3Url) || []), index]), 'audio');
       } else if (field === "startSeconds") {
-        track.startSeconds = timeToSeconds(value);
-        input.value = secondsToTime(track.startSeconds);
+        const secs = applyTimeInput(input);
+        if (secs === null) return;
+        track.startSeconds = secs;
         const loadBtn = row.querySelector(`button[data-action="loadTrack"][data-track="${trackIdx}"]`);
         if (loadBtn) { loadBtn.textContent = "▶ Cargar"; loadBtn.disabled = false; }
       } else if (field === "title") {
@@ -2009,6 +2025,7 @@
     $("newTrackTagSuggestions").querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
     $("newMp3Url").value = "";
     $("newStart").value = "0:00";
+    $("newStart").classList.remove("field-error");
     $("newTags").value = "";
     $("newPop").value = 5;
     $("newYear").value = new Date().getFullYear();
@@ -2023,7 +2040,7 @@
     const title  = $("newTitle").value.trim();
     const artist = $("newArtist").value.trim();
     const sourceVal = $("newMp3Url").value.trim();
-    const startSeconds = timeToSeconds($("newStart").value);
+    const startSeconds = applyTimeInput($("newStart"));
     const pop = Math.max(1, Math.min(6, Number($("newPop").value) || 5));
     const year = Number($("newYear").value) || new Date().getFullYear();
 
@@ -2033,6 +2050,7 @@
     const coverOk = validateCoverInput($("newCover"), cover, -1);
     const mp3Ok   = validateAudioInput($("newMp3Url"), normalizeAudioUrl(sourceVal), -1);
     if (!coverOk) { $("newCover").focus(); return; }
+    if (startSeconds === null) { $("newStart").focus(); return; }
     if (!mp3Ok)   { $("newMp3Url").focus(); return; }
 
     const tags = $("newTags").value.split(',').map(t => t.trim()).filter(Boolean);
@@ -2166,7 +2184,7 @@
     if (!mp3Url) return;
     _gpIndex = -1;
     loadTrackInPlayer(
-      { mp3Url, startSeconds: timeToSeconds($("newStart").value), title: $("newTitle").value.trim(), artist: $("newArtist").value.trim() },
+      { mp3Url, startSeconds: timeToSeconds($("newStart").value) ?? 0, title: $("newTitle").value.trim(), artist: $("newArtist").value.trim() },
       $("newGame").value.trim() || "(nueva entrada)",
       $("newCover").value.trim(),
       this
