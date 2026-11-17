@@ -154,24 +154,32 @@ function hideToast() {
   el.classList.remove('toast--show', 'toast--warn', 'toast--error');
 }
 
-function _showAchievementAnnouncement() {
-  const KEY = 'ostquest_seen_ach_v1';
-  if (localStorage.getItem(KEY)) return;
+// Aviso de novedades: se muestra uno solo, el primero de la lista que no se haya cerrado.
+// Al cerrarlo se marca como visto junto con los de `alsoSeen`: quien recibe el de logros es
+// alguien nuevo (o que nunca lo cerró), y para él el cambio de puntuación no es ninguna novedad.
+const _NEWS = [
+  { key: 'ostquest_seen_ach_v1',    icon: '🏆', title: 'news_ach_title',    body: 'news_ach_body', alsoSeen: ['ostquest_seen_points_v1'] },
+  { key: 'ostquest_seen_points_v1', icon: '📊', title: 'news_points_title', body: 'news_points_body' },
+];
+
+function _showNewsAnnouncement() {
+  const news = _NEWS.find(n => { try { return !localStorage.getItem(n.key); } catch { return false; } });
+  if (!news) return;
   setTimeout(() => {
     const el = document.createElement('div');
     el.className = 'news-banner';
     el.innerHTML = `
-      <div class="news-banner__icon">🏆</div>
+      <div class="news-banner__icon">${news.icon}</div>
       <div class="news-banner__body">
-        <div class="news-banner__title">${t('news_ach_title')}</div>
-        <div class="news-banner__text">${t('news_ach_body')}</div>
+        <div class="news-banner__title">${t(news.title)}</div>
+        <div class="news-banner__text">${t(news.body)}</div>
       </div>
       <button class="news-banner__close" id="news-banner-close">&times;</button>`;
     document.body.appendChild(el);
     document.getElementById('news-banner-close').addEventListener('click', () => {
       el.classList.add('news-banner--out');
       el.addEventListener('animationend', () => el.remove(), { once: true });
-      localStorage.setItem(KEY, '1');
+      try { [news.key, ...(news.alsoSeen || [])].forEach(k => localStorage.setItem(k, '1')); } catch {}
     });
   }, 1800);
 }
@@ -492,5 +500,5 @@ siteI18nReady.then(() => {
     _updateCountdownLabel();
   });
 
-  _showAchievementAnnouncement();
+  _showNewsAnnouncement();
 });

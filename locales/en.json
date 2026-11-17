@@ -210,5 +210,7 @@
   "auth_last_used": "Last used",
   "achievement_unlocked": "Trophy acquired",
   "news_ach_title": "NEW!",
-  "news_ach_body": "Earn trophies and unlock avatars for your profile."
+  "news_ach_body": "Earn trophies and unlock avatars for your profile.",
+  "news_points_title": "UPDATE",
+  "news_points_body": "Scores have been readjusted to normalize the values and reward perfect scores. But don't worry, you haven't lost any of your previously scored quests."
 }

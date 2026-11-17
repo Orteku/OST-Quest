@@ -209,5 +209,7 @@
   "auth_last_used": "Último uso",
   "achievement_unlocked": "Trofeo adquirido",
   "news_ach_title": "¡NOVEDAD!",
-  "news_ach_body": "Consigue logros y desbloquea avatares para tu perfil."
+  "news_ach_body": "Consigue logros y desbloquea avatares para tu perfil.",
+  "news_points_title": "ACTUALIZACIÓN",
+  "news_points_body": "Se han reajustado las puntuaciones para normalizar los valores y recompensar los plenos. Pero no os preocupéis que no habéis perdido las quests puntuadas anteriores."
 }
