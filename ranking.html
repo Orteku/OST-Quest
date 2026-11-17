@@ -30,7 +30,20 @@
   <div id="site-controls"></div>
 
   <div class="ranking-page">
-    <h1 class="ranking-page__title" data-i18n="ranking_title">Ranking</h1>
+    <div class="ranking-page__head">
+      <h1 class="ranking-page__title" data-i18n="ranking_title">Ranking</h1>
+      <button type="button" class="rank-info-btn" popovertarget="rank-info" data-i18n-aria="ranking_info_btn" aria-label="Cómo se puntúa">?</button>
+    </div>
+    <div id="rank-info" class="rank-info" popover>
+      <h2 class="rank-info__title" data-i18n="ranking_info_title">Cómo se puntúa</h2>
+      <ul class="rank-info__list" data-i18n-html="ranking_info_body">
+        <li><strong>3 puntos</strong> por cada canción acertada.</li>
+        <li><strong>+1 por pleno</strong>: acertar las tres da 10 puntos.</li>
+        <li><strong>+1 por racha</strong> si llevas 2 o más días seguidos jugando.</li>
+        <li>Solo suman las quests jugadas en su día; las del Quest Log no cuentan.</li>
+        <li>El ranking semanal empieza de cero cada lunes. Si hay empate, se comparte el puesto.</li>
+      </ul>
+    </div>
 
     <div class="rank-tabs">
       <button class="rank-tab rank-tab--active" id="rtab-weekly" data-i18n="ranking_weekly">Esta semana</button>

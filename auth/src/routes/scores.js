@@ -1,6 +1,7 @@
 import { json } from '../lib/cors.js';
 import { requireAuth } from './user.js';
 import { checkServerAchievements, getServerProgress } from '../lib/achievements.js';
+import { pointsForScore, STREAK_BONUS } from '../lib/points.js';
 
 const RESULTS_RE = /^[01]{3}$/;
 const DATE_RE    = /^\d{4}-\d{2}-\d{2}$/;
@@ -47,7 +48,7 @@ export async function handleSubmitScore(request, env, db) {
     return json({ ok: true, duplicate: true, newAchievements: [] }, 200, request);
   }
 
-  const pts = score === 3 ? 100 : score === 2 ? 66 : score === 1 ? 33 : 0;
+  const pts = pointsForScore(score);
   // Columnas acertadas, para los logros de tag. Solo se acepta si cuadra con la puntuación.
   const results = RESULTS_RE.test(body.results || '') && [...body.results].filter(c => c === '1').length === score
     ? body.results : undefined;
@@ -67,7 +68,7 @@ export async function handleSubmitScore(request, env, db) {
 
   // Racha calculada en el servidor desde los registros reales
   const streak = await db.calcStreakFromScores(payload.sub);
-  const bonus  = streak >= 2 ? 10 : 0;
+  const bonus  = streak >= 2 ? STREAK_BONUS : 0;
 
   await Promise.all([
     db.upsertScore({
@@ -126,7 +127,7 @@ export async function handleMigrateScores(request, env, db) {
     if (![0, 1, 2, 3].includes(res?.score) || !res.ts || res.ts > Date.now() + 3_600_000) continue;
     const playedAt = new Date(res.ts).toISOString();
     if (!db._isOnTime(date, playedAt)) continue;
-    const pts = res.score === 3 ? 100 : res.score === 2 ? 66 : res.score === 1 ? 33 : 0;
+    const pts = pointsForScore(res.score);
     rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: 0, total_points: pts, played_at: playedAt });
   }
 

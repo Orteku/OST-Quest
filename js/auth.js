@@ -735,13 +735,14 @@ async function loadRankingInto(containerId, tab) {
       <th class="rank-th--streak">${t('ranking_streak')}</th>
     </tr></thead>
     <tbody>${data.map((r, i) => {
-      const medal = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : '';
+      const pos   = _rankOf(data, r.pts);
+      const medal = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
       const isMe  = r.username === me;
       const avatarHtml = r.selected_avatar
         ? `<img class="rank-avatar rank-avatar--img" src="img/achievements/${_esc(r.selected_avatar)}" alt="">`
         : `<span class="rank-avatar">${_esc(r.username.charAt(0).toUpperCase())}</span>`;
       return `<tr class="${[medal, isMe ? 'rank-row--me' : ''].filter(Boolean).join(' ')}">
-        <td class="rank-pos">${i + 1}</td>
+        <td class="rank-pos">${pos}</td>
         <td class="rank-name"><button type="button" class="rank-name__btn">${avatarHtml}${_esc(r.username)}${isMe ? `<span class="rank-me-led" title="${t('ranking_you')}" aria-label="${t('ranking_you')}"></span>` : ''}</button></td>
         <td class="rank-pts">${r.pts}</td>
         <td class="rank-streak">${r.streak || '—'}</td>
@@ -1025,7 +1026,13 @@ async function getUserWeeklyPosition() {
   const data = await supabaseSelect('ranking_weekly', { select: 'username,pts', order: 'pts.desc' });
   if (!data) return null;
   const idx = data.findIndex(r => r.username === _profile.username);
-  return idx !== -1 ? { rank: idx + 1, pts: data[idx].pts } : null;
+  return idx !== -1 ? { rank: _rankOf(data, data[idx].pts), pts: data[idx].pts } : null;
+}
+
+// Puesto con empates compartidos (1, 1, 1, 4), igual que RANK() en ranking_weekly_history,
+// que es lo que usa el servidor para los logros semanales. `data` va ordenado por pts desc.
+function _rankOf(data, pts) {
+  return 1 + data.filter(r => r.pts > pts).length;
 }
 
 // ─── Modal de perfil ──────────────────────────────────────────────────────────

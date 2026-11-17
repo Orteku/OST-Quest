@@ -118,7 +118,7 @@ La sesión dura 30 días desde la última visita. El login social usa un `state`
 para vincular una red se pide antes un ticket de 5 minutos (`/auth/link-ticket`) en vez de poner la sesión en la URL.
 Las partidas jugadas sin sesión en su día se suben al iniciarla; las del Quest Log no suman puntos.
 
-Puntos por quest: 100 (3/3) · 66 (2/3) · 33 (1/3), +10 si se lleva una racha de 2 o más días seguidos.
+Puntos por quest: 10 (3/3, pleno) · 6 (2/3) · 3 (1/3), +1 si se lleva una racha de 2 o más días seguidos.
 Ranking semanal (lunes a domingo) y global, leídos de las vistas `ranking_weekly` y `ranking_global`.
 
 ### Logros (`js/achievements.js`)

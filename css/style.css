@@ -2868,7 +2868,48 @@ body.theme--light .st-play-banner__btn:hover { background: #3a5c00; }
   margin: 0 auto;
   padding: 24px 16px 48px;
 }
-.ranking-page__title { font-size: 22px; margin-bottom: 16px; }
+.ranking-page__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 16px;
+}
+.ranking-page__title { font-size: 22px; }
+
+/* Botón «?» y panel con las reglas de puntuación (popover nativo: se cierra al pulsar fuera o con Esc) */
+.rank-info-btn {
+  flex: none;
+  width: 26px; height: 26px; padding: 0;
+  border-radius: 50%;
+  background: #22232a; color: #9999a0;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; line-height: 1;
+  box-shadow: inset 0 1px 0 var(--k-hl), 0 2px 0 var(--k-e);
+  transition: transform 0.08s, box-shadow 0.08s, color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+.rank-info-btn:hover { background: #2a2b33; color: #b8e030; }
+.rank-info-btn:active { transform: translateY(2px); box-shadow: inset 0 1px 0 var(--k-hl), 0 0 0 var(--k-e); }
+body.theme--light .rank-info-btn { background: #e2dfd7; color: #6a6a78; }
+body.theme--light .rank-info-btn:hover { background: #d8d5cc; color: #4a6c10; }
+
+.rank-info {
+  inset: 0; margin: auto; height: fit-content;  /* centrado: el reset global quita el margin:auto del navegador */
+  width: min(360px, calc(100% - 32px));
+  padding: 20px 22px;
+  border: 0; border-radius: 14px;
+  background: #1b1c21; color: #c8c6be;
+  box-shadow: var(--modal-shadow);
+}
+.rank-info::backdrop { background: rgba(0,0,0,0.5); }
+.rank-info__title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: 1.5px;
+  text-transform: uppercase; font-size: 18px; color: #b8e030;
+  margin: 0 0 12px;
+}
+.rank-info__list { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; line-height: 1.45; }
+.rank-info__list strong { color: #ddd9cf; }
+body.theme--light .rank-info { background: #f0ede6; color: #45444f; }
+body.theme--light .rank-info::backdrop { background: rgba(0,0,0,0.25); }
+body.theme--light .rank-info__title { color: #4a6c10; }
+body.theme--light .rank-info__list strong { color: #1e1d28; }
 .ranking-page .rank-tabs { margin-bottom: 12px; }
 .ranking-page .rank-content {
   overflow: visible;

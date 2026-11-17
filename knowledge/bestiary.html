@@ -478,7 +478,7 @@
     .gm-login-input { width: 190px; font-size: 13px; }
     .gm-gate { display: inline-flex; }
     .gm-only:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
-    body:not(.has-db) .needs-db, body:not(.has-trans) .needs-trans, body:not(.has-specials) .needs-specials { display: none !important; }
+    body:not(.has-db) .needs-db, body:not(.has-trans) .needs-trans, body:not(.has-specials) .needs-specials, body:not(.has-ach) .needs-ach { display: none !important; }
     .pane-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; }
     .pane-sticky { position: sticky; top: var(--header-h, 0px); z-index: 9; background: var(--bg); margin: -16px 0 10px; padding: 6px 0 8px; }
     .header-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -517,7 +517,52 @@
     .tools-group > .sheets-status:empty { display: none; }
     body.has-db [data-for="db"] .load-group,
     body.has-trans [data-for="traducciones"] .load-group,
-    body.has-specials [data-for="especiales"] .load-group { margin-left: auto; }
+    body.has-specials [data-for="especiales"] .load-group,
+    body.has-ach [data-for="logros"] .load-group { margin-left: auto; }
+    /* ── Logros ───────────────────────────── */
+    .ach-section { margin: 18px 0 8px; font-size: 13px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .ach-section span { font-weight: 500; opacity: .7; }
+    .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+    .ach-card {
+      position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 8px 8px;
+      border-radius: 10px; background: var(--panel); box-shadow: var(--panel-shadow); cursor: pointer; text-align: center;
+      transition: transform .1s, background .12s;
+    }
+    .ach-card:hover { background: #20212a; }
+    .ach-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .ach-card.sel { background: #1f2a2e; box-shadow: var(--panel-shadow), inset 0 0 0 2px rgba(40,215,232,0.6); }
+    .ach-card img, .ach-card .ach-noimg { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--ring), 0 3px 0 2px var(--ring-edge); }
+    .ach-noimg { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); background: var(--well-bg); }
+    .ach-card.prov { opacity: .65; }
+    .ach-name { font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
+    .ach-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+    .ach-badges:empty { display: none; }
+    .ach-badge { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: rgba(0,0,0,0.25); color: var(--muted); }
+    .ach-badge.warn { color: #ffd166; background: rgba(255,209,102,0.1); }
+    .ach-dot { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: #ffd166; box-shadow: 0 0 6px #ffd166; }
+    .ach-panel {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 58vh; overflow-y: auto;
+      background: #1e1f25; border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(0,0,0,0.45);
+    }
+    .ach-panel[hidden], body:not([data-tab="logros"]) .ach-panel { display: none; }
+    body.ach-open[data-tab="logros"] .footer-space { height: calc(var(--ach-panel-h, 0px) + 24px); }
+    .ach-panel-inner { display: flex; gap: 18px; max-width: 1100px; margin: 0 auto; padding: 14px 16px 16px; }
+    .ach-panel-img img, .ach-panel-img .ach-noimg { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px var(--ring), 0 4px 0 3px var(--ring-edge); }
+    .ach-panel-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+    .ach-panel-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+    .ach-panel-head code { font-family: ui-monospace, monospace; font-size: 13px; color: var(--accent); }
+    .ach-close { margin-left: auto; padding: 4px 9px; }
+    .ach-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+    .ach-fields label, .ach-image-field { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); }
+    .ach-fields input, .ach-fields textarea { width: 100%; font-size: 13px; color: var(--text); resize: vertical; }
+    .ach-fields [readonly] { opacity: .6; }
+    .ach-fields-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+    .ach-image-field { width: 260px; }
+    .ach-image-field input { font: 12px ui-monospace, monospace; color: var(--text); }
+    .ach-games { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+    .ach-rule { font-size: 12px; color: var(--muted); }
+    .ach-rule b { color: var(--text); font-weight: 600; }
+    @media (max-width: 700px) { .ach-panel-inner { flex-direction: column; } .ach-fields { grid-template-columns: 1fr; } }
     .tab-tools .sheets-panel { margin-top: 0; }
     .save-wrap { display: inline-flex; align-items: center; gap: 8px; }
     .pending-summary { font-size: 11px; color: var(--muted); white-space: nowrap; }
@@ -742,6 +787,7 @@
     <button class="tab-btn active" data-tab="db">Juegos</button>
     <button class="tab-btn" data-tab="traducciones">Traducciones</button>
     <button class="tab-btn" data-tab="especiales">Especiales</button>
+    <button class="tab-btn" data-tab="logros">Logros</button>
   </div>
 
   <div class="tab-tools active" data-for="db">
@@ -814,6 +860,22 @@
         <span class="gm-gate"><button id="specialsLoad" class="primary gm-only">Cargar desde Supabase</button></span>
         <button id="specialsUpload">Subir archivo</button>
         <input id="specialsFileInput" type="file" accept=".js,.txt" hidden />
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-tools" data-for="logros">
+    <div class="tools-row">
+      <div class="tools-group save-group needs-ach">
+        <button id="achDownload" class="download">Descargar achievements.js</button>
+        <span class="save-wrap"><span class="gm-gate"><button id="achSave" class="primary gm-only">Guardar en Supabase</button></span><span id="achPending" class="pending-summary"></span></span>
+        <span id="achDirtyPill" class="pill warn" style="display:none">Sin guardar</span>
+      </div>
+      <div class="tools-group load-group">
+        <span id="achStatus" class="sheets-status"></span>
+        <span class="gm-gate"><button id="achLoad" class="primary gm-only">Cargar desde Supabase</button></span>
+        <button id="achUpload">Subir archivo</button>
+        <input id="achFileInput" type="file" accept=".js,.txt" hidden />
       </div>
     </div>
   </div>
@@ -925,8 +987,20 @@
     </div>
   </div><!-- /tab-especiales -->
 
+  <div id="tab-logros" class="tab-pane">
+    <div class="pane-sticky pane-tools needs-ach">
+      <div class="search-well"><input id="achSearch" type="search" placeholder="Buscar logro: nombre, descripción o id..." /></div>
+      <label class="switch-label"><input type="checkbox" id="achOnlyProv" class="switch-input" /><span class="switch"></span>Solo provisionales</label>
+      <span id="achCount" class="search-stats"></span>
+    </div>
+    <div id="achGrid">
+      <p style="color:var(--muted);padding:16px 0">Carga los logros desde Supabase para empezar.</p>
+    </div>
+  </div><!-- /tab-logros -->
+
   <div class="footer-space"></div>
 </main>
+<div id="achPanel" class="ach-panel" hidden></div>
 
 <div id="lightbox" style="display:none" role="dialog" aria-modal="true">
   <img id="lightboxImg" alt="Cover ampliada" />
@@ -2547,6 +2621,7 @@
       // Las otras pestañas se recargan solas salvo que tengan cambios sin guardar
       if (!_transDirty) $("transLoad").click();
       if (!_specialsDirty) $("specialsLoad").click();
+      if (!_achDirty) $("achLoad").click();
       checkDbDiff();
     } catch (err) {
       status.textContent = "Error: " + err.message;
@@ -2835,6 +2910,8 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     document.querySelectorAll(".tab-tools").forEach(t => t.classList.toggle("active", t.dataset.for === tab));
     if (tab === "traducciones") renderTranslations();
     if (tab === "especiales") renderSpecials();
+    document.body.dataset.tab = tab;
+    if (tab === "logros") { renderAchievements(); renderAchPanel(); }
   }
   document.querySelectorAll(".tab-btn").forEach(btn =>
     btn.addEventListener("click", () => switchTab(btn.dataset.tab))
@@ -3664,6 +3741,371 @@ if (typeof module !== 'undefined') module.exports = { SPECIAL_EVENTS, getSpecial
     $("specialsStatus").textContent = '✓ specials.js descargado';
     $("specialsStatus").className = 'sheets-status ok';
     setTabDiff('especiales', false);
+  });
+
+  // ── Logros ────────────────────────────────────────────────────────────────
+  // Solo se editan textos, imagen y oculto. Qué logros hay y cuándo se conceden está en el código
+  // (js/achievements.js y auth/src/lib/achievements.js): los logros nuevos se crean allí y aparecen aquí
+  // como "nuevos" la próxima vez que se carga. La descarga reescribe solo los bloques cambiados de
+  // js/achievements.js (el de GitHub, o el que se haya subido), sin tocar comentarios ni el resto.
+  let _ach = [];                 // [{ id, sort, hidden, image, name_es, desc_es, name_en, desc_en, section, inFile }]
+  let _achBaseline = null;       // id → achCanon tal como está en Supabase
+  let _achSrc = null;            // texto de js/achievements.js usado como base
+  let _achFile = null;           // { byId: Map id → logro del archivo, devTerms, trackMaxYear }
+  let _achManifest = null;       // Set de imágenes de img/achievements/ (null = no se sabe)
+  let _achLoaded = false, _achDirty = false;
+  let _achSel = null;            // id del logro abierto en el panel
+  let _achGamesOpen = false;
+  const ACH_IMG = '/img/achievements/';
+  const ACH_FIELDS = ['image', 'name_es', 'desc_es', 'name_en', 'desc_en'];
+
+  const achCanon = a => JSON.stringify([a.sort, !!a.hidden, ...ACH_FIELDS.map(k => a[k] || '')]);
+  const achFromFile = (e, sort) => ({
+    id: e.id, sort, hidden: !!e.hidden, image: e.image || '',
+    name_es: e.es?.name || '', desc_es: e.es?.desc || '', name_en: e.en?.name || '', desc_en: e.en?.desc || '',
+  });
+  const achFromRow = r => ({
+    id: r.id, sort: Number(r.sort) || 0, hidden: !!r.hidden,
+    ...Object.fromEntries(ACH_FIELDS.map(k => [k, r[k] || ''])),
+  });
+
+  // Lee js/achievements.js (archivo del propio proyecto): lista, secciones (comentarios "// ─── Título")
+  // y las tablas que deciden qué juegos cuentan
+  function parseAchievementsJs(src) {
+    // eslint-disable-next-line no-new-func
+    const out = new Function(src.replace(/if\s*\(typeof\s+module[^\n]*/g, '') +
+      '; return { list: ACHIEVEMENTS_DB,' +
+      ' devTerms: typeof DEV_ACHIEVEMENT_TERMS !== "undefined" ? DEV_ACHIEVEMENT_TERMS : {},' +
+      ' trackMaxYear: typeof TRACK_ACHIEVEMENT_MAX_YEAR !== "undefined" ? TRACK_ACHIEVEMENT_MAX_YEAR : {} };')();
+    if (!Array.isArray(out.list)) throw new Error('no se ha encontrado ACHIEVEMENTS_DB');
+    const sections = new Map();
+    let section = 'Otros';
+    for (const line of src.split('\n')) {
+      const h = line.match(/^\s*\/\/\s*─+\s*(.+?)\s*─*\s*$/);
+      if (h) section = h[1].replace(/\s*\(.*\)\s*$/, '');
+      const m = line.match(/^\s*id:\s*['"]([^'"]+)['"]/);
+      if (m) sections.set(m[1], section);
+    }
+    return {
+      list: out.list, sections, devTerms: out.devTerms || {}, trackMaxYear: out.trackMaxYear || {},
+      byId: new Map(out.list.map(e => [e.id, e])),
+    };
+  }
+
+  // Une el archivo (orden, secciones, logros nuevos) con lo guardado en Supabase (textos)
+  function mergeAchievements(file, rows) {
+    const byRow = new Map(rows.map(r => [r.id, r]));
+    const list = file.list.map((e, k) => {
+      const r = byRow.get(e.id);
+      return { ...(r ? achFromRow(r) : achFromFile(e, k)), sort: k, section: file.sections.get(e.id) || 'Otros', inFile: true };
+    });
+    for (const r of rows) if (!file.byId.has(r.id)) list.push({ ...achFromRow(r), section: 'No están en achievements.js', inFile: false });
+    return list;
+  }
+
+  function getAchDiff() {
+    if (!_achBaseline) return null;
+    const rows = _ach.filter(a => _achBaseline.get(a.id) !== achCanon(a));
+    return { rows, added: rows.filter(a => !_achBaseline.has(a.id)).length, modified: rows.filter(a => _achBaseline.has(a.id)).length };
+  }
+  function updateAchDirty() {
+    const d = getAchDiff();
+    _achDirty = !!d?.rows.length;
+    document.body.classList.toggle('has-ach', _achLoaded);
+    $("achDirtyPill").style.display = _achDirty ? '' : 'none';
+    setTabDirty('logros', _achDirty);
+    $("achPending").textContent = d ? pendingText(d.added, d.modified, 0) : '';
+  }
+  // ¿Difiere de lo que hay en js/achievements.js de GitHub?
+  function achDiffersFromFile(a) {
+    const e = _achFile?.byId.get(a.id);
+    return !!e && achCanon({ ...achFromFile(e, 0), sort: 0 }) !== achCanon({ ...a, sort: 0 });
+  }
+  function checkAchDiff() { setTabDiff('logros', _ach.some(achDiffersFromFile)); }
+
+  // ── Juegos que conceden cada logro ─────────────────────────────────────────
+  // Misma regla que _countAchievementHits de js/auth.js (si cambia allí, cambiarla aquí).
+  // Los especiales usan el pool del evento de la pestaña Especiales.
+  function achRule(a) {
+    const m = a.id.match(/^(tag|track|dev)_(.+)_(\d+)$/);
+    if (m) {
+      const [, kind, key, n] = m;
+      if (kind === 'tag') return { n, text: `Cuenta cada acierto de un juego con el tag <b>${escapeHtml(key)}</b>.`,
+        test: g => (g.tags || []).includes(key) ? (g.tracks || []).map((_, i) => i) : [] };
+      if (kind === 'track') {
+        const maxYear = _achFile?.trackMaxYear?.[key];
+        return { n, text: `Cuenta cada acierto en que suena una canción con el tag <b>${escapeHtml(key)}</b>` +
+            (maxYear !== undefined ? ` (solo juegos hasta ${escapeHtml(maxYear)})` : '') + '.',
+          test: g => maxYear !== undefined && g.year > maxYear ? [] :
+            (g.tracks || []).map((t, i) => (t.tags || []).includes(key) ? i : -1).filter(i => i >= 0) };
+      }
+      const terms = _achFile?.devTerms?.[key] || [];
+      const res = terms.map(t => new RegExp('\\b' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b'));
+      return { n, text: `Cuenta cada acierto de un juego cuya desarrolladora contiene ` +
+          (terms.length ? terms.map(t => `<b>${escapeHtml(t)}</b>`).join(' o ') : '<b>(sin palabras en DEV_ACHIEVEMENT_TERMS)</b>') + '.',
+        test: g => res.some(re => re.test(String(g.developer || '').toLowerCase())) ? (g.tracks || []).map((_, i) => i) : [] };
+    }
+    if (a.special) return { text: 'Se concede al completar el evento. Estos son los juegos de su pool:', test: g => eventTrackIndexes(a.special, g) };
+    return null;
+  }
+
+  // Logros de especiales: los genera achievements.js a partir de specials.js (no se editan aquí)
+  function specialAchievements() {
+    return _specials.filter(eventHasFilters).map((sp, k) => ({
+      id: 'special_' + sp.date, sort: 10000 + k, hidden: false, image: 'special_' + sp.date.replace(/-/g, '') + '.webp',
+      name_es: sp.label || sp.name, desc_es: 'Completa el evento especial de ' + (sp.label || sp.name),
+      name_en: sp.label || sp.name, desc_en: 'Complete the ' + (sp.label || sp.name) + ' special event',
+      section: 'Especiales (se generan desde la pestaña Especiales)', special: sp, readOnly: true, inFile: true,
+    }));
+  }
+  const allAchievements = () => [..._ach, ...specialAchievements()];
+  const findAch = id => allAchievements().find(a => a.id === id);
+  const achProvisional = a => !!_achManifest && !_achManifest.has(a.image);
+
+  // ── Cuadrícula ──────────────────────────────────────────────────────────────
+  function achCardHtml(a) {
+    const prov = achProvisional(a);
+    const changed = _achBaseline && !a.readOnly && _achBaseline.get(a.id) !== achCanon(a);
+    return `<div class="ach-card${_achSel === a.id ? ' sel' : ''}${prov ? ' prov' : ''}" data-ach="${escapeHtml(a.id)}" tabindex="0" title="${escapeHtml(a.id)}">
+        ${a.image && !prov ? `<img src="${ACH_IMG}${escapeHtml(a.image)}" alt="" loading="lazy" />` : '<span class="ach-noimg">sin imagen</span>'}
+        <span class="ach-name">${escapeHtml(a.name_es || a.id)}</span>
+        <span class="ach-badges">${a.hidden ? '<span class="ach-badge">oculto</span>' : ''}${prov ? '<span class="ach-badge warn">provisional</span>' : ''}${!a.inFile ? '<span class="ach-badge warn">no está en el archivo</span>' : ''}</span>
+        ${changed ? '<span class="ach-dot" title="Cambio sin guardar"></span>' : ''}
+      </div>`;
+  }
+  function renderAchievements() {
+    const grid = $("achGrid");
+    if (!_achLoaded) return;
+    const q = $("achSearch").value.trim().toLowerCase();
+    const onlyProv = $("achOnlyProv").checked;
+    const list = allAchievements().filter(a =>
+      (!q || [a.id, a.name_es, a.desc_es, a.name_en, a.desc_en].join(' ').toLowerCase().includes(q)) &&
+      (!onlyProv || achProvisional(a)));
+    const groups = new Map();
+    for (const a of list) (groups.get(a.section) || groups.set(a.section, []).get(a.section)).push(a);
+    $("achCount").textContent = `${list.length} de ${allAchievements().length}`;
+    grid.innerHTML = list.length ? [...groups].map(([sec, items]) =>
+      `<h3 class="ach-section">${escapeHtml(sec)} <span>${items.length}</span></h3><div class="ach-grid">${items.map(achCardHtml).join('')}</div>`).join('')
+      : '<p style="color:var(--muted);padding:16px 0">Ningún logro coincide.</p>';
+  }
+  function refreshAchCard(id) {
+    const a = findAch(id), el = $("achGrid").querySelector(`.ach-card[data-ach="${id}"]`);
+    if (a && el) el.outerHTML = achCardHtml(a);
+  }
+
+  // ── Panel de edición (fijo abajo) ──────────────────────────────────────────
+  function achGamesHtml(a) {
+    const rule = achRule(a);
+    if (!rule) return '<div class="ach-rule">No depende de juegos concretos.</div>';
+    const head = `<div class="ach-rule">${rule.text}${rule.n ? ` Este nivel pide <b>${escapeHtml(rule.n)}</b> aciertos.` : ''}</div>`;
+    if (!db.length) return head + '<div class="pool-empty">Carga la pestaña Juegos para ver la lista.</div>';
+    const entries = poolEntries(rule.test);
+    return head + `<div class="special-pool-count"><button type="button" class="pool-toggle${_achGamesOpen ? ' open' : ''}" data-action="achGames"${entries.length ? '' : ' disabled'}><span class="pool-arrow">▸</span></button><strong>${entries.length}</strong> juegos lo conceden</div>` +
+      (_achGamesOpen && entries.length ? `<div class="pool-list">${poolRowsHtml(entries)}</div>` : '');
+  }
+  function renderAchPanel() {
+    const panel = $("achPanel");
+    const a = _achSel && findAch(_achSel);
+    if (!a) { panel.hidden = true; document.body.classList.remove('ach-open'); return; }
+    const ro = a.readOnly ? ' readonly' : '';
+    const prov = achProvisional(a);
+    panel.innerHTML = `<div class="ach-panel-inner">
+        <div class="ach-panel-img">${a.image && !prov ? `<img src="${ACH_IMG}${escapeHtml(a.image)}" alt="" />` : '<span class="ach-noimg">sin imagen</span>'}</div>
+        <div class="ach-panel-main">
+          <div class="ach-panel-head">
+            <code>${escapeHtml(a.id)}</code><span class="pool-muted">${escapeHtml(a.section)}</span>
+            ${prov ? '<span class="ach-badge warn" title="No hay imagen en img/achievements/: no se muestra ni se concede">provisional</span>' : ''}
+            ${a.readOnly ? '<span class="ach-badge">se edita en Especiales</span>' : ''}
+            <button type="button" class="ach-close" data-action="achClose" title="Cerrar (Esc)">✕</button>
+          </div>
+          <div class="ach-fields">
+            <label><span>Nombre (ES)</span><input data-ach-field="name_es" value="${escapeHtml(a.name_es)}"${ro} /></label>
+            <label><span>Nombre (EN)</span><input data-ach-field="name_en" value="${escapeHtml(a.name_en)}"${ro} /></label>
+            <label><span>Descripción (ES)</span><textarea data-ach-field="desc_es" rows="2"${ro}>${escapeHtml(a.desc_es)}</textarea></label>
+            <label><span>Descripción (EN)</span><textarea data-ach-field="desc_en" rows="2"${ro}>${escapeHtml(a.desc_en)}</textarea></label>
+          </div>
+          <div class="ach-fields-row">
+            <label class="ach-image-field"><span>Imagen</span><input data-ach-field="image" value="${escapeHtml(a.image)}"${ro} spellcheck="false" /></label>
+            <label class="switch-label"${a.readOnly ? ' style="pointer-events:none;opacity:.5"' : ''}><input type="checkbox" data-ach-field="hidden" class="switch-input"${a.hidden ? ' checked' : ''} /><span class="switch"></span>Oculto hasta desbloquearlo</label>
+          </div>
+          <div class="ach-games">${achGamesHtml(a)}</div>
+        </div>
+      </div>`;
+    panel.hidden = false;
+    document.body.classList.add('ach-open');
+  }
+  function selectAch(id) {
+    _achSel = _achSel === id ? null : id;
+    _achGamesOpen = false;
+    $("achGrid").querySelectorAll('.ach-card.sel').forEach(c => c.classList.remove('sel'));
+    if (_achSel) $("achGrid").querySelector(`.ach-card[data-ach="${_achSel}"]`)?.classList.add('sel');
+    renderAchPanel();
+  }
+
+  $("achGrid").addEventListener('click', e => {
+    const card = e.target.closest('.ach-card');
+    if (card) selectAch(card.dataset.ach);
+  });
+  $("achGrid").addEventListener('keydown', e => {
+    const card = e.target.closest('.ach-card');
+    if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectAch(card.dataset.ach); }
+  });
+  $("achPanel").addEventListener('click', e => {
+    if (e.target.closest('[data-action="achClose"]')) return selectAch(_achSel);
+    if (e.target.closest('[data-action="achGames"]')) {
+      _achGamesOpen = !_achGamesOpen;
+      const a = findAch(_achSel);
+      if (a) $("achPanel").querySelector('.ach-games').innerHTML = achGamesHtml(a);
+    }
+  });
+  $("achPanel").addEventListener('input', e => {
+    const f = e.target.dataset.achField;
+    const a = _ach.find(x => x.id === _achSel);
+    if (!f || !a) return;
+    a[f] = f === 'hidden' ? e.target.checked : e.target.value;
+    if (f === 'image') {
+      const img = $("achPanel").querySelector('.ach-panel-img');
+      img.innerHTML = a.image && !achProvisional(a) ? `<img src="${ACH_IMG}${escapeHtml(a.image)}" alt="" />` : '<span class="ach-noimg">sin imagen</span>';
+    }
+    refreshAchCard(a.id);
+    updateAchDirty();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && _achSel && !$("achPanel").hidden && tfPop.hidden) selectAch(_achSel);
+  });
+  // El final de la página deja sitio al panel fijo para que la última fila no quede tapada
+  new ResizeObserver(() => document.body.style.setProperty('--ach-panel-h', $("achPanel").offsetHeight + 'px')).observe($("achPanel"));
+
+  $("achSearch").addEventListener('input', renderAchievements);
+  $("achOnlyProv").addEventListener('change', renderAchievements);
+
+  // ── Cargar, guardar, subir y descargar ─────────────────────────────────────
+  async function loadAchManifest() {
+    try {
+      const r = await fetch('/img/achievements/manifest.json');
+      const list = r.ok ? await r.json() : null;
+      return Array.isArray(list) ? new Set(list) : null;
+    } catch { return null; }
+  }
+
+  $("achLoad").addEventListener('click', async () => {
+    if (!await confirmDiscard(_achDirty, "Logros")) return;
+    const status = $("achStatus");
+    status.textContent = 'Cargando...'; status.className = 'sheets-status';
+    try {
+      const [rows, src, manifest] = await Promise.all([gmApi('/gm/achievements'), getGithubRaw('js/achievements.js'), loadAchManifest()]);
+      if (!src) throw new Error('no se ha podido leer js/achievements.js de GitHub');
+      _achSrc = normalizeEol(src) + '\n';
+      _achFile = parseAchievementsJs(_achSrc);
+      _achManifest = manifest;
+      _ach = mergeAchievements(_achFile, rows || []);
+      _achBaseline = new Map((rows || []).map(r => [r.id, achCanon(achFromRow(r))]));
+      _achLoaded = true;
+      _achSel = null;
+      updateAchDirty();
+      renderAchievements();
+      renderAchPanel();
+      checkAchDiff();
+      const d = getAchDiff();
+      status.textContent = `✓ ${_ach.length} logros cargados` + (d.added ? ` · ${d.added} del archivo aún sin guardar en Supabase` : '');
+      status.className = 'sheets-status ok';
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+      status.className = 'sheets-status error';
+      console.error(err);
+    }
+  });
+
+  $("achSave").addEventListener('click', async () => {
+    const status = $("achStatus");
+    const d = getAchDiff();
+    if (!d) return;
+    if (!d.rows.length) { status.textContent = 'No hay cambios que guardar'; status.className = 'sheets-status'; return; }
+    status.textContent = 'Guardando...'; status.className = 'sheets-status';
+    try {
+      await gmApi('/gm/achievements', { rows: d.rows.map(a => ({ id: a.id, sort: a.sort, hidden: !!a.hidden, ...Object.fromEntries(ACH_FIELDS.map(k => [k, a[k] || ''])) })) });
+      d.rows.forEach(a => _achBaseline.set(a.id, achCanon(a)));
+      updateAchDirty();
+      renderAchievements();
+      status.textContent = `✓ Guardado: ${pendingText(d.added, d.modified, 0)}`;
+      status.className = 'sheets-status ok';
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+      status.className = 'sheets-status error';
+      console.error(err);
+    }
+  });
+
+  // Subir un achievements.js: sus textos pasan a los logros cargados (sin guardar) y pasa a ser la base de la descarga
+  $("achUpload").addEventListener('click', () => $("achFileInput").click());
+  $("achFileInput").addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const status = $("achStatus");
+    try {
+      const src = normalizeEol(await file.text()) + '\n';
+      const parsed = parseAchievementsJs(src);
+      if (!_achLoaded) _achManifest = await loadAchManifest();
+      const keep = _achLoaded ? _ach.filter(a => !parsed.byId.has(a.id)).map(a => ({ ...a, section: 'No están en achievements.js', inFile: false })) : [];
+      _achSrc = src;
+      _achFile = parsed;
+      _ach = [...parsed.list.map((x, k) => ({ ...achFromFile(x, k), section: parsed.sections.get(x.id) || 'Otros', inFile: true })), ...keep];
+      _achLoaded = true;
+      _achSel = null;
+      updateAchDirty();
+      renderAchievements();
+      renderAchPanel();
+      status.textContent = `✓ ${parsed.list.length} logros leídos de ${file.name}` + (_achBaseline ? ' (sin guardar)' : ' · carga desde Supabase para poder guardar');
+      status.className = 'sheets-status ok';
+    } catch (err) {
+      status.textContent = 'Error al leer el archivo: ' + err.message;
+      status.className = 'sheets-status error';
+    }
+  });
+
+  // Texto JS entre comillas: simples salvo que el texto lleve apóstrofo (como en el archivo)
+  function achQuote(s) {
+    const esc = String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n');
+    if (!esc.includes("'")) return `'${esc}'`;
+    if (!esc.includes('"')) return `"${esc}"`;
+    return `'${esc.replace(/'/g, "\\'")}'`;
+  }
+  function achBlock(a) {
+    return `  {\n    id:     ${achQuote(a.id)},\n    hidden: ${a.hidden ? 'true' : 'false'},\n    image:  ${achQuote(a.image)},\n` +
+      `    es: { name: ${achQuote(a.name_es)}, desc: ${achQuote(a.desc_es)} },\n` +
+      `    en: { name: ${achQuote(a.name_en)}, desc: ${achQuote(a.desc_en)} },\n  }`;
+  }
+  // Reescribe en el archivo solo los bloques de los logros que han cambiado
+  function patchAchievementsJs(src) {
+    let out = src, changed = 0;
+    for (const a of _ach) {
+      if (!a.inFile || !achDiffersFromFile(a)) continue;
+      const idRe = new RegExp(`\\n {4}id:\\s*['"]${a.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]\\s*,`);
+      const at = out.search(idRe);
+      if (at < 0) continue;
+      const start = out.lastIndexOf('\n  {', at) + 1;
+      const end = out.indexOf('\n  }', at) + 4;
+      if (start <= 0 || end < 4) continue;
+      out = out.slice(0, start) + achBlock(a) + out.slice(end);
+      changed++;
+    }
+    return { out, changed };
+  }
+
+  $("achDownload").addEventListener('click', () => {
+    const status = $("achStatus");
+    if (!_achSrc) { status.textContent = 'Carga los logros primero'; status.className = 'sheets-status error'; return; }
+    const { out, changed } = patchAchievementsJs(_achSrc);
+    try { parseAchievementsJs(out); } catch (err) {
+      status.textContent = 'El archivo generado no es válido, no se descarga: ' + err.message;
+      status.className = 'sheets-status error';
+      return;
+    }
+    download('achievements.js', out,'text/javascript;charset=utf-8');
+    status.textContent = `✓ achievements.js descargado (${changed} logro${changed === 1 ? '' : 's'} cambiado${changed === 1 ? '' : 's'})`;
+    status.className = 'sheets-status ok';
+    setTabDiff('logros', false);
   });
 
   // Buscador de IDs de juegos para la pestaña de especiales

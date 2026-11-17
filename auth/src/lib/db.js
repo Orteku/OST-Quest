@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { STREAK_BONUS } from './points.js';
 
 // Mapa provider → columna en player_accounts
 const PROVIDER_COL = { google: 'google_id', discord: 'discord_id', twitch: 'twitch_id', steam: 'steam_id' };
@@ -74,7 +75,7 @@ export function createDb(env) {
         .upsert(rows, { onConflict: 'user_id,game_date', ignoreDuplicates: true })
         .select('game_date')) || []).map(r => r.game_date);
     },
-    // Recalcula la bonificación de racha (+10 con 2 o más días seguidos jugados en su día) desde fromDate.
+    // Recalcula la bonificación de racha (+STREAK_BONUS con 2 o más días seguidos jugados en su día) desde fromDate.
     // Mismo criterio que al enviar una partida; las partidas fuera de plazo no forman racha ni se tocan.
     async recalcStreakBonuses(userId, fromDate) {
       const rows = await check(await supabase.from('scores')
@@ -87,7 +88,7 @@ export function createDb(env) {
         streak = prev && nextDay(prev) === r.game_date ? streak + 1 : 1;
         prev = r.game_date;
         if (r.game_date < fromDate) continue;
-        const bonus = streak >= 2 ? 10 : 0;
+        const bonus = streak >= 2 ? STREAK_BONUS : 0;
         if (bonus === r.streak_bonus) continue;
         await check(await supabase.from('scores')
           .update({ streak_bonus: bonus, total_points: (r.points || 0) + bonus })
@@ -271,6 +272,13 @@ export function createDb(env) {
       if (deleteIds.length) await check(await supabase.from('editor_specials').delete().in('id', deleteIds));
       if (update.length)    await check(await supabase.from('editor_specials').upsert(update, { onConflict: 'id' }));
       if (insert.length)    await check(await supabase.from('editor_specials').insert(insert));
+    },
+
+    async getEditorAchievements() {
+      return check(await supabase.from('editor_achievements').select('*').order('sort')) || [];
+    },
+    async upsertEditorAchievements(rows) {
+      return check(await supabase.from('editor_achievements').upsert(rows, { onConflict: 'id' }));
     },
 
     // ── Tokens de reset de contraseña ────────────────────────────────────────

@@ -160,3 +160,31 @@ export async function handleGmLinkStatus(request, env, db) {
   }
   return json(await Promise.all(urls.map(linkStatus)), 200, request);
 }
+
+// GET /gm/achievements  →  textos de los logros (editor_achievements)
+export async function handleGmGetAchievements(request, env, db) {
+  const [, err] = await requireGm(request, env, db);
+  if (err) return err;
+  return json(await db.getEditorAchievements(), 200, request);
+}
+
+// POST /gm/achievements  { rows: [{ id, sort, hidden, image, name_es, desc_es, name_en, desc_en }] }
+// Solo textos, imagen y oculto: qué logros existen y cuándo se conceden sigue en el código.
+// No borra: un logro se quita en js/achievements.js y en el worker, no desde el bestiario.
+const ACH_ID_RE   = /^[a-z0-9_-]{1,64}$/;
+const ACH_TEXT    = ['image', 'name_es', 'desc_es', 'name_en', 'desc_en'];
+function achievementRow(r) {
+  if (!ACH_ID_RE.test(r?.id || '') || typeof r.hidden !== 'boolean' || !Number.isInteger(r.sort)) return null;
+  if (!ACH_TEXT.every(k => typeof r[k] === 'string' && r[k].length <= 500)) return null;
+  const row = { id: r.id, sort: r.sort, hidden: r.hidden, updated_at: new Date().toISOString() };
+  for (const k of ACH_TEXT) row[k] = r[k];
+  return row;
+}
+export async function handleGmSaveAchievements(request, env, db) {
+  const [, err] = await requireGm(request, env, db);
+  if (err) return err;
+  const rows = rowsFrom(await readBody(request))?.map(achievementRow);
+  if (!rows || !rows.length || rows.some(r => !r)) return json({ error: 'invalid_rows' }, 400, request);
+  await db.upsertEditorAchievements(rows);
+  return json({ ok: true, count: rows.length }, 200, request);
+}

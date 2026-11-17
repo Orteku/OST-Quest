@@ -67,7 +67,7 @@ CREATE INDEX IF NOT EXISTS users_username_idx    ON public.users (username);
 CREATE INDEX IF NOT EXISTS reset_token_token_idx ON public.password_reset_tokens (token);
 
 -- ── Vistas del ranking ───────────────────────────────────────────────────────
--- La tabla scores almacena: score (0-3), points (33/66/100), streak_bonus (0/10),
+-- La tabla scores almacena: score (0-3), points (3/6/10), streak_bonus (0/1),
 -- total_points (points + streak_bonus). Las vistas agregan total_points por jugador.
 -- Ejecutar también si se añaden columnas nuevas (CREATE OR REPLACE es seguro).
 
