@@ -1819,18 +1819,23 @@ function _renderAchievementsHTML(unlocked, available) {
   const list = _achOnlyUnlocked() ? available.filter(a => unlockedIds.has(a.id)) : available;
   if (!list.length) return `<p class="achievements-grid__empty">${t('ach_none_unlocked')}</p>`;
 
-  // Compacta: una sola rejilla seguida, con un hueco entre categorías y la línea de puntos antes de los especiales
+  // Compacta: las categorías van seguidas, cada una con su encabezado y separadas por una barra vertical.
+  // Varias caben en la misma fila; una con muchos trofeos ocupa el ancho y sus iconos pasan a la fila siguiente.
   if (!detailed) {
-    const parts = _ACH_CATEGORIES
-      .map(cat => ({ cat, items: list.filter(a => _achCategory(a) === cat) }))
-      .filter(p => p.items.length)
-      .map((p, i) => {
-        const sep = i === 0 ? '' : p.cat === 'special'
-          ? `<div class="ach-compact-sep" aria-hidden="true"></div>`
-          : `<div class="ach-compact-gap" aria-hidden="true"></div>`;
-        return sep + p.items.map(_item).join('');
-      });
-    return `<div class="ach-cat__items ach-cat__items--compact">${parts.join('')}</div>`;
+    const groups = _ACH_CATEGORIES.map(cat => {
+      const items = list.filter(a => _achCategory(a) === cat);
+      if (!items.length) return '';
+      const all  = available.filter(a => _achCategory(a) === cat);
+      const done = all.filter(a => unlockedIds.has(a.id)).length;
+      return `<section class="ach-group">
+        <div class="ach-group__head">
+          <span class="ach-cat__title">${t('ach_cat_' + cat)}</span>
+          <span class="ach-cat__count">${done}/${all.length}</span>
+        </div>
+        <div class="ach-cat__items ach-cat__items--compact">${items.map(_item).join('')}</div>
+      </section>`;
+    });
+    return `<div class="ach-compact"><div class="ach-compact__flow">${groups.join('')}</div></div>`;
   }
 
   const closed = _achClosedCats();

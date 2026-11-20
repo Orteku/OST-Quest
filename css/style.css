@@ -1767,21 +1767,33 @@ body.theme--light .achievements-grid { background: #dcd9d1; box-shadow: inset 0 
   text-transform: uppercase; color: #7a7a88;
 }
 .ach-cat__count { font-size: 11px; color: #55555f; font-variant-numeric: tabular-nums; }
-/* Compacta: flujo de iconos de ancho fijo (no rejilla) para que el hueco entre categorías pueda ser estrecho */
-/* Entre iconos: 13px. Entre categorías: el doble, porque el hueco (ancho 0) suma un espacio más del flex */
+/* Compacta: categorías seguidas, cada una con encabezado y una barra vertical a su izquierda.
+   La barra de la primera de cada fila no debe verse: el flujo se desplaza a la izquierda lo que ocupan
+   margen + barra + relleno (13 + 1 + 13 px) y el contenedor recorta solo ese lado. */
+.ach-compact { clip-path: inset(-40px -40px -40px 0); }
+.ach-compact__flow {
+  display: flex; flex-wrap: wrap; align-items: flex-start;
+  row-gap: 18px;
+  margin-left: -27px;
+}
+.ach-group {
+  min-width: 0;
+  max-width: calc(100% - 13px);  /* así sus iconos ocupan como mucho el ancho visible */
+  margin-left: 13px; padding-left: 13px;
+  border-left: 1px solid #2c2c34;
+}
+.ach-group__head {
+  display: flex; align-items: baseline; gap: 6px;
+  margin-bottom: 8px; white-space: nowrap;
+}
+.ach-group .ach-cat__title { font-size: 11px; letter-spacing: 1.2px; }
+.ach-group .ach-cat__count { font-size: 10px; }
 .ach-cat__items--compact {
   display: flex; flex-wrap: wrap;
   gap: 14px 13px;
 }
 .ach-cat__items--compact .achievement-card { width: 68px; }
-.ach-compact-gap { width: 0; flex-shrink: 0; }
-/* Línea de puntos de lado a lado antes de los especiales */
-.ach-compact-sep {
-  flex-basis: 100%;
-  border-top: 1px dashed #2c2c34;
-  margin: 4px 0;
-}
-body.theme--light .ach-compact-sep { border-color: #d0cec6; }
+body.theme--light .ach-group { border-color: #d0cec6; }
 .ach-cat__items--detailed {
   display: grid;
   grid-template-columns: 1fr 1fr;
