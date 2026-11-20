@@ -59,6 +59,7 @@ export function createDb(env) {
     },
     async deleteUser(userId) {
       await check(await supabase.from('scores').delete().eq('user_id', userId));
+      await supabase.from('archive_plays').delete().eq('user_id', userId);  // sin check: la FK ya borra en cascada
       await check(await supabase.from('password_reset_tokens').delete().eq('user_id', userId));
       await check(await supabase.from('user_achievements').delete().eq('user_id', userId));
       return check(await supabase.from('player_accounts').delete().eq('id', userId));
@@ -95,9 +96,24 @@ export function createDb(env) {
           .eq('user_id', userId).eq('game_date', r.game_date));
       }
     },
+    // Historial para restaurar el Quest Log en otro navegador: quests jugadas en su día (scores)
+    // y las jugadas después desde el Quest Log (archive_plays, sin results)
     async getScoreHistory(userId) {
-      return check(await supabase.from('scores')
-        .select('game_date, score, results, played_at').eq('user_id', userId)) || [];
+      const [scores, archive] = await Promise.all([
+        supabase.from('scores').select('game_date, score, results, played_at').eq('user_id', userId).then(check),
+        // Si falta la tabla (SQL sin ejecutar), el historial sigue funcionando sin ella
+        supabase.from('archive_plays').select('game_date, score, played_at').eq('user_id', userId).then(check)
+          .catch(e => { console.error('archive_plays:', e.message); return []; }),
+      ]);
+      const onServer = new Set((scores || []).map(r => r.game_date));
+      return [...(scores || []), ...(archive || []).filter(r => !onServer.has(r.game_date))];
+    },
+    // Partidas del Quest Log: solo para el historial y los logros de especiales (sin puntos,
+    // estadísticas ni otros logros, que leen de scores). Nunca pisa lo que ya hay.
+    async insertArchivePlays(rows) {
+      return (check(await supabase.from('archive_plays')
+        .upsert(rows, { onConflict: 'user_id,game_date', ignoreDuplicates: true })
+        .select('game_date')) || []).map(r => r.game_date);
     },
     async getUserScores(userId) {
       return check(await supabase.from('scores').select('game_date').eq('user_id', userId));

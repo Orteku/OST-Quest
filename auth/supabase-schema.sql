@@ -8,6 +8,7 @@
 --   player_accounts       id, email, password_hash, provider, provider_id, username, created_at,
 --                         streak, selected_avatar, google_id, discord_id, twitch_id, steam_id, is_gm
 --   scores                user_id, game_date, score, points, streak_bonus, total_points, played_at, results
+--   archive_plays         user_id, game_date, score, played_at (partidas del Quest Log, sin puntos)
 --   user_achievements     user_id, achievement_id, unlocked_at
 --   password_reset_tokens user_id, token, expires_at
 -- Vistas: ranking_weekly, ranking_global (públicas) y ranking_weekly_history (solo worker).
@@ -117,3 +118,17 @@ WHERE week_start < date_trunc('week', CURRENT_DATE)::date;
 
 -- Contiene user_id: no exponerla a la API pública
 REVOKE ALL ON public.ranking_weekly_history FROM anon, authenticated;
+
+-- ── Partidas del Quest Log ───────────────────────────────────────────────────
+-- Quests jugadas después de su día. No suman puntos ni cuentan para estadísticas ni logros
+-- (todo eso lee de scores): solo sirven para que el Quest Log salga igual en todos los
+-- dispositivos y para los logros de especiales. Solo la usa el worker (service key).
+CREATE TABLE IF NOT EXISTS public.archive_plays (
+  user_id   UUID        NOT NULL REFERENCES public.player_accounts(id) ON DELETE CASCADE,
+  game_date DATE        NOT NULL,
+  score     SMALLINT    NOT NULL CHECK (score BETWEEN 0 AND 3),
+  played_at TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (user_id, game_date)
+);
+ALTER TABLE public.archive_plays ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.archive_plays FROM anon, authenticated;

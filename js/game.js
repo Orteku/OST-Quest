@@ -883,7 +883,10 @@ function _recordFinishedQuest() {
   if (currentDateStr === '__gm__' || loadPlayedDays()[currentDateStr]) return;
   const score = colStates.filter(s => s.correct).length;
   recordDailyResult(currentDateStr, score, 3, colStates.map(s => s.correct ? '1' : '0').join(''));
-  if (!isArchiveMode && typeof authUnlockAchievement === 'function' && typeof SPECIAL_EVENTS !== 'undefined') {
+  // Las del Quest Log se guardan sin puntos: historial en otros dispositivos y logros de especiales
+  if (isArchiveMode && typeof authSaveArchivePlay === 'function') authSaveArchivePlay(currentDateStr);
+  // Logro del especial: también desde el Quest Log (es lo único que cuenta de esas partidas)
+  if (typeof authUnlockAchievement === 'function' && typeof SPECIAL_EVENTS !== 'undefined') {
     const sp = SPECIAL_EVENTS.find(e => hasGameData(e) &&
       (currentDateStr === e.date || currentDateStr.endsWith('-' + e.date))
     );

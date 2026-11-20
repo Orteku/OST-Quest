@@ -107,8 +107,10 @@ export async function handleSubmitScore(request, env, db) {
   return json({ ok: true, streak, newAchievements }, 200, request);
 }
 
-// POST /scores/migrate  { played: { [date]: { score, total } } }
-// Migra el historial de localStorage al primer login
+// POST /scores/migrate  { played: { [date]: { score, total, ts } } }
+// Sube las partidas del navegador que el servidor aún no tiene (jugadas sin sesión, o en otro momento).
+// Las jugadas en su día van a scores y suman puntos; las del Quest Log van a archive_plays,
+// que solo sirve para el historial en otros dispositivos y los logros de especiales.
 export async function handleMigrateScores(request, env, db) {
   const [payload, err] = await requireAuth(request, env);
   if (err) return err;
@@ -119,16 +121,32 @@ export async function handleMigrateScores(request, env, db) {
   const { played } = body;
   if (!played || typeof played !== 'object') return json({ error: 'invalid_played' }, 400, request);
 
-  // Solo partidas jugadas en su día (ts = momento en que se jugó): las del Quest Log no suman puntos.
-  // Un ts del futuro no puede ser real (se da una hora de margen por el reloj del jugador)
-  const rows = [];
+  // ts = momento en que se jugó. Un ts del futuro no puede ser real (se da una hora de margen por el
+  // reloj del jugador), ni una quest que aún no ha salido o jugada antes de su día.
+  const rows = [], archiveRows = [];
   for (const date of Object.keys(played).filter(d => DATE_RE.test(d))) {
     const res = played[date];
-    if (![0, 1, 2, 3].includes(res?.score) || !res.ts || res.ts > Date.now() + 3_600_000) continue;
+    if (![0, 1, 2, 3].includes(res?.score) || !Number.isFinite(res.ts) || res.ts > Date.now() + 3_600_000) continue;
+    if (date > gameDay(1)) continue;
     const playedAt = new Date(res.ts).toISOString();
-    if (!db._isOnTime(date, playedAt)) continue;
-    const pts = pointsForScore(res.score);
-    rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: 0, total_points: pts, played_at: playedAt });
+    if (db._isOnTime(date, playedAt)) {
+      const pts = pointsForScore(res.score);
+      rows.push({ user_id: payload.sub, game_date: date, score: res.score, points: pts, streak_bonus: 0, total_points: pts, played_at: playedAt });
+    } else if (res.ts >= Date.parse(date + 'T03:00:00Z')) {
+      archiveRows.push({ user_id: payload.sub, game_date: date, score: res.score, played_at: playedAt });
+    }
+  }
+
+  // Del Quest Log, solo las quests que no estén ya jugadas en su día
+  let archived = 0;
+  if (archiveRows.length) {
+    try {
+      const inScores = new Set(((await db.getUserScores(payload.sub)) || []).map(r => r.game_date));
+      const fresh = archiveRows.filter(r => !inScores.has(r.game_date));
+      if (fresh.length) archived = (await db.insertArchivePlays(fresh)).length;
+    } catch (e) {
+      console.error('archive_plays:', e.message);  // no impide guardar las jugadas en su día
+    }
   }
 
   // Nunca pisa lo que ya hay en el servidor; solo añade lo que falta
@@ -141,7 +159,7 @@ export async function handleMigrateScores(request, env, db) {
     await db.updateUser(payload.sub, { streak });
   }
 
-  return json({ ok: true, migrated: added.length }, 200, request);
+  return json({ ok: true, migrated: added.length, archived }, 200, request);
 }
 
 // GET /scores/history — todas las partidas del usuario, para restaurar el estado en un navegador nuevo

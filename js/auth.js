@@ -1002,9 +1002,10 @@ function _syncAfterLogin() {
   }).catch(() => {}).then(_prefetchAchievementData);
 }
 
-// Sube al servidor las partidas jugadas en su día que aún no tenga (p. ej. jugadas sin sesión iniciada).
+// Sube al servidor las partidas que aún no tenga (p. ej. jugadas sin sesión iniciada).
 // Se comprueba en cada carga con sesión: antes era una sola vez por dispositivo y las posteriores se perdían.
-// Las del Quest Log no se suben: no deben sumar puntos.
+// El servidor separa: las jugadas en su día suman puntos; las del Quest Log solo se guardan para que
+// el historial salga en otros dispositivos y cuenten para los logros de especiales.
 async function _migrateIfNeeded() {
   if (!_token || !_profile?.id || typeof loadPlayedDays !== 'function') return;
   const history = await _getServerHistory();
@@ -1012,13 +1013,20 @@ async function _migrateIfNeeded() {
   const onServer = new Set(history.map(r => r.game_date));
 
   const missing = Object.fromEntries(Object.entries(loadPlayedDays()).filter(([date, r]) =>
-    !onServer.has(date) && r?.ts && getGameDay(new Date(r.ts)) === date));
+    !onServer.has(date) && r?.ts));
   if (!Object.keys(missing).length) return;
 
   const data = await _apiFetch('/scores/migrate', 'POST', { played: missing });
   if ((data?.migrated ?? 0) > 0 && typeof showToast === 'function') {
     showToast(t('auth_migration_done'));
   }
+}
+
+// Guarda en el servidor una quest recién jugada desde el Quest Log (sin puntos; ver _migrateIfNeeded)
+function authSaveArchivePlay(dateStr) {
+  const entry = _token && typeof loadPlayedDays === 'function' ? loadPlayedDays()[dateStr] : null;
+  if (!entry?.ts) return;
+  _apiFetch('/scores/migrate', 'POST', { played: { [dateStr]: entry } }).catch(() => {});
 }
 
 async function getUserWeeklyPosition() {
