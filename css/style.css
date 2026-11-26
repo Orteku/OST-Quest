@@ -2430,6 +2430,20 @@ body.theme--light .profile-delete-btn:hover { background: #f8e8e8; border-color:
 .rank-content { overflow-x: auto; }
 .rank-empty { text-align: center; color: #555560; font-size: 14px; padding: 20px 0; }
 .rank-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+/* «Mostrar más» bajo la tabla: carga la siguiente página del ranking */
+.rank-more {
+  display: block; width: 100%; margin: 8px 0 4px; padding: 9px;
+  border-radius: 8px; background: #22232a; color: #9999a0;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+  box-shadow: inset 0 1px 0 var(--k-hl), 0 2px 0 var(--k-e);
+  transition: transform 0.08s, box-shadow 0.08s, color 0.15s, background 0.15s;
+}
+.rank-more:hover { background: #2a2b33; color: #b8e030; }
+.rank-more:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 1px 0 var(--k-hl), 0 0 0 var(--k-e); }
+.rank-more:disabled { opacity: 0.6; cursor: progress; }
+body.theme--light .rank-more { background: #e2dfd7; color: #6a6a78; }
+body.theme--light .rank-more:hover { background: #d8d5cc; color: #4a6c10; }
 .rank-table th {
   text-align: left;
   padding: 6px 8px;

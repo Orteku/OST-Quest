@@ -712,21 +712,35 @@ function _signOut() {
 
 // ─── Ranking ──────────────────────────────────────────────────────────────────
 
+// El ranking se pide por páginas: las primeras 100 filas y luego 100 más con «Mostrar más».
+// Cada página se añade debajo, así el puesto con empates (_rankOf) sigue siendo correcto: todos los
+// que tienen más puntos ya están cargados. El orden secundario por nombre hace estable la paginación.
+const _RANK_PAGE = 100;
+let _rankLoadId = 0;
+
 async function loadRankingInto(containerId, tab) {
   const el = document.getElementById(containerId);
   if (!el) return;
+  const loadId = ++_rankLoadId;  // si se cambia de pestaña a medio cargar, la respuesta vieja se descarta
   el.innerHTML = `<p class="rank-empty">${t('ranking_loading')}</p>`;
 
   document.getElementById('player-card')?.remove();
   const view = tab === 'weekly' ? 'ranking_weekly' : 'ranking_global';
-  const data = await supabaseSelect(view, { select: 'username,streak,pts,selected_avatar', order: 'pts.desc', limit: 25 });
+  const rows = [];
 
-  if (!data?.length) {
+  // Pide una fila de más para saber si queda otra página
+  const fetchPage = () => supabaseSelect(view, {
+    select: 'username,streak,pts,selected_avatar', order: 'pts.desc,username.asc',
+    limit: _RANK_PAGE + 1, offset: rows.length,
+  });
+
+  const first = await fetchPage();
+  if (loadId !== _rankLoadId) return;
+  if (!first?.length) {
     el.innerHTML = `<p class="rank-empty">${t('ranking_empty')}</p>`;
     return;
   }
 
-  const me = _profile?.username;
   el.innerHTML = `<table class="rank-table">
     <thead><tr>
       <th class="rank-th--pos"></th>
@@ -734,12 +748,24 @@ async function loadRankingInto(containerId, tab) {
       <th class="rank-th--pts">${t('ranking_pts')}</th>
       <th class="rank-th--streak">${t('ranking_streak')}</th>
     </tr></thead>
-    <tbody>${data.map((r, i) => {
-      const pos   = _rankOf(data, r.pts);
+    <tbody></tbody>
+  </table>
+  <button type="button" class="rank-more" hidden>${t('ranking_more')}</button>`;
+  const tbody = el.querySelector('tbody');
+  const more  = el.querySelector('.rank-more');
+  const me    = _profile?.username;
+
+  const addPage = page => {
+    const hasMore = page.length > _RANK_PAGE;
+    const fresh   = page.slice(0, _RANK_PAGE);
+    const from    = rows.length;
+    rows.push(...fresh);
+    tbody.insertAdjacentHTML('beforeend', fresh.map(r => {
+      const pos   = _rankOf(rows, r.pts);
       const medal = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
       const isMe  = r.username === me;
       const avatarHtml = r.selected_avatar
-        ? `<img class="rank-avatar rank-avatar--img" src="img/achievements/${_esc(r.selected_avatar)}" alt="">`
+        ? `<img class="rank-avatar rank-avatar--img" src="img/achievements/${_esc(r.selected_avatar)}" alt="" loading="lazy">`
         : `<span class="rank-avatar">${_esc(r.username.charAt(0).toUpperCase())}</span>`;
       return `<tr class="${[medal, isMe ? 'rank-row--me' : ''].filter(Boolean).join(' ')}">
         <td class="rank-pos">${pos}</td>
@@ -747,10 +773,20 @@ async function loadRankingInto(containerId, tab) {
         <td class="rank-pts">${r.pts}</td>
         <td class="rank-streak">${r.streak || '—'}</td>
       </tr>`;
-    }).join('')}</tbody>
-  </table>`;
-  el.querySelectorAll('.rank-name__btn').forEach((btn, i) => {
-    btn.addEventListener('click', () => _openPlayerCard(btn, data[i]));
+    }).join(''));
+    [...tbody.querySelectorAll('.rank-name__btn')].slice(from).forEach((btn, i) => {
+      btn.addEventListener('click', () => _openPlayerCard(btn, fresh[i]));
+    });
+    more.hidden = !hasMore;
+  };
+  addPage(first);
+
+  more.addEventListener('click', async () => {
+    more.disabled = true;
+    const page = await fetchPage();
+    if (loadId !== _rankLoadId) return;
+    more.disabled = false;
+    if (page) addPage(page);
   });
 }
 

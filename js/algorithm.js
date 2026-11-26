@@ -1,5 +1,9 @@
 // Group selection algorithm — used by update.js (generates games.json) and game.js (GM mode)
 
+// Un juego de la misma franquicia (campo `franchise`) que otro ya elegido en el grupo tiene su peso
+// multiplicado por esto: muy improbable, pero posible si no hay alternativa (p. ej. un especial de Star Wars)
+const FRANCHISE_PENALTY = 0.05;
+
 const WEIGHTS = {
   strict: { year: 0.55, tags: 0.35, random: 0.10 },
   normal: { year: 0.30, tags: 0.15, random: 0.55 },
@@ -36,7 +40,8 @@ function effectiveTags(game, track = null) {
 // Weighted random sample without replacement.
 // answerEffTags: precomputed effective tags for the answer (game.tags + 'lyrics' if applicable)
 // rng: function returning a float in [0, 1) — seededRng() or Math.random
-function weightedPickN(candidates, answer, answerEffTags, weights, rng, count) {
+// already: otros juegos ya elegidos para el grupo (además de la respuesta), para la penalización de franquicia
+function weightedPickN(candidates, answer, answerEffTags, weights, rng, count, already = []) {
   const scored = candidates.map(c => ({
     c,
     w: Math.max(
@@ -47,15 +52,20 @@ function weightedPickN(candidates, answer, answerEffTags, weights, rng, count) {
     )
   }));
 
+  // Franquicias ya presentes en el grupo; se actualiza con cada elección
+  const franchises = new Set([answer, ...already].map(g => g.franchise).filter(Boolean));
+  const weightOf   = x => x.c.franchise && franchises.has(x.c.franchise) ? x.w * FRANCHISE_PENALTY : x.w;
+
   const result = [];
   for (let n = 0; n < count && scored.length > 0; n++) {
-    const total = scored.reduce((s, x) => s + x.w, 0);
+    const total = scored.reduce((s, x) => s + weightOf(x), 0);
     let r = rng() * total, idx = scored.length - 1;
     for (let i = 0; i < scored.length; i++) {
-      r -= scored[i].w;
+      r -= weightOf(scored[i]);
       if (r <= 0) { idx = i; break; }
     }
     result.push(scored[idx].c);
+    if (scored[idx].c.franchise) franchises.add(scored[idx].c.franchise);
     scored.splice(idx, 1);
   }
   return result;
@@ -126,7 +136,7 @@ function generateGameForDate(dateStr, pool, trackIndexes = null) {
     if (distractors.length < 3) {
       const distIds = new Set(distractors.map(d => d.id));
       const fallback = pool.filter(g => !used.has(g.id) && !distIds.has(g.id));
-      const extra    = weightedPickN(fallback, answer, answerEffTags, WEIGHTS.normal, rng, 3 - distractors.length);
+      const extra    = weightedPickN(fallback, answer, answerEffTags, WEIGHTS.normal, rng, 3 - distractors.length, distractors);
       distractors    = [...distractors, ...extra];
     }
 

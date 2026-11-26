@@ -298,6 +298,14 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     .game-input { width: 100%; }
+    /* Franquicia: bajo el nombre, plegada si está vacía */
+    .franchise-cell { grid-column: 1 / 2; display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: -4px; }
+    .franchise-cell input { display: none; }
+    .franchise-cell.open input { display: block; flex: 1; }
+    .fr-toggle { flex: none; padding: 2px 4px; border: 0; background: transparent; box-shadow: none; font-size: 12px; font-weight: 600; color: var(--muted); }
+    .fr-toggle:hover:not(:disabled) { color: var(--text); filter: none; }
+    .fr-toggle:active:not(:disabled) { transform: none; box-shadow: none; }
+    .franchise-cell.open .pool-arrow { transform: rotate(90deg); }
     .meta-fields input { width: 100%; min-width: 0; }
     .meta-fields > button { white-space: nowrap; }
     .actions {
@@ -937,6 +945,7 @@
         <label><span>Año</span><input id="newYear" class="year-input" list="yearOptions" inputmode="numeric" maxlength="4" autocomplete="off" /></label>
         <label><span>Pop (1–6)</span><input id="newPop" type="number" min="1" max="6" step="1" value="5" /></label>
         <label><span>Desarrollador</span><input id="newDeveloper" placeholder="Estudio o publisher (opcional)" /></label>
+        <label><span>Franquicia</span><input id="newFranchise" list="franchiseOptions" autocomplete="off" placeholder="Opcional" /></label>
       </div>
       <div class="add-row-tags" style="display:flex;flex-direction:column;gap:5px">
         <label style="display:grid;gap:4px;color:var(--muted);font-size:12px"><span>Tags</span><input id="newTags" class="field-youtube" placeholder="rpg, action..." /></label>
@@ -1207,6 +1216,7 @@
       game:      String(x.game ?? "").trim(),
       cover:     cleanUrl(x.cover ?? ""),
       developer: String(x.developer ?? "").trim(),
+      franchise: String(x.franchise ?? "").trim(),
       tracks:    normalizeTracks(x),
       pop:       Number(x.pop) || 1,
       year:      Number(x.year) || 0,
@@ -1290,6 +1300,17 @@
   function _addToIdx(map, key, i)   { if (!key) return; if (!map.has(key)) map.set(key, new Set()); map.get(key).add(i); }
   function _delFromIdx(map, key, i) { const s = map.get(key); if (!s) return; s.delete(i); if (!s.size) map.delete(key); }
   function _gyKey(g, y)             { return g && y ? `${String(g).toLowerCase()}\0${Number(y)}` : ''; }
+
+  // Franquicias que ya existen, como sugerencias del campo (datalist, como el del año)
+  const franchiseList = document.createElement('datalist');
+  franchiseList.id = 'franchiseOptions';
+  document.body.appendChild(franchiseList);
+  function updateFranchiseOptions() {
+    const counts = new Map();
+    db.forEach(item => { if (item.franchise) counts.set(item.franchise, (counts.get(item.franchise) || 0) + 1); });
+    franchiseList.innerHTML = [...counts].sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([f, n]) => `<option value="${escapeHtml(f)}" label="${n} juego${n === 1 ? '' : 's'}"></option>`).join('');
+  }
 
   function rebuildIndexes() {
     _coverIdx.clear(); _audioIdx.clear(); _gyIdx.clear();
@@ -1411,6 +1432,10 @@
           <button class="small" data-action="reloadCover">↺ Cover</button>
           <label><span>Año</span><input class="year-input" data-field="year" list="yearOptions" inputmode="numeric" maxlength="4" autocomplete="off" value="${escapeHtml(item.year || '')}" /></label>
           <label><span>Pop</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
+          <div class="franchise-cell${item.franchise ? ' open' : ''}">
+            <button type="button" class="fr-toggle" data-action="toggleFranchise" title="Franquicia a la que pertenece el juego"><span class="pool-arrow">▸</span> Franquicia</button>
+            <input data-field="franchise" list="franchiseOptions" autocomplete="off" value="${escapeHtml(item.franchise || '')}" placeholder="Final Fantasy, Zelda..." />
+          </div>
           <label style="grid-column:1/-1"><span>Desarrollador</span><input data-field="developer" value="${escapeHtml(item.developer || '')}" placeholder="Estudio o publisher (opcional)" /></label>
         </div>
         <div class="tags-row">
@@ -1425,8 +1450,8 @@
   // Textos en minúsculas por los que filtra el buscador, uno por cada opción de "searchField"
   function searchTexts(item) {
     return {
-      all:    `${item.game} ${item.developer || ""} ${item.tracks.map(t => `${t.title} ${t.mp3Url} ${t.artist} ${(t.tags||[]).join(" ")}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
-      game:   item.game.toLowerCase(),
+      all:    `${item.game} ${item.franchise || ""} ${item.developer || ""} ${item.tracks.map(t => `${t.title} ${t.mp3Url} ${t.artist} ${(t.tags||[]).join(" ")}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
+      game:   `${item.game} ${item.franchise || ""}`.toLowerCase(),
       tracks: item.tracks.map(t => `${t.title} ${t.artist}`).join(" ").toLowerCase(),
       tags:   `${(item.tags||[]).join(" ")} ${item.tracks.map(t => (t.tags||[]).join(" ")).join(" ")}`.toLowerCase(),
       year:   String(item.year),
@@ -1482,6 +1507,7 @@
   // keepPage: tras borrar o duplicar una entrada se queda en la misma página en vez de volver a la primera
   function render(keepPage = false) {
     _searchIndex = db.map(searchTexts);
+    updateFranchiseOptions();
     rebuildIndexes();
     filterDb();
     if (!keepPage) _page = 0;
@@ -1569,7 +1595,9 @@
         if (field === "pop") value = Math.max(1, Math.min(6, value));
         const oldGyKey  = (field === "game" || field === "year") ? _gyKey(db[index].game, db[index].year) : null;
         const oldGyRows = oldGyKey ? new Set(_gyIdx.get(oldGyKey) || []) : null;
+        if (field === "franchise") { value = String(value).trim(); input.value = value; }
         db[index][field] = value;
+        if (field === "franchise") updateFranchiseOptions();
         if (field === "game") {
           const title = row.querySelector(".game-title");
           if (title) title.textContent = value || "(sin título)";
@@ -1675,6 +1703,13 @@
   });
 
   list.addEventListener("click", (e) => {
+    const frToggle = e.target.closest("[data-action='toggleFranchise']");
+    if (frToggle) {
+      const cell = frToggle.closest(".franchise-cell");
+      cell.classList.toggle("open");
+      if (cell.classList.contains("open")) cell.querySelector("input").focus();
+      return;
+    }
     const cover = e.target.closest("img.cover-preview");
     if (cover) {
       $("lightboxImg").src = cover.src;
@@ -2145,6 +2180,7 @@
     $("newGame").value = "";
     $("newCover").value = "";
     $("newDeveloper").value = "";
+    $("newFranchise").value = "";
     $("newTitle").value = "";
     $("newArtist").value = "";
     $("newTrackTagSuggestions").querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
@@ -2183,9 +2219,10 @@
     const track = { title, artist, mp3Url: normalizeAudioUrl(sourceVal), startSeconds, tags: trackTags };
 
     const developer = $("newDeveloper").value.trim();
+    const franchise = $("newFranchise").value.trim();
     const maxId = db.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
     const newIndex = db.length;
-    db.push({ id: maxId + 1, game, cover, pop, year, tags, ...(developer ? { developer } : {}), tracks: [track] });
+    db.push({ id: maxId + 1, game, cover, pop, year, tags, ...(developer ? { developer } : {}), franchise, tracks: [track] });
     const newItem = db[newIndex];
     _addToIdx(_coverIdx, newItem.cover, newIndex);
     newItem.tracks.forEach(t => _addToIdx(_audioIdx, t.mp3Url, newIndex));
@@ -2221,6 +2258,7 @@
     const lines = db.map(item => {
       const coverPart     = item.cover      ? ` cover: "${jsString(item.cover)}",`                          : "";
       const developerPart = item.developer  ? ` developer: "${jsString(item.developer)}",`                  : "";
+      const franchisePart = item.franchise  ? ` franchise: "${jsString(item.franchise)}",`                  : "";
       const tagsPart      = item.tags?.length ? ` tags: [${item.tags.map(t => `'${jsString(t)}'`).join(', ')}],` : "";
       const tracksPart = item.tracks.map(t => {
         const p = [];
@@ -2231,7 +2269,7 @@
         if (p.length === 0) p.push(`mp3Url: ""`);
         return `{ ${p.join(", ")} }`;
       }).join(", ");
-      return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart}${developerPart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0},${tagsPart} tracks: [${tracksPart}] },`;
+      return `  { id: ${Number(item.id) || 0}, game: "${jsString(item.game)}",${coverPart}${developerPart}${franchisePart} pop: ${Number(item.pop) || 1}, year: ${Number(item.year) || 0},${tagsPart} tracks: [${tracksPart}] },`;
     });
     return `const GAME_DB = [\n${lines.join("\n")}\n];\n`;
   }
@@ -2703,9 +2741,10 @@
       download(`database-${stamp}.js`, toJs(), "text/javascript;charset=utf-8");
       status.textContent = "Guardando...";
       status.className = "sheets-status";
-      const rows = [...newEntries, ...modifiedEntries];
+      const saved = [...newEntries, ...modifiedEntries];
+      const rows = saved.map(item => ({ ...item, franchise: item.franchise || null }));
       await gmApi("/gm/games/upsert", { rows, deleteIds: deletedIds });
-      rows.forEach(item => _supaBaseline.set(item.id, JSON.stringify(item)));
+      saved.forEach(item => _supaBaseline.set(item.id, JSON.stringify(item)));
       deletedIds.forEach(id => _supaBaseline.delete(id));
       setDirty(false);
       updateDbPending();

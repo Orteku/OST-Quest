@@ -561,5 +561,11 @@
   "2027-11-17": [{"answerId":234,"coverIds":[790,129,407,234],"trackIndex":0},{"answerId":249,"coverIds":[833,822,249,495],"trackIndex":0},{"answerId":308,"coverIds":[263,308,194,586],"trackIndex":0}],
   "2027-11-18": [{"answerId":282,"coverIds":[433,719,282,451],"trackIndex":0},{"answerId":400,"coverIds":[633,196,400,32],"trackIndex":0},{"answerId":736,"coverIds":[736,364,441,827],"trackIndex":0}],
   "2027-11-19": [{"answerId":401,"coverIds":[401,786,57,410],"trackIndex":0},{"answerId":821,"coverIds":[821,265,222,346],"trackIndex":0},{"answerId":769,"coverIds":[242,769,721,240],"trackIndex":0}],
-  "2027-11-20": [{"answerId":384,"coverIds":[191,611,384,187],"trackIndex":0},{"answerId":347,"coverIds":[614,481,542,347],"trackIndex":0},{"answerId":276,"coverIds":[679,90,276,25],"trackIndex":0}]
+  "2027-11-20": [{"answerId":384,"coverIds":[191,611,384,187],"trackIndex":0},{"answerId":347,"coverIds":[614,481,542,347],"trackIndex":0},{"answerId":276,"coverIds":[679,90,276,25],"trackIndex":0}],
+  "2027-11-21": [{"answerId":596,"coverIds":[358,664,813,596],"trackIndex":0},{"answerId":462,"coverIds":[417,357,644,462],"trackIndex":0},{"answerId":789,"coverIds":[789,92,690,419],"trackIndex":0}],
+  "2027-11-22": [{"answerId":109,"coverIds":[773,428,507,109],"trackIndex":0},{"answerId":781,"coverIds":[791,781,169,749],"trackIndex":2},{"answerId":142,"coverIds":[168,663,167,142],"trackIndex":0}],
+  "2027-11-23": [{"answerId":786,"coverIds":[662,430,445,786],"trackIndex":0},{"answerId":407,"coverIds":[407,466,271,505],"trackIndex":0},{"answerId":443,"coverIds":[33,443,633,112],"trackIndex":0}],
+  "2027-11-24": [{"answerId":448,"coverIds":[570,616,448,268],"trackIndex":0},{"answerId":691,"coverIds":[414,554,691,351],"trackIndex":0},{"answerId":832,"coverIds":[588,555,442,832],"trackIndex":0}],
+  "2027-11-25": [{"answerId":588,"coverIds":[397,588,510,606],"trackIndex":0},{"answerId":813,"coverIds":[150,813,297,451],"trackIndex":1},{"answerId":577,"coverIds":[577,430,566,743],"trackIndex":0}],
+  "2027-11-26": [{"answerId":584,"coverIds":[584,421,410,321],"trackIndex":0},{"answerId":574,"coverIds":[574,15,54,285],"trackIndex":0},{"answerId":72,"coverIds":[23,443,28,72],"trackIndex":0}]
 }
