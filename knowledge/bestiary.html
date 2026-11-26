@@ -306,6 +306,7 @@
     .fr-toggle:hover:not(:disabled) { color: var(--text); filter: none; }
     .fr-toggle:active:not(:disabled) { transform: none; box-shadow: none; }
     .franchise-cell.open .pool-arrow { transform: rotate(90deg); }
+    .fr-opt { display: flex; justify-content: space-between; gap: 12px; padding: 6px 8px; font-size: 13px; }
     .meta-fields input { width: 100%; min-width: 0; }
     .meta-fields > button { white-space: nowrap; }
     .actions {
@@ -900,6 +901,7 @@
       <select id="searchField">
         <option value="all">Todo</option>
         <option value="game">Título</option>
+        <option value="franchise">Franquicia</option>
         <option value="tracks">Canción</option>
         <option value="artist">Artista</option>
         <option value="tags">Tags</option>
@@ -945,7 +947,7 @@
         <label><span>Año</span><input id="newYear" class="year-input" list="yearOptions" inputmode="numeric" maxlength="4" autocomplete="off" /></label>
         <label><span>Pop (1–6)</span><input id="newPop" type="number" min="1" max="6" step="1" value="5" /></label>
         <label><span>Desarrollador</span><input id="newDeveloper" placeholder="Estudio o publisher (opcional)" /></label>
-        <label><span>Franquicia</span><input id="newFranchise" list="franchiseOptions" autocomplete="off" placeholder="Opcional" /></label>
+        <label><span>Franquicia</span><input id="newFranchise" autocomplete="off" placeholder="Opcional" /></label>
       </div>
       <div class="add-row-tags" style="display:flex;flex-direction:column;gap:5px">
         <label style="display:grid;gap:4px;color:var(--muted);font-size:12px"><span>Tags</span><input id="newTags" class="field-youtube" placeholder="rpg, action..." /></label>
@@ -1301,16 +1303,66 @@
   function _delFromIdx(map, key, i) { const s = map.get(key); if (!s) return; s.delete(i); if (!s.size) map.delete(key); }
   function _gyKey(g, y)             { return g && y ? `${String(g).toLowerCase()}\0${Number(y)}` : ''; }
 
-  // Franquicias que ya existen, como sugerencias del campo (datalist, como el del año)
-  const franchiseList = document.createElement('datalist');
-  franchiseList.id = 'franchiseOptions';
-  document.body.appendChild(franchiseList);
+  // Franquicias que ya existen (nombre → nº de juegos), para las sugerencias del campo
+  let _franchises = new Map();
   function updateFranchiseOptions() {
-    const counts = new Map();
-    db.forEach(item => { if (item.franchise) counts.set(item.franchise, (counts.get(item.franchise) || 0) + 1); });
-    franchiseList.innerHTML = [...counts].sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([f, n]) => `<option value="${escapeHtml(f)}" label="${n} juego${n === 1 ? '' : 's'}"></option>`).join('');
+    _franchises = new Map();
+    db.forEach(item => { if (item.franchise) _franchises.set(item.franchise, (_franchises.get(item.franchise) || 0) + 1); });
   }
+
+  // Desplegable de sugerencias bajo el campo de franquicia (filas de la lista y panel de añadir).
+  // Vacío: todas; al escribir: las que contienen el texto, primero las que empiezan por él.
+  const frPop = document.createElement('div');
+  frPop.className = 'tf-pop';
+  frPop.id = 'franchisePop';
+  frPop.hidden = true;
+  document.body.appendChild(frPop);
+  let _frInput = null, _frSugg = [], _frSel = -1;
+  const isFranchiseInput = el => el?.matches?.('input[data-field="franchise"], #newFranchise');
+  function showFranchiseSugg(input) {
+    const q = input.value.trim().toLowerCase();
+    _frSugg = [..._franchises.keys()]
+      .filter(f => f.toLowerCase().includes(q) && f.toLowerCase() !== q)
+      .sort((a, b) => (b.toLowerCase().startsWith(q) - a.toLowerCase().startsWith(q)) || a.localeCompare(b));
+    _frSel = q && _frSugg.length ? 0 : -1;
+    _frInput = input;
+    if (!_frSugg.length) { frPop.hidden = true; return; }
+    frPop.innerHTML = _frSugg.map((f, n) => {
+      const c = _franchises.get(f);
+      return `<div class="tf-opt fr-opt${n === _frSel ? ' sel' : ''}" data-fr="${escapeHtml(f)}"><span>${escapeHtml(f)}</span><span class="pool-muted">${c} juego${c === 1 ? '' : 's'}</span></div>`;
+    }).join('');
+    frPop.hidden = false;
+    const r = input.getBoundingClientRect();
+    frPop.style.width = Math.max(r.width, 220) + 'px';
+    frPop.style.left = (r.left + scrollX) + 'px';
+    frPop.style.top = (r.bottom + scrollY + 4) + 'px';
+  }
+  function closeFranchiseSugg() { frPop.hidden = true; _frInput = null; _frSugg = []; }
+  function pickFranchise(f) {
+    const input = _frInput;
+    closeFranchiseSugg();
+    if (!input) return;
+    input.value = f;
+    input.dispatchEvent(new Event('change', { bubbles: true }));   // las filas guardan el valor en "change"
+  }
+  document.addEventListener('focusin', e => { if (isFranchiseInput(e.target)) showFranchiseSugg(e.target); });
+  document.addEventListener('input', e => { if (isFranchiseInput(e.target)) showFranchiseSugg(e.target); });
+  document.addEventListener('focusout', e => { if (e.target === _frInput) closeFranchiseSugg(); });
+  document.addEventListener('keydown', e => {
+    if (e.target !== _frInput || frPop.hidden || e.isComposing) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      _frSel = (_frSel + (e.key === 'ArrowDown' ? 1 : -1) + _frSugg.length) % _frSugg.length;
+      frPop.querySelectorAll('.fr-opt').forEach((o, n) => o.classList.toggle('sel', n === _frSel));
+      frPop.querySelectorAll('.fr-opt')[_frSel]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && _frSel >= 0) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      pickFranchise(_frSugg[_frSel]);
+    } else if (e.key === 'Escape') closeFranchiseSugg();
+  }, true);
+  frPop.addEventListener('pointerdown', e => e.preventDefault());   // no quitar el foco al campo
+  frPop.addEventListener('click', e => { const o = e.target.closest('[data-fr]'); if (o) pickFranchise(o.dataset.fr); });
 
   function rebuildIndexes() {
     _coverIdx.clear(); _audioIdx.clear(); _gyIdx.clear();
@@ -1434,7 +1486,7 @@
           <label><span>Pop</span><input type="number" min="1" max="6" step="1" data-field="pop" value="${escapeHtml(item.pop)}" /></label>
           <div class="franchise-cell${item.franchise ? ' open' : ''}">
             <button type="button" class="fr-toggle" data-action="toggleFranchise" title="Franquicia a la que pertenece el juego"><span class="pool-arrow">▸</span> Franquicia</button>
-            <input data-field="franchise" list="franchiseOptions" autocomplete="off" value="${escapeHtml(item.franchise || '')}" placeholder="Final Fantasy, Zelda..." />
+            <input data-field="franchise" autocomplete="off" value="${escapeHtml(item.franchise || '')}" placeholder="Final Fantasy, Zelda..." />
           </div>
           <label style="grid-column:1/-1"><span>Desarrollador</span><input data-field="developer" value="${escapeHtml(item.developer || '')}" placeholder="Estudio o publisher (opcional)" /></label>
         </div>
@@ -1451,7 +1503,8 @@
   function searchTexts(item) {
     return {
       all:    `${item.game} ${item.franchise || ""} ${item.developer || ""} ${item.tracks.map(t => `${t.title} ${t.mp3Url} ${t.artist} ${(t.tags||[]).join(" ")}`).join(" ")} ${item.cover} ${item.year} ${item.pop} ${(item.tags||[]).join(" ")}`.toLowerCase(),
-      game:   `${item.game} ${item.franchise || ""}`.toLowerCase(),
+      game:   item.game.toLowerCase(),
+      franchise: String(item.franchise || "").toLowerCase(),
       tracks: item.tracks.map(t => `${t.title} ${t.artist}`).join(" ").toLowerCase(),
       tags:   `${(item.tags||[]).join(" ")} ${item.tracks.map(t => (t.tags||[]).join(" ")).join(" ")}`.toLowerCase(),
       year:   String(item.year),
